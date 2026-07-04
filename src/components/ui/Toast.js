@@ -57,7 +57,7 @@ const Toast = ({ visible, message, duration = 3000, onHide, type = 'success' }) 
       case 'error':
         return '#EF4444';
       case 'warning':
-        return '#F59E0B';
+        return '#AD7130';
       case 'info':
         return '#4A90E2';
       default:

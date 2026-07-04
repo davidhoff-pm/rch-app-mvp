@@ -111,9 +111,9 @@ const CalendarSection = ({
             if (score !== null) {
               hasData = true;
               // Couleurs sémantiques alignées sur la légende : vert / ambre / rouge
-              let scoreColor = '#16A34A'; // Excellent (0-3)
-              if (score >= 10) scoreColor = '#DC2626'; // Préoccupant (10+)
-              else if (score >= 4) scoreColor = '#F59E0B'; // Acceptable (4-9)
+              let scoreColor = '#397852'; // Excellent (0-3)
+              if (score >= 10) scoreColor = '#C0392B'; // Préoccupant (10+)
+              else if (score >= 4) scoreColor = '#AD7130'; // Acceptable (4-9)
 
               cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
               cellContent = (
@@ -185,18 +185,18 @@ const styles = StyleSheet.create({
   calendarMonth: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#101010',
+    color: '#312620',
     textAlign: 'center',
   },
   currentMonthBadge: {
-    backgroundColor: '#E0E7FF',
+    backgroundColor: '#FFE9DE',
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 4,
     borderRadius: designSystem.borderRadius.full,
     marginBottom: designSystem.spacing[1],
   },
   currentMonthText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '600',
   },
   monthNavButton: {
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
   monthNavIcon: {
     fontSize: 24,
-    color: '#4C4DDC',
+    color: '#C16046',
   },
   calendarHeader: {
     flexDirection: 'row',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: designSystem.spacing[2],
   },
   dayName: {
-    color: '#64748B',
+    color: '#84776F',
     fontWeight: '600',
     textTransform: 'uppercase',
   },
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.md,
   },
   dayCellWithStools: {
-    backgroundColor: '#E0E7FF',
+    backgroundColor: '#FFE9DE',
     borderRadius: designSystem.borderRadius.md,
   },
   dayCellEmpty: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   stoolCountLarge: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '700',
   },
   dayNumberEmpty: {

@@ -4,21 +4,17 @@ import designSystem from './designSystem';
 
 const { colors, typography } = designSystem;
 
-// Inter avec fallbacks appropriés
-const getInterFont = () => {
+// Hanken Grotesk (UI) avec fallbacks appropriés
+const getUIFont = () => {
   if (Platform.OS === 'web') {
-    // Sur web, Inter est chargé via Google Fonts (voir App.js)
-    return 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  } else if (Platform.OS === 'android') {
-    // Inter sera chargé via expo-google-fonts
-    return 'Inter';
-  } else {
-    // iOS utilise System mais on peut essayer Inter si disponible
-    return 'Inter, System';
+    // Sur web, Hanken Grotesk est chargé via Google Fonts (voir App.js)
+    return "'Hanken Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   }
+  // Native : fallback système si la police n'est pas embarquée
+  return 'Hanken Grotesk';
 };
 
-const interFont = getInterFont();
+const interFont = getUIFont();
 
 export const theme = {
   ...DefaultTheme,
@@ -40,10 +36,10 @@ export const theme = {
     outlineVariant: colors.border.light,
     error: colors.health.danger.main,
     placeholder: colors.text.tertiary,
-    // Couleurs sémantiques personnalisées - Palette unifiée
-    success: colors.primary[500], // #4C4DDC
-    warning: colors.primary[500], // #4C4DDC (même couleur, différenciée par opacité)
-    info: colors.primary[500], // #4C4DDC
+    // Couleurs sémantiques personnalisées
+    success: colors.health.excellent.main, // vert sauge
+    warning: colors.health.moderate.main, // or
+    info: colors.secondary[500],
   },
   fonts: {
     ...DefaultTheme.fonts,

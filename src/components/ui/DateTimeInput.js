@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
   },
   dateInput: {
     marginRight: 8,

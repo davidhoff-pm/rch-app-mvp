@@ -6,7 +6,7 @@ import Svg, { Path, Circle, Rect, G, Line, Polyline, Ellipse } from 'react-nativ
  * Composant d'icônes médicales inspiré de Health Icons
  * Icônes SVG optimisées pour React Native
  *
- * Usage: <HealthIcon name="stethoscope" size={24} color="#4C4DDC" />
+ * Usage: <HealthIcon name="stethoscope" size={24} color="#C16046" />
  */
 
 const icons = {
@@ -253,7 +253,7 @@ const icons = {
 const HealthIcon = ({
   name,
   size = 24,
-  color = '#4C4DDC',
+  color = '#C16046',
   style
 }) => {
   const IconComponent = icons[name];

@@ -111,7 +111,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
           <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#DC2626" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#C0392B" />
               <AppText variant="h2" style={styles.modalTitle}>
                 {initialData ? 'Modifier le symptôme' : 'Nouveau symptôme'}
               </AppText>
@@ -173,7 +173,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 onValueChange={setIntensity}
                 style={styles.slider}
                 minimumTrackTintColor={getIntensityColorHex(intensity)}
-                maximumTrackTintColor="#E5E5F4"
+                maximumTrackTintColor="#E6E0DA"
                 thumbTintColor={getIntensityColorHex(intensity)}
               />
               <View style={styles.intensityLabels}>
@@ -244,16 +244,16 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
 // Helpers pour les couleurs d'intensité
 const getIntensityColor = (intensity) => {
   if (intensity === 0) return { color: '#A3A3A3' };
-  if (intensity <= 2) return { color: '#16A34A' };
-  if (intensity <= 3) return { color: '#F59E0B' };
-  return { color: '#DC2626' };
+  if (intensity <= 2) return { color: '#397852' };
+  if (intensity <= 3) return { color: '#AD7130' };
+  return { color: '#C0392B' };
 };
 
 const getIntensityColorHex = (intensity) => {
   if (intensity === 0) return '#A3A3A3';
-  if (intensity <= 2) return '#16A34A';
-  if (intensity <= 3) return '#F59E0B';
-  return '#DC2626';
+  if (intensity <= 2) return '#397852';
+  if (intensity <= 3) return '#AD7130';
+  return '#C0392B';
 };
 
 const styles = StyleSheet.create({
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   suggestionsContainer: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5F4',
+    borderColor: '#E6E0DA',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     maxHeight: 200,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   suggestionItem: {
     padding: designSystem.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5F4',
+    borderBottomColor: '#E6E0DA',
   },
   suggestionText: {
     color: designSystem.colors.text.primary,

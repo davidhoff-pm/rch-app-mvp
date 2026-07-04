@@ -29,8 +29,8 @@ const KeyInsights = ({ data }) => {
           icon: 'trending-up',
           title: 'Amélioration récente',
           description: `Votre score moyen a diminué de ${percentChange.toFixed(0)}% ces 7 derniers jours.`,
-          color: '#4C4DDC', // Color 01
-          backgroundColor: '#EDEDFC' // Color 02
+          color: '#C16046', // Color 01
+          backgroundColor: '#FFF3EE' // Color 02
         });
       } else if (diff > 0.5) {
         results.push({
@@ -38,8 +38,8 @@ const KeyInsights = ({ data }) => {
           icon: 'trending-down',
           title: 'Dégradation récente',
           description: `Votre score moyen a augmenté de ${percentChange.toFixed(0)}% ces 7 derniers jours. Consultez votre médecin.`,
-          color: '#101010', // Color 03 - Noir pour alertes
-          backgroundColor: '#EDEDFC' // Color 02
+          color: '#312620', // Color 03 - Noir pour alertes
+          backgroundColor: '#FFF3EE' // Color 02
         });
       } else {
         results.push({
@@ -47,8 +47,8 @@ const KeyInsights = ({ data }) => {
           icon: 'minus',
           title: 'Stabilité récente',
           description: `Votre score reste stable ces 7 derniers jours (variation de ${percentChange.toFixed(0)}%).`,
-          color: '#4C4DDC', // Color 01
-          backgroundColor: '#C8C8F4' // Color 04
+          color: '#C16046', // Color 01
+          backgroundColor: '#E6E0DA' // Color 04
         });
       }
     }
@@ -64,8 +64,8 @@ const KeyInsights = ({ data }) => {
         icon: 'target',
         title: 'Scores très stables',
         description: `Vos scores varient peu (±${stdDev.toFixed(1)} points). Excellente régularité !`,
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#C16046', // Color 01
+        backgroundColor: '#FFF3EE' // Color 02
       });
     } else if (stdDev > 3) {
       results.push({
@@ -73,8 +73,8 @@ const KeyInsights = ({ data }) => {
         icon: 'lightning-bolt',
         title: 'Scores variables',
         description: `Vos scores varient beaucoup (±${stdDev.toFixed(1)} points). Identifiez les déclencheurs.`,
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#C8C8F4' // Color 04
+        color: '#C16046', // Color 01
+        backgroundColor: '#E6E0DA' // Color 04
       });
     }
 
@@ -94,8 +94,8 @@ const KeyInsights = ({ data }) => {
         icon: 'fire',
         title: `${currentGoodStreak} jours de rémission`,
         description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours consécutifs. Continuez !`,
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#C16046', // Color 01
+        backgroundColor: '#FFF3EE' // Color 02
       });
     } else if (currentGoodStreak >= 3) {
       results.push({
@@ -103,8 +103,8 @@ const KeyInsights = ({ data }) => {
         icon: 'check-circle',
         title: `${currentGoodStreak} jours en amélioration`,
         description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours. Bon début !`,
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#C16046', // Color 01
+        backgroundColor: '#FFF3EE' // Color 02
       });
     }
 
@@ -124,8 +124,8 @@ const KeyInsights = ({ data }) => {
         icon: 'alert',
         title: `Alerte : ${currentBadStreak} jours de poussée`,
         description: `Votre score est élevé (≥10) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
-        color: '#101010', // Color 03 - Noir pour alertes
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#312620', // Color 03 - Noir pour alertes
+        backgroundColor: '#FFF3EE' // Color 02
       });
     }
 
@@ -151,8 +151,8 @@ const KeyInsights = ({ data }) => {
           icon: 'chart-bar',
           title: '1 poussée détectée',
           description: `Une seule poussée (score ≥10) détectée ${periodText}.`,
-          color: '#4C4DDC', // Color 01
-          backgroundColor: '#C8C8F4' // Color 04
+          color: '#C16046', // Color 01
+          backgroundColor: '#E6E0DA' // Color 04
         });
       } else if (flareCount >= 3) {
         results.push({
@@ -160,8 +160,8 @@ const KeyInsights = ({ data }) => {
           icon: 'alert-circle',
           title: `${flareCount} poussées détectées`,
           description: `Poussées fréquentes ${periodText}. Parlez-en à votre médecin pour ajuster le traitement.`,
-          color: '#101010', // Color 03 - Noir pour alertes
-          backgroundColor: '#EDEDFC' // Color 02
+          color: '#312620', // Color 03 - Noir pour alertes
+          backgroundColor: '#FFF3EE' // Color 02
         });
       }
     }
@@ -174,8 +174,8 @@ const KeyInsights = ({ data }) => {
           icon: 'star',
         title: 'Score parfait aujourd\'hui',
         description: 'Félicitations ! Votre score est de 0. Continuez vos bonnes habitudes.',
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#C16046', // Color 01
+        backgroundColor: '#FFF3EE' // Color 02
       });
     } else if (lastScore <= 2) {
       results.push({
@@ -183,8 +183,8 @@ const KeyInsights = ({ data }) => {
         icon: '✨',
         title: 'Excellent score actuel',
         description: `Votre dernier score est de ${lastScore}. Vous êtes en très bonne forme !`,
-        color: '#4C4DDC', // Color 01
-        backgroundColor: '#EDEDFC' // Color 02
+        color: '#C16046', // Color 01
+        backgroundColor: '#FFF3EE' // Color 02
       });
     }
 
@@ -196,7 +196,7 @@ const KeyInsights = ({ data }) => {
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
-        <MaterialCommunityIcons name="lightbulb-on" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
+        <MaterialCommunityIcons name="lightbulb-on" size={28} color="#C16046" style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
           Points Clés
         </AppText>
@@ -240,7 +240,7 @@ const KeyInsights = ({ data }) => {
       {/* Message informatif */}
       <View style={styles.infoBox}>
         <View style={styles.infoContent}>
-          <MaterialCommunityIcons name="information" size={16} color="#101010" style={{ marginRight: 8 }} />
+          <MaterialCommunityIcons name="information" size={16} color="#312620" style={{ marginRight: 8 }} />
           <AppText variant="labelSmall" style={styles.infoText}>
             Ces analyses vous aident à suivre votre évolution et à prendre des décisions éclairées avec votre médecin.
           </AppText>
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   titleContainer: {
     flexDirection: 'row',
@@ -266,15 +266,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '700',
   },
   subtitle: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 8,
   },
   infoSubtitle: {
-    color: '#4C4DDC', // Color 01
+    color: '#C16046', // Color 01
     marginBottom: 20,
     fontStyle: 'italic',
     fontWeight: '500',
@@ -311,15 +311,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   insightDescription: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     lineHeight: 20,
   },
   infoBox: {
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   infoContent: {
     flexDirection: 'row',
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   infoText: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     lineHeight: 16,
     flex: 1,
   },

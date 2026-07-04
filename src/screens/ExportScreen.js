@@ -336,9 +336,9 @@ export default function ExportScreen() {
     const getScoreColor = (score) => {
       if (score === 'N/A') return '#D4D4D8'; // Color 05
       const numScore = parseFloat(score);
-      if (numScore < 5) return '#16A34A'; // Vert pastel pour bon score
-      if (numScore <= 10) return '#4C4DDC'; // Color 01 pour score modéré
-      return '#DC2626'; // Rouge pastel pour mauvais score
+      if (numScore < 5) return '#397852'; // Vert pastel pour bon score
+      if (numScore <= 10) return '#C16046'; // Color 01 pour score modéré
+      return '#C0392B'; // Rouge pastel pour mauvais score
     };
 
     // Préparer les données pour le graphique histogramme des selles
@@ -531,12 +531,12 @@ export default function ExportScreen() {
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #005A9C;
+            border-bottom: 3px solid #C16046;
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
           .header h1 {
-            color: #005A9C;
+            color: #C16046;
             margin: 0 0 10px 0;
             font-size: 28px;
             font-weight: bold;
@@ -553,13 +553,13 @@ export default function ExportScreen() {
           }
           .summary-section {
             background: #f8f9fa;
-            border: 2px solid #005A9C;
+            border: 2px solid #C16046;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 30px;
           }
           .summary-title {
-            color: #005A9C;
+            color: #C16046;
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 20px;
@@ -575,7 +575,7 @@ export default function ExportScreen() {
             padding: 15px;
             border-radius: 6px;
             text-align: center;
-            border-left: 4px solid #005A9C;
+            border-left: 4px solid #C16046;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           .summary-value {
@@ -592,11 +592,11 @@ export default function ExportScreen() {
             margin-bottom: 30px;
           }
           .details-title {
-            color: #005A9C;
+            color: #C16046;
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 15px;
-            border-bottom: 2px solid #005A9C;
+            border-bottom: 2px solid #C16046;
             padding-bottom: 8px;
           }
           table {
@@ -606,7 +606,7 @@ export default function ExportScreen() {
             font-size: 11px;
           }
           th {
-            background-color: #005A9C;
+            background-color: #C16046;
             color: white;
             padding: 10px 6px;
             text-align: left;
@@ -627,7 +627,7 @@ export default function ExportScreen() {
           .footer {
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 2px solid #005A9C;
+            border-top: 2px solid #C16046;
             text-align: center;
             color: #666;
             font-size: 12px;
@@ -657,28 +657,28 @@ export default function ExportScreen() {
               <div class="summary-label">Score de Lichtiger Moyen</div>
             </div>
             <div class="summary-card">
-              <div class="summary-value" style="color: #DC2626;">${daysWithBlood} jours (${bleedingPercentage}%)</div>
+              <div class="summary-value" style="color: #C0392B;">${daysWithBlood} jours (${bleedingPercentage}%)</div>
               <div class="summary-label">Jours avec Saignements</div>
             </div>
             <div class="summary-card">
-              <div class="summary-value" style="color: #4C4DDC;">${averageStoolsPerDay}</div>
+              <div class="summary-value" style="color: #C16046;">${averageStoolsPerDay}</div>
               <div class="summary-label">Nombre de Selles Moyen</div>
             </div>
             ${scoreTrend ? `
             <div class="summary-card">
-              <div class="summary-value" style="color: ${scoreTrend.isImprovement ? '#16A34A' : '#DC2626'};">
+              <div class="summary-value" style="color: ${scoreTrend.isImprovement ? '#397852' : '#C0392B'};">
                 ${scoreTrend.arrow} ${scoreTrend.isImprovement ? scoreTrend.value : '+' + scoreTrend.value}
               </div>
               <div class="summary-label">Tendance d'Évolution (Score)</div>
             </div>
             ` : ''}
             <div class="summary-card">
-              <div class="summary-value" style="color: #DC2626;">${nightStoolsDaysCount} jours (${nightStoolsPercentage}%)</div>
+              <div class="summary-value" style="color: #C0392B;">${nightStoolsDaysCount} jours (${nightStoolsPercentage}%)</div>
               <div class="summary-label">Selles Nocturnes</div>
             </div>
             ${lastIbdiskScore !== null ? `
             <div class="summary-card">
-              <div class="summary-value" style="color: #4C4DDC;">${lastIbdiskScore} / 10</div>
+              <div class="summary-value" style="color: #C16046;">${lastIbdiskScore} / 10</div>
               <div class="summary-label">Qualité de Vie (IBDisk)</div>
               <div class="summary-sublabel" style="font-size: 11px; color: #666; margin-top: 4px;">${lastIbdiskDate}</div>
             </div>
@@ -689,15 +689,15 @@ export default function ExportScreen() {
         <div class="details-section" style="page-break-inside: avoid;">
           <div class="details-title">Graphique des Selles</div>
           <div style="margin: 20px 0; text-align: center; overflow: hidden; width: 100%;">
-            <svg width="${chartWidth}" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}" style="background: white; border: 1px solid #C8C8F4; border-radius: 12px; padding: 0; width: 100%; height: auto;">
+            <svg width="${chartWidth}" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}" style="background: white; border: 1px solid #E6E0DA; border-radius: 12px; padding: 0; width: 100%; height: auto;">
               <!-- Grille horizontale -->
               ${Array.from({ length: Math.ceil(maxStools / 2) + 1 }, (_, i) => {
                 const value = i * 2;
                 const y = padding.top + graphHeight - (value / maxStools) * graphHeight;
                 return `
                   <line x1="${padding.left}" y1="${y}" x2="${chartWidth - padding.right}" y2="${y}" 
-                        stroke="#EDEDFC" stroke-width="1" stroke-dasharray="2,2"/>
-                  <text x="${padding.left - 10}" y="${y + 4}" font-size="10" fill="#101010" text-anchor="end">${value}</text>
+                        stroke="#FFF3EE" stroke-width="1" stroke-dasharray="2,2"/>
+                  <text x="${padding.left - 10}" y="${y + 4}" font-size="10" fill="#312620" text-anchor="end">${value}</text>
                 `;
               }).join('')}
               
@@ -719,7 +719,7 @@ export default function ExportScreen() {
                 return `
                   ${day.totalStools > 0 ? `
                     <rect x="${x}" y="${yTotal}" width="${barWidth}" height="${totalHeight}" 
-                          fill="#4C4DDC" opacity="0.8" rx="${totalBarRadius}" ry="${totalBarRadius}"/>
+                          fill="#C16046" opacity="0.8" rx="${totalBarRadius}" ry="${totalBarRadius}"/>
                   ` : ''}
                   ${day.stoolsWithBlood > 0 ? `
                     <rect x="${x}" y="${yBlood}" width="${barWidth}" height="${bloodHeight}" 
@@ -727,7 +727,7 @@ export default function ExportScreen() {
                   ` : ''}
                   ${index % Math.ceil(daysForChart / 15) === 0 || index === chartDays.length - 1 ? `
                     <text x="${x + barWidth / 2}" y="${padding.top + graphHeight + 20}" 
-                          font-size="9" fill="#101010" text-anchor="middle" 
+                          font-size="9" fill="#312620" text-anchor="middle" 
                           transform="rotate(-45 ${x + barWidth / 2} ${padding.top + graphHeight + 20})">
                       ${day.dateLabel}
                     </text>
@@ -738,30 +738,30 @@ export default function ExportScreen() {
               <!-- Axe Y -->
               <line x1="${padding.left}" y1="${padding.top}" 
                     x2="${padding.left}" y2="${padding.top + graphHeight}" 
-                    stroke="#C8C8F4" stroke-width="2"/>
+                    stroke="#E6E0DA" stroke-width="2"/>
               
               <!-- Axe X -->
               <line x1="${padding.left}" y1="${padding.top + graphHeight}" 
                     x2="${chartWidth - padding.right}" y2="${padding.top + graphHeight}" 
-                    stroke="#C8C8F4" stroke-width="2"/>
+                    stroke="#E6E0DA" stroke-width="2"/>
               
               <!-- Labels des axes -->
               <text x="${padding.left - 50}" y="${padding.top + graphHeight / 2}" 
-                    font-size="12" fill="#101010" text-anchor="middle" 
+                    font-size="12" fill="#312620" text-anchor="middle" 
                     transform="rotate(-90 ${padding.left - 50} ${padding.top + graphHeight / 2})">
                 Nombre de selles
               </text>
               <text x="${chartWidth / 2}" y="${chartHeight - 20}" 
-                    font-size="12" fill="#101010" text-anchor="middle">
+                    font-size="12" fill="#312620" text-anchor="middle">
                 Jours
               </text>
               
               <!-- Légende - repositionnée pour éviter la superposition -->
               <g transform="translate(${chartWidth - padding.right + 20}, ${padding.top})">
-                <rect x="0" y="0" width="12" height="12" rx="6" fill="#4C4DDC" opacity="0.8"/>
-                <text x="18" y="10" font-size="11" fill="#101010">Selles totales</text>
+                <rect x="0" y="0" width="12" height="12" rx="6" fill="#C16046" opacity="0.8"/>
+                <text x="18" y="10" font-size="11" fill="#312620">Selles totales</text>
                 <rect x="0" y="20" width="12" height="12" rx="6" fill="#FCA5A5" opacity="0.9"/>
-                <text x="18" y="30" font-size="11" fill="#101010">Selles avec sang</text>
+                <text x="18" y="30" font-size="11" fill="#312620">Selles avec sang</text>
               </g>
             </svg>
           </div>
@@ -770,15 +770,15 @@ export default function ExportScreen() {
         <div class="details-section" style="page-break-inside: avoid;">
           <div class="details-title">Évolution du Score et % Selles sanglantes</div>
           <div style="margin: 20px 0; text-align: center; overflow: hidden; width: 100%;">
-            <svg width="${multiAxisChartWidth}" height="${multiAxisChartHeight}" viewBox="0 0 ${multiAxisChartWidth} ${multiAxisChartHeight}" style="background: white; border: 1px solid #C8C8F4; border-radius: 12px; padding: 0; width: 100%; height: auto;">
+            <svg width="${multiAxisChartWidth}" height="${multiAxisChartHeight}" viewBox="0 0 ${multiAxisChartWidth} ${multiAxisChartHeight}" style="background: white; border: 1px solid #E6E0DA; border-radius: 12px; padding: 0; width: 100%; height: auto;">
               <defs>
                 <linearGradient id="scoreAreaGradientPdf" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#4C4DDC" stop-opacity="0.2" />
-                  <stop offset="100%" stop-color="#4C4DDC" stop-opacity="0.05" />
+                  <stop offset="0%" stop-color="#C16046" stop-opacity="0.2" />
+                  <stop offset="100%" stop-color="#C16046" stop-opacity="0.05" />
                 </linearGradient>
                 <linearGradient id="bloodAreaGradientPdf" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#DC2626" stop-opacity="0.15" />
-                  <stop offset="100%" stop-color="#DC2626" stop-opacity="0.05" />
+                  <stop offset="0%" stop-color="#C0392B" stop-opacity="0.15" />
+                  <stop offset="100%" stop-color="#C0392B" stop-opacity="0.05" />
                 </linearGradient>
               </defs>
               
@@ -787,8 +787,8 @@ export default function ExportScreen() {
                 const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 20) * multiAxisGraphHeight);
                 return `
                   <line x1="${multiAxisPadding.left}" y1="${y}" x2="${multiAxisChartWidth - multiAxisPadding.right}" y2="${y}" 
-                        stroke="#EDEDFC" stroke-width="1" stroke-dasharray="2,2"/>
-                  <text x="${multiAxisPadding.left - 10}" y="${y + 4}" font-size="10" fill="#101010" text-anchor="end" font-weight="500">${value}</text>
+                        stroke="#FFF3EE" stroke-width="1" stroke-dasharray="2,2"/>
+                  <text x="${multiAxisPadding.left - 10}" y="${y + 4}" font-size="10" fill="#312620" text-anchor="end" font-weight="500">${value}</text>
                 `;
               }).join('')}
               
@@ -797,8 +797,8 @@ export default function ExportScreen() {
                 const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 100) * multiAxisGraphHeight);
                 return `
                   <line x1="${multiAxisPadding.left}" y1="${y}" x2="${multiAxisChartWidth - multiAxisPadding.right}" y2="${y}" 
-                        stroke="#FEE2E2" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>
-                  <text x="${multiAxisChartWidth - multiAxisPadding.right + 10}" y="${y + 4}" font-size="10" fill="#DC2626" text-anchor="start" font-weight="500">${value}%</text>
+                        stroke="#FBE3DF" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>
+                  <text x="${multiAxisChartWidth - multiAxisPadding.right + 10}" y="${y + 4}" font-size="10" fill="#C0392B" text-anchor="start" font-weight="500">${value}%</text>
                 `;
               }).join('')}
               
@@ -830,10 +830,10 @@ export default function ExportScreen() {
                 
                 return `
                   ${scoreAreaPath ? `<path d="${scoreAreaPath}" fill="url(#scoreAreaGradientPdf)"/>` : ''}
-                  ${scoreLinePath ? `<path d="${scoreLinePath}" stroke="#4C4DDC" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+                  ${scoreLinePath ? `<path d="${scoreLinePath}" stroke="#C16046" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
                   ${scorePoints.map((point, idx) => `
-                    <circle cx="${point.x}" cy="${point.y}" r="4" fill="#FFFFFF" stroke="#4C4DDC" stroke-width="2"/>
-                    <circle cx="${point.x}" cy="${point.y}" r="2" fill="#4C4DDC"/>
+                    <circle cx="${point.x}" cy="${point.y}" r="4" fill="#FFFFFF" stroke="#C16046" stroke-width="2"/>
+                    <circle cx="${point.x}" cy="${point.y}" r="2" fill="#C16046"/>
                   `).join('')}
                 `;
               })()}
@@ -866,10 +866,10 @@ export default function ExportScreen() {
                 
                 return `
                   ${bloodAreaPath ? `<path d="${bloodAreaPath}" fill="url(#bloodAreaGradientPdf)"/>` : ''}
-                  ${bloodLinePath ? `<path d="${bloodLinePath}" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"/>` : ''}
+                  ${bloodLinePath ? `<path d="${bloodLinePath}" stroke="#C0392B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"/>` : ''}
                   ${bloodPoints.map((point, idx) => `
-                    <circle cx="${point.x}" cy="${point.y}" r="3.5" fill="#FFFFFF" stroke="#DC2626" stroke-width="1.5"/>
-                    <circle cx="${point.x}" cy="${point.y}" r="1.5" fill="#DC2626"/>
+                    <circle cx="${point.x}" cy="${point.y}" r="3.5" fill="#FFFFFF" stroke="#C0392B" stroke-width="1.5"/>
+                    <circle cx="${point.x}" cy="${point.y}" r="1.5" fill="#C0392B"/>
                   `).join('')}
                 `;
               })()}
@@ -877,7 +877,7 @@ export default function ExportScreen() {
               <!-- Axe X -->
               <line x1="${multiAxisPadding.left}" y1="${multiAxisChartHeight - multiAxisPadding.bottom}" 
                     x2="${multiAxisChartWidth - multiAxisPadding.right}" y2="${multiAxisChartHeight - multiAxisPadding.bottom}" 
-                    stroke="#C8C8F4" stroke-width="2"/>
+                    stroke="#E6E0DA" stroke-width="2"/>
               
               <!-- Labels X -->
               ${(() => {
@@ -887,7 +887,7 @@ export default function ExportScreen() {
                   const x = multiAxisPadding.left + (index / (multiAxisLabels.length - 1)) * multiAxisGraphWidth;
                   return `
                     <text x="${x}" y="${multiAxisChartHeight - multiAxisPadding.bottom + 20}" 
-                          font-size="10" fill="#101010" text-anchor="middle">
+                          font-size="10" fill="#312620" text-anchor="middle">
                       ${label}
                     </text>
                   `;
@@ -897,7 +897,7 @@ export default function ExportScreen() {
               <!-- Axe Y gauche (Score) -->
               <line x1="${multiAxisPadding.left}" y1="${multiAxisPadding.top}" 
                     x2="${multiAxisPadding.left}" y2="${multiAxisChartHeight - multiAxisPadding.bottom}" 
-                    stroke="#C8C8F4" stroke-width="2"/>
+                    stroke="#E6E0DA" stroke-width="2"/>
               
               <!-- Axe Y droit (Pourcentage) -->
               <line x1="${multiAxisChartWidth - multiAxisPadding.right}" y1="${multiAxisPadding.top}" 
@@ -906,13 +906,13 @@ export default function ExportScreen() {
               
               <!-- Labels des axes -->
               <text x="${multiAxisPadding.left - 30}" y="${multiAxisPadding.top + multiAxisGraphHeight / 2}" 
-                    font-size="11" fill="#101010" text-anchor="middle" 
+                    font-size="11" fill="#312620" text-anchor="middle" 
                     transform="rotate(-90 ${multiAxisPadding.left - 30} ${multiAxisPadding.top + multiAxisGraphHeight / 2})" 
                     font-weight="600">
                 Score Lichtiger
               </text>
               <text x="${multiAxisChartWidth - multiAxisPadding.right + 30}" y="${multiAxisPadding.top + multiAxisGraphHeight / 2}" 
-                    font-size="11" fill="#DC2626" text-anchor="middle" 
+                    font-size="11" fill="#C0392B" text-anchor="middle" 
                     transform="rotate(-90 ${multiAxisChartWidth - multiAxisPadding.right + 30} ${multiAxisPadding.top + multiAxisGraphHeight / 2})" 
                     font-weight="600">
                 % Selles sanglantes
@@ -920,10 +920,10 @@ export default function ExportScreen() {
               
               <!-- Légende -->
               <g transform="translate(${multiAxisPadding.left + 10}, ${multiAxisPadding.top - 20})">
-                <line x1="0" y1="0" x2="30" y2="0" stroke="#4C4DDC" stroke-width="2" stroke-linecap="round"/>
-                <text x="35" y="4" font-size="10" fill="#101010" font-weight="500">Score Lichtiger</text>
-                <line x1="0" y1="15" x2="30" y2="15" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
-                <text x="35" y="19" font-size="10" fill="#101010" font-weight="500">% Selles sanglantes</text>
+                <line x1="0" y1="0" x2="30" y2="0" stroke="#C16046" stroke-width="2" stroke-linecap="round"/>
+                <text x="35" y="4" font-size="10" fill="#312620" font-weight="500">Score Lichtiger</text>
+                <line x1="0" y1="15" x2="30" y2="15" stroke="#C0392B" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
+                <text x="35" y="19" font-size="10" fill="#312620" font-weight="500">% Selles sanglantes</text>
               </g>
             </svg>
           </div>
@@ -948,7 +948,7 @@ export default function ExportScreen() {
                 const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                 const symptomName = getSymptomDisplayName(symptom);
                 const intensityLabel = INTENSITY_LABELS[symptom.intensity];
-                const intensityColor = symptom.intensity <= 2 ? '#16A34A' : symptom.intensity <= 3 ? '#F59E0B' : '#DC2626';
+                const intensityColor = symptom.intensity <= 2 ? '#397852' : symptom.intensity <= 3 ? '#AD7130' : '#C0392B';
 
                 return `
                   <tr>
@@ -988,7 +988,7 @@ export default function ExportScreen() {
                   <tr>
                     <td style="white-space: nowrap;">${dateStr} ${timeStr}</td>
                     <td style="text-align: center;">
-                      ${note.category ? `<span style="background: #EDEDFC; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #4C4DDC;">${categoryLabel}</span>` : '—'}
+                      ${note.category ? `<span style="background: #FFF3EE; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #C16046;">${categoryLabel}</span>` : '—'}
                     </td>
                     <td>${note.content}</td>
                   </tr>
@@ -1063,7 +1063,7 @@ export default function ExportScreen() {
                     expectedIntakes = Math.floor(daysDuration / schema.frequency.intervalDays) + 1;
                   }
 
-                  const adherenceColor = adherence >= 90 ? '#16A34A' : adherence >= 70 ? '#F59E0B' : '#DC2626';
+                  const adherenceColor = adherence >= 90 ? '#397852' : adherence >= 70 ? '#AD7130' : '#C0392B';
                   const adherenceText = hasOverdose ? (adherence + '% (+' + excess + ')') : (adherence + '%');
 
                   return '<tr>' +
@@ -1074,7 +1074,7 @@ export default function ExportScreen() {
                     '<td style="text-align: center;">' + actualIntakes + '</td>' +
                     '<td style="text-align: center; font-weight: 700; color: ' + adherenceColor + ';">' +
                       adherenceText +
-                      (hasOverdose ? '<br><span style="font-size: 9px; color: #DC2626;">⚠️ Surdosage</span>' : '') +
+                      (hasOverdose ? '<br><span style="font-size: 9px; color: #C0392B;">⚠️ Surdosage</span>' : '') +
                     '</td>' +
                   '</tr>';
                 }).join('')}
@@ -1159,7 +1159,7 @@ export default function ExportScreen() {
                   const distance = (value / maxValue) * radius;
                   const x = center + distance * Math.cos(angle);
                   const y = center + distance * Math.sin(angle);
-                  const color = value <= 3 ? '#16A34A' : value <= 6 ? '#4C4DDC' : '#DC2626';
+                  const color = value <= 3 ? '#397852' : value <= 6 ? '#C16046' : '#C0392B';
                   return { x, y, value, color, label: question.shortLabel };
                 });
               };
@@ -1186,7 +1186,7 @@ export default function ExportScreen() {
                 <div style="page-break-inside: avoid;">
                   <div style="margin-bottom: 12px; text-align: center;">
                     <h3 style="margin: 0; color: #2D3748; font-size: 16px;">Questionnaire IBDisk du ${dateStr}</h3>
-                    <p style="margin: 5px 0; color: #101010; font-size: 13px;">Score moyen : <strong>${averageScore}/10</strong></p>
+                    <p style="margin: 5px 0; color: #312620; font-size: 13px;">Score moyen : <strong>${averageScore}/10</strong></p>
                   </div>
                   
                   <div style="text-align: center; margin: 15px 0;">
@@ -1204,7 +1204,7 @@ export default function ExportScreen() {
                         <text x="${axis.x2 + 15 * Math.cos(axis.angle)}" 
                               y="${axis.y2 + 15 * Math.sin(axis.angle)}" 
                               text-anchor="middle" dominant-baseline="middle" 
-                              font-size="12" font-weight="600" fill="#101010">
+                              font-size="12" font-weight="600" fill="#312620">
                           ${axis.label}
                         </text>
                       `).join('')}
@@ -1212,7 +1212,7 @@ export default function ExportScreen() {
                       <!-- Polygone des données -->
                       <polygon points="${polygonPoints}" 
                                fill="rgba(100, 116, 139, 0.1)" 
-                               stroke="#101010" stroke-width="2"/>
+                               stroke="#312620" stroke-width="2"/>
                       
                       <!-- Points de données -->
                       ${points.map((point, index) => `
@@ -1227,43 +1227,43 @@ export default function ExportScreen() {
                     </svg>
                   </div>
                   
-                  <div style="margin-top: 12px; padding: 10px; background-color: #F8FAFB; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  <div style="margin-top: 12px; padding: 10px; background-color: #F5EFE8; border-radius: 6px; border: 1px solid #E2E8F0;">
                     <h4 style="margin: 0 0 6px 0; color: #374151; font-size: 12px;">Légende des couleurs</h4>
                     <div style="display: flex; justify-content: space-around; font-size: 10px;">
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 8px; height: 8px; background-color: #16A34A; border-radius: 50%; margin-right: 3px;"></div>
-                        <span style="color: #101010;">Très satisfaisant (0-3)</span>
+                        <div style="width: 8px; height: 8px; background-color: #397852; border-radius: 50%; margin-right: 3px;"></div>
+                        <span style="color: #312620;">Très satisfaisant (0-3)</span>
                       </div>
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 8px; height: 8px; background-color: #4C4DDC; border-radius: 50%; margin-right: 3px;"></div>
-                        <span style="color: #101010;">Modérément satisfaisant (4-6)</span>
+                        <div style="width: 8px; height: 8px; background-color: #C16046; border-radius: 50%; margin-right: 3px;"></div>
+                        <span style="color: #312620;">Modérément satisfaisant (4-6)</span>
                       </div>
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 8px; height: 8px; background-color: #DC2626; border-radius: 50%; margin-right: 3px;"></div>
-                        <span style="color: #101010;">Peu satisfaisant (7-10)</span>
+                        <div style="width: 8px; height: 8px; background-color: #C0392B; border-radius: 50%; margin-right: 3px;"></div>
+                        <span style="color: #312620;">Peu satisfaisant (7-10)</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div style="margin-top: 8px; font-size: 9px; color: #101010; text-align: center;">
+                  <div style="margin-top: 8px; font-size: 9px; color: #312620; text-align: center;">
                     <p style="margin: 0;">Scores détaillés disponibles dans l'application</p>
                   </div>
                   
                   <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #E2E8F0; text-align: center;">
-                    <p style="margin: 0; font-size: 10px; color: #101010;">Rapport généré avec l'application de suivi RCH</p>
+                    <p style="margin: 0; font-size: 10px; color: #312620;">Rapport généré avec l'application de suivi RCH</p>
                   </div>
                 </div>
               `;
             })()}
           ` : `
             <div style="display: flex; flex-direction: column; height: 100%; justify-content: center; align-items: center;">
-              <div style="text-align: center; color: #101010;">
-                <h3 style="margin: 0; color: #101010;">Aucun questionnaire IBDisk disponible</h3>
-                <p style="margin: 10px 0; font-size: 14px; color: #101010;">Remplissez un questionnaire IBDisk dans l'application pour voir vos résultats ici.</p>
+              <div style="text-align: center; color: #312620;">
+                <h3 style="margin: 0; color: #312620;">Aucun questionnaire IBDisk disponible</h3>
+                <p style="margin: 10px 0; font-size: 14px; color: #312620;">Remplissez un questionnaire IBDisk dans l'application pour voir vos résultats ici.</p>
               </div>
               
               <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
-                <p style="margin: 0; font-size: 12px; color: #101010;">Rapport généré avec l'application de suivi RCH</p>
+                <p style="margin: 0; font-size: 12px; color: #312620;">Rapport généré avec l'application de suivi RCH</p>
               </div>
             </div>
           `}
@@ -1341,7 +1341,7 @@ export default function ExportScreen() {
           style={styles.segmentedButtons}
           theme={{
             colors: {
-              secondaryContainer: '#4C4DDC', // Color 01 pour le bouton sélectionné
+              secondaryContainer: '#C16046', // Color 01 pour le bouton sélectionné
               onSecondaryContainer: '#FFFFFF',
             }
           }}

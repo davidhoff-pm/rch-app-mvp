@@ -421,10 +421,10 @@ const TreatmentScreen = () => {
           const adherence = schema.adherence || 0;
 
           const adherenceColor = adherence >= 90
-            ? '#16A34A'
+            ? '#397852'
             : adherence >= 70
-            ? '#F59E0B'
-            : '#DC2626';
+            ? '#AD7130'
+            : '#C0392B';
 
           return (
             <AppCard key={schema.id} style={styles.historyCard}>

@@ -297,10 +297,10 @@ export default function HistoryScreen({ navigation }) {
 
   // Couleur selon le score Bristol - Palette unifiée
   const getBristolColor = (bristol) => {
-    if (bristol <= 2) return '#4C4DDC'; // Color 01 (constipation)
-    if (bristol <= 4) return '#4C4DDC'; // Color 01 (normal)
-    if (bristol <= 5) return '#C8C8F4'; // Color 04 (tendance)
-    return '#101010'; // Color 03 (diarrhée - alerte)
+    if (bristol <= 2) return '#C16046'; // Color 01 (constipation)
+    if (bristol <= 4) return '#C16046'; // Color 01 (normal)
+    if (bristol <= 5) return '#E6E0DA'; // Color 04 (tendance)
+    return '#312620'; // Color 03 (diarrhée - alerte)
   };
 
   // Rendu calendrier moderne
@@ -405,9 +405,9 @@ export default function HistoryScreen({ navigation }) {
               const score = calculateLichtigerScore(dateStr, storage);
               if (score !== null) {
                 hasData = true;
-                let scoreColor = '#4C4DDC'; // Color 01
-                if (score >= 10) scoreColor = '#101010'; // Color 03 - Noir pour alertes
-                else if (score >= 4) scoreColor = '#4C4DDC'; // Color 01
+                let scoreColor = '#C16046'; // Color 01
+                if (score >= 10) scoreColor = '#312620'; // Color 03 - Noir pour alertes
+                else if (score >= 4) scoreColor = '#C16046'; // Color 01
                 
                 cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
                 cellContent = (
@@ -496,13 +496,13 @@ export default function HistoryScreen({ navigation }) {
                         onPress={() => handleEditStool(item)}
                         style={styles.actionButton}
                       >
-                        <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                        <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
                       </TouchableOpacity>
                       <TouchableOpacity 
                         onPress={() => handleDeleteStool(item.id)}
                         style={styles.actionButton}
                       >
-                        <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                        <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -533,15 +533,15 @@ export default function HistoryScreen({ navigation }) {
           {calendarMode === 'score' ? (
             <>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#C16046' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#C16046' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#101010' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#312620' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
               </View>
             </>
@@ -576,7 +576,7 @@ export default function HistoryScreen({ navigation }) {
                   <MaterialCommunityIcons 
                     name="chevron-left" 
                     size={24} 
-                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#101010'} 
+                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#312620'} 
                   />
                 </TouchableOpacity>
                 
@@ -595,7 +595,7 @@ export default function HistoryScreen({ navigation }) {
                   <MaterialCommunityIcons 
                     name="chevron-right" 
                     size={24} 
-                    color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#101010'} 
+                    color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#312620'} 
                   />
                 </TouchableOpacity>
               </View>
@@ -631,7 +631,7 @@ export default function HistoryScreen({ navigation }) {
               <AnimatedListItem key={item.id} index={index} delay={30}>
                 <View style={styles.treatmentItem}>
                   <View style={styles.treatmentIcon}>
-                    <MaterialCommunityIcons name="pill" size={24} color="#4C4DDC" />
+                    <MaterialCommunityIcons name="pill" size={24} color="#C16046" />
                   </View>
                   <View style={styles.treatmentInfo}>
                     <AppText variant="bodyLarge" style={styles.treatmentName}>
@@ -646,13 +646,13 @@ export default function HistoryScreen({ navigation }) {
                       onPress={() => handleEditTreatment(item)}
                       style={styles.actionButton}
                     >
-                      <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                      <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
                     </TouchableOpacity>
                     <TouchableOpacity 
                       onPress={() => handleDeleteTreatment(item.id)}
                       style={styles.actionButton}
                     >
-                      <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                      <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -695,8 +695,8 @@ export default function HistoryScreen({ navigation }) {
                   step={1}
                   value={editBristol}
                   onValueChange={setEditBristol}
-                  minimumTrackTintColor="#4C4DDC"
-                  maximumTrackTintColor="#C8C8F4"
+                  minimumTrackTintColor="#C16046"
+                  maximumTrackTintColor="#E6E0DA"
                 />
                 <AppText variant="headlineLarge" style={styles.bristolValue}>
                   {Math.round(editBristol)}
@@ -774,7 +774,7 @@ export default function HistoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
   },
   scrollContent: {
     paddingBottom: 100,
@@ -786,12 +786,12 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   title: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 6,
     fontWeight: '700',
   },
   subtitle: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
   },
   stoolsCard: {
     marginHorizontal: 20,
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sectionTitle: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 16,
     fontWeight: '700',
   },
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
   },
   stoolItem: {
     marginBottom: 12,
@@ -816,14 +816,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   stoolMainWithBlood: {
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     borderWidth: 2,
   },
   bristolBadge: {
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stoolDate: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '500',
   },
   stoolActions: {
@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   actionIcon: {
     fontSize: 18,
@@ -888,15 +888,15 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   monthNavIcon: {
     fontSize: 24,
-    color: '#4C4DDC', // Color 01
+    color: '#C16046', // Color 01
     fontWeight: '700',
   },
   monthTitleContainer: {
@@ -904,12 +904,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   calendarMonth: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '700',
     textAlign: 'center',
   },
   currentMonthBadge: {
-    backgroundColor: '#4C4DDC', // Color 01
+    backgroundColor: '#C16046', // Color 01
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   dayName: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '700',
     textTransform: 'uppercase',
   },
@@ -951,10 +951,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   dayCellWithStools: {
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#4C4DDC', // Color 01
+    borderColor: '#C16046', // Color 01
   },
   dayCellContent: {
     alignItems: 'center',
@@ -976,7 +976,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   dayNumberSmall: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '600',
     fontSize: 9,
     position: 'absolute',
@@ -984,12 +984,12 @@ const styles = StyleSheet.create({
     left: 4,
   },
   stoolCountLarge: {
-    color: '#4C4DDC', // Color 01
+    color: '#C16046', // Color 01
     fontWeight: '700',
     fontSize: 26,
   },
   dayNumberEmpty: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     fontSize: 14,
     fontWeight: '500',
   },
@@ -1012,19 +1012,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   legendText: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '500',
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   legendTextCentered: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputLabel: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 8,
     fontWeight: '600',
   },
@@ -1043,14 +1043,14 @@ const styles = StyleSheet.create({
   },
   dateTimeInput: {
     flex: 1,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   inputHelper: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     marginBottom: 4,
   },
   sliderContainer: {
@@ -1063,20 +1063,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bristolValue: {
-    color: '#4C4DDC', // Color 01
+    color: '#C16046', // Color 01
     fontWeight: '700',
     minWidth: 40,
     textAlign: 'center',
   },
   bristolDesc: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 20,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     padding: 12,
     borderRadius: 12,
   },
@@ -1098,7 +1098,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 12,
     marginBottom: 8,
   },
@@ -1109,12 +1109,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   treatmentName: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '600',
     marginBottom: 4,
   },
   treatmentDate: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     fontSize: 13,
   },
   treatmentActions: {
@@ -1122,15 +1122,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   treatmentNameInput: {
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
     marginBottom: 16,
   },
   textInputField: {
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     marginBottom: 16,
   },
   // Styles IBDisk
@@ -1141,7 +1141,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   ibdiskHeader: {
     flexDirection: 'row',
@@ -1157,19 +1157,19 @@ const styles = StyleSheet.create({
   navButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
   },
   navButtonDisabled: {
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
   },
   navText: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '600',
     minWidth: 40,
     textAlign: 'center',
   },
   singleQuestionnaireText: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     fontStyle: 'italic',
   },
 });

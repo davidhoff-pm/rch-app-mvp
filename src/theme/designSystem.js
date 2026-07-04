@@ -1,222 +1,234 @@
 // Design System - RCH Suivi
-// Système de design complet pour l'application
+// Direction visuelle "chaude / éditoriale" : fond crème, accent terracotta,
+// vert sauge (santé), or/ocre (secondaire), typographies Hanken Grotesk + Newsreader.
 
 export const colors = {
-  // Couleurs principales - Palette unifiée
+  // Terracotta - couleur de marque (primary)
   primary: {
-    50: '#EDEDFC',
-    100: '#EDEDFC',
-    200: '#C8C8F4',
-    300: '#C8C8F4',
-    400: '#4C4DDC',
-    500: '#4C4DDC', // Principale (Color 01)
-    600: '#4C4DDC',
-    700: '#4C4DDC',
-    800: '#4C4DDC',
-    900: '#101010', // Color 03
+    50: '#FFF3EE',
+    100: '#FFE9DE',
+    200: '#F6D3C4',
+    300: '#E5A98F',
+    400: '#D07A5B',
+    500: '#C16046', // Principale (terracotta)
+    600: '#B05139', // Hover / actif
+    700: '#8F4230',
+    800: '#6E3325',
+    900: '#312620',
   },
-  
-  // Couleurs secondaires - Vert médical
+
+  // Vert sauge - santé / rémission (secondary)
   secondary: {
-    50: '#F0FDF4',
-    100: '#DCFCE7',
-    200: '#BBF7D0',
-    300: '#86EFAC',
-    400: '#4ADE80',
-    500: '#22C55E', // Secondaire
-    600: '#16A34A',
-    700: '#15803D',
-    800: '#166534',
-    900: '#14532D',
+    50: '#F0F7F2',
+    100: '#D7F4E0',
+    200: '#B4E3C2',
+    300: '#8FCEA3',
+    400: '#6BB183',
+    500: '#4B8A63',
+    600: '#397852',
+    700: '#2E6142',
+    800: '#244D35',
+    900: '#1B3A28',
   },
-  
-  // États de santé - Couleurs sémantiques (vert = bon, ambre = vigilance, rouge = alerte)
-  // La marque reste l'indigo (primary), mais les états cliniques parlent en couleur.
+
+  // Or / ocre - accent secondaire (IBDisk, vigilance)
+  accent: {
+    50: '#FFF6E9',
+    100: '#FFEBD2',
+    200: '#F4D6A8',
+    300: '#E3B978',
+    400: '#C99A52',
+    500: '#AD7130',
+    600: '#8A5A26',
+    700: '#6B451D',
+    800: '#4D3115',
+    900: '#33200E',
+  },
+
+  // États de santé - couleurs sémantiques dans la nouvelle palette
   health: {
     excellent: {
-      main: '#16A34A', // Vert - état excellent
-      light: '#DCFCE7', // Vert très clair - fond
-      dark: '#15803D', // Vert foncé
+      main: '#4B8A63', // Vert sauge - excellent
+      light: '#D7F4E0',
+      dark: '#397852',
     },
     good: {
-      main: '#22C55E', // Vert clair - bon état
-      light: '#DCFCE7', // Vert très clair - fond
-      dark: '#16A34A', // Vert
+      main: '#4B8A63', // Vert sauge - bon
+      light: '#E4F3E8',
+      dark: '#397852',
     },
     moderate: {
-      main: '#F59E0B', // Ambre - vigilance
-      light: '#FEF3C7', // Ambre très clair - fond
-      dark: '#D97706', // Ambre foncé
+      main: '#AD7130', // Or - vigilance
+      light: '#FFEBD2',
+      dark: '#8A5A26',
     },
     warning: {
-      main: '#F97316', // Orange - attention
-      light: '#FFEDD5', // Orange très clair - fond
-      dark: '#EA580C', // Orange foncé
+      main: '#C36A4F', // Terracotta clair - attention
+      light: '#FFE9DE',
+      dark: '#B05139',
     },
     danger: {
-      main: '#DC2626', // Rouge - alerte, consulter
-      light: '#FEE2E2', // Rouge très clair - fond
-      dark: '#B91C1C', // Rouge foncé
+      main: '#C0392B', // Rouge chaud - alerte
+      light: '#FBE3DF',
+      dark: '#9A2C20',
     },
-    // Couleurs pastel pour amélioration/dégradation (tendances)
     improvement: {
-      main: '#86EFAC', // Vert pastel pour amélioration
-      light: '#D1FAE5', // Vert pastel très clair
-      dark: '#16A34A', // Vert plus foncé
+      main: '#6BB183',
+      light: '#D7F4E0',
+      dark: '#397852',
     },
     decline: {
-      main: '#FCA5A5', // Rouge pastel pour dégradation
-      light: '#FEE2E2', // Rouge pastel très clair
-      dark: '#DC2626', // Rouge plus foncé
+      main: '#D98A72',
+      light: '#FBE3DF',
+      dark: '#C0392B',
     },
   },
-  
-  // Neutres
+
+  // Neutres chauds (taupe/brun)
   neutral: {
-    50: '#FAFAFA',
-    100: '#F5F5F5',
-    200: '#E5E5E5',
-    300: '#D4D4D4',
-    400: '#A3A3A3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#171717',
+    50: '#FCF8F3',
+    100: '#F5EFE8',
+    200: '#E6E0DA',
+    300: '#D6CEC5',
+    400: '#A99B93',
+    500: '#84776F',
+    600: '#72665E',
+    700: '#5A493E',
+    800: '#3D3229',
+    900: '#312620',
   },
-  
-  // Background et surface
+
+  // Fonds et surfaces
   background: {
-    primary: '#EDEDFC', // Color 02
-    secondary: '#C8C8F4', // Color 04
-    tertiary: '#FFFFFF',
+    primary: '#FCF8F3', // Crème - fond de l'app
+    secondary: '#F5EFE8', // Beige clair - surfaces subtiles
+    tertiary: '#FFFFFF', // Blanc - cartes
   },
-  
-  // Texte
+
+  // Texte (bruns chauds)
   text: {
-    primary: '#101010', // Color 03 - Noir principal
-    secondary: '#101010', // Color 03 - Noir pour meilleure lisibilité (au lieu de bleu)
-    tertiary: '#101010', // Color 03 - Noir au lieu de gris pour meilleure lisibilité
-    disabled: '#D4D4D8', // Color 05 - Gris uniquement pour les éléments désactivés
+    primary: '#312620',
+    secondary: '#72665E',
+    tertiary: '#84776F',
+    disabled: '#C1B5AB',
     inverse: '#FFFFFF',
   },
-  
+
   // Bordures
   border: {
-    light: '#C8C8F4', // Color 04
-    medium: '#D4D4D8', // Color 05
-    dark: '#4C4DDC', // Color 01
+    light: '#E6E0DA',
+    medium: '#D6CEC5',
+    dark: '#C16046',
   },
 };
 
 export const typography = {
-  // Famille de polices - Inter
+  // Familles : Hanken Grotesk (UI) + Newsreader (serif, gros titres)
   fontFamily: {
-    regular: 'Inter',
-    medium: 'Inter-Medium',
-    semiBold: 'Inter-SemiBold',
-    bold: 'Inter-Bold',
-    // Fallback pour web
+    regular: 'Hanken Grotesk',
+    medium: 'Hanken Grotesk',
+    semiBold: 'Hanken Grotesk',
+    bold: 'Hanken Grotesk',
+    serif: 'Newsreader',
     fallback: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
-  
-  // Hiérarchie typographique claire
-  // H1 - Titre principal d'écran (36px)
-  h1: {
-    fontSize: 36,
+
+  // Display serif (greeting type "Bonjour")
+  display: {
+    fontFamily: 'Newsreader',
+    fontSize: 42,
     lineHeight: 44,
+    fontWeight: '500',
+    letterSpacing: -0.6,
+  },
+  // H1 - Titre principal d'écran
+  h1: {
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
-  // H2 - Titre de section (28px)
+  // H2 - Titre de section
   h2: {
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
-  // H3 - Titre de sous-section (24px)
+  // H3 - Titre de sous-section
   h3: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '600',
-    letterSpacing: 0,
-  },
-  // H4 - Titre de carte (20px)
-  h4: {
     fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '600',
-    letterSpacing: 0,
+    lineHeight: 26,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
-  // Body Large - Texte important (18px)
+  // H4 - Titre de carte
+  h4: {
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+  },
   bodyLarge: {
-    fontSize: 18,
-    lineHeight: 28,
-    fontWeight: '400',
-    letterSpacing: 0.15,
-  },
-  // Body - Texte principal (16px)
-  body: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '400',
-    letterSpacing: 0.25,
+    letterSpacing: 0,
   },
-  // Body Small - Texte secondaire (14px)
-  bodySmall: {
-    fontSize: 14,
-    lineHeight: 20,
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
     fontWeight: '400',
-    letterSpacing: 0.25,
+    letterSpacing: 0,
   },
-  // Caption - Légendes et labels (12px)
+  bodySmall: {
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: '400',
+    letterSpacing: 0,
+  },
   caption: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '400',
-    letterSpacing: 0.4,
-  },
-  // Label - Labels de formulaires (14px, medium)
-  label: {
-    fontSize: 14,
-    lineHeight: 20,
     fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+  label: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
     letterSpacing: 0.1,
   },
-  // Button - Texte de bouton (16px, semiBold)
   button: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '700',
+    letterSpacing: 0.1,
   },
-  
-  // Tailles de police (pour compatibilité)
+
   fontSize: {
     xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
+    sm: 13.5,
+    base: 15,
+    lg: 17,
     xl: 20,
     '2xl': 24,
-    '3xl': 30,
-    '4xl': 36,
+    '3xl': 28,
+    '4xl': 32,
   },
-  
-  // Hauteurs de ligne
+
   lineHeight: {
     tight: 1.2,
     normal: 1.5,
     relaxed: 1.75,
   },
-  
-  // Poids de police
+
   fontWeight: {
     regular: '400',
     medium: '500',
     semiBold: '600',
     bold: '700',
+    extraBold: '800',
   },
 };
 
@@ -238,18 +250,18 @@ export const spacing = {
 
 export const borderRadius = {
   none: 0,
-  sm: 6, // Petits éléments (badges, puces)
-  base: 10, // Boutons, inputs
-  md: 12, // Cards secondaires
-  lg: 16, // Cards principales (look santé moderne)
-  xl: 20, // Grands conteneurs
-  '2xl': 24, // Sections héro
-  '3xl': 28, // Cas exceptionnels
+  sm: 8,
+  base: 11,
+  md: 14,
+  lg: 18,
+  xl: 20,
+  '2xl': 22,
+  '3xl': 28,
   full: 9999,
 };
 
-// Ombres douces teintées indigo (#1E1B4B) plutôt que noir pur, pour une profondeur
-// moderne sans effet "flat" ni drop-shadow lourd.
+// Ombres : douces et chaudes (brun) pour la profondeur générale.
+// Les CTA (boutons terracotta) utilisent `terracotta` pour une ombre colorée.
 export const shadows = {
   none: {
     shadowColor: 'transparent',
@@ -259,76 +271,76 @@ export const shadows = {
     elevation: 0,
   },
   sm: {
-    shadowColor: '#1E1B4B',
+    shadowColor: '#5E402F',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   base: {
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: '#5E402F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 5,
+    shadowColor: '#5E402F',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.09,
+    shadowRadius: 20,
+    elevation: 4,
   },
   lg: {
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
+    shadowColor: '#5E402F',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.11,
+    shadowRadius: 32,
     elevation: 8,
   },
   xl: {
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.16,
-    shadowRadius: 32,
+    shadowColor: '#5E402F',
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.13,
+    shadowRadius: 44,
     elevation: 12,
+  },
+  // Ombre colorée terracotta pour les CTA
+  terracotta: {
+    shadowColor: '#C16046',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 8,
   },
 };
 
 export const gradients = {
-  primary: ['#6366F1', '#4F46E5'],
-  secondary: ['#22C55E', '#16A34A'],
-  excellent: ['#10B981', '#059669'],
-  warning: ['#F59E0B', '#D97706'],
-  danger: ['#EF4444', '#DC2626'],
-  info: ['#3B82F6', '#2563EB'],
+  primary: ['#C16046', '#B05139'],
+  secondary: ['#4B8A63', '#397852'],
+  accent: ['#C99A52', '#AD7130'],
+  excellent: ['#4B8A63', '#397852'],
+  warning: ['#C99A52', '#AD7130'],
+  danger: ['#C0392B', '#9A2C20'],
 };
 
 export const layout = {
-  // Largeurs de conteneur
-  containerPadding: spacing[4],
-  cardPadding: spacing[4],
-  
-  // Espacements par défaut
-  sectionSpacing: spacing[6],
+  containerPadding: spacing[5],
+  cardPadding: spacing[5],
+  sectionSpacing: spacing[7],
   elementSpacing: spacing[4],
-  
-  // Hauteurs
   headerHeight: 60,
-  tabBarHeight: 65,
-  buttonHeight: 48,
-  inputHeight: 48,
+  tabBarHeight: 72,
+  buttonHeight: 50,
+  inputHeight: 50,
 };
 
 export const animations = {
-  // Durées
   duration: {
     fast: 150,
     normal: 250,
     slow: 400,
   },
-  
-  // Types d'animation
   easing: {
     ease: 'ease',
     easeIn: 'ease-in',
@@ -337,7 +349,6 @@ export const animations = {
   },
 };
 
-// Export du design system complet
 export default {
   colors,
   typography,
@@ -348,4 +359,3 @@ export default {
   layout,
   animations,
 };
-

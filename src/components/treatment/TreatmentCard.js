@@ -130,7 +130,7 @@ const TreatmentCard = ({
       {/* Alerte retard pour interval */}
       {isLate && !isDaily && (
         <View style={styles.lateAlert}>
-          <MaterialCommunityIcons name="alert" size={20} color="#DC2626" />
+          <MaterialCommunityIcons name="alert" size={20} color="#C0392B" />
           <AppText variant="bodySmall" style={styles.lateText}>
             RETARD {daysLate} jour{daysLate > 1 ? 's' : ''}
           </AppText>
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[4],
   },
   cardLate: {
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     borderWidth: 2,
   },
   header: {
@@ -267,14 +267,14 @@ const styles = StyleSheet.create({
   lateAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FBE3DF',
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     marginBottom: designSystem.spacing[4],
     gap: designSystem.spacing[2],
   },
   lateText: {
-    color: '#DC2626',
+    color: '#C0392B',
     fontWeight: '700',
   },
   mainSection: {
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[3],
   },
   excessText: {
-    color: '#F59E0B',
+    color: '#AD7130',
     fontWeight: '600',
   },
   checkboxContainer: {
@@ -333,13 +333,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   observanceGood: {
-    color: '#16A34A',
+    color: '#397852',
   },
   observanceMedium: {
-    color: '#F59E0B',
+    color: '#AD7130',
   },
   observanceBad: {
-    color: '#DC2626',
+    color: '#C0392B',
   },
 });
 

@@ -592,208 +592,233 @@ export default function HomeScreen({ route }) {
     }
   };
 
+  // Construire la liste des tâches en attente (la 1re est mise en avant en terracotta)
+  const pendingTasks = [];
+  if (!surveyCompleted) {
+    pendingTasks.push({
+      key: 'bilan',
+      title: 'Bilan quotidien',
+      description: 'Renseignez vos symptômes du jour',
+      badge: '2 min',
+      icon: 'clipboard-text-outline',
+      accent: 'primary',
+      onPress: navigateToSurvey,
+    });
+  }
+  if (ibdiskAvailable) {
+    pendingTasks.push({
+      key: 'ibdisk',
+      title: 'Questionnaire IBDisk',
+      description: 'Évaluez votre qualité de vie',
+      badge: 'Mensuel',
+      icon: 'chart-box-outline',
+      accent: 'gold',
+      onPress: () => navigation.navigate('IBDiskQuestionnaire'),
+    });
+  }
+  if (pendingTreatmentsCount > 0) {
+    pendingTasks.push({
+      key: 'treatment',
+      title: 'Traitement à prendre',
+      description: `${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`,
+      badge: `${pendingTreatmentsCount}`,
+      icon: 'pill',
+      accent: 'primary',
+      onPress: () => navigation.navigate('Traitement'),
+    });
+  }
+
+  // Statut clinique dérivé du score du jour
+  const status = todayProvisionalScore == null
+    ? { label: 'Pas encore de score', color: designSystem.colors.text.tertiary }
+    : todayProvisionalScore <= 4
+      ? { label: 'En rémission', color: designSystem.colors.health.excellent.main }
+      : todayProvisionalScore <= 10
+        ? { label: 'Activité modérée', color: designSystem.colors.health.moderate.main }
+        : { label: 'Poussée', color: designSystem.colors.health.danger.main };
+
+  const scoreTone = todayProvisionalScore == null
+    ? { label: '—', color: designSystem.colors.text.tertiary, bg: designSystem.colors.background.secondary }
+    : todayProvisionalScore < 5
+      ? { label: 'Faible', color: designSystem.colors.health.excellent.main, bg: designSystem.colors.health.excellent.light }
+      : todayProvisionalScore <= 10
+        ? { label: 'Modéré', color: designSystem.colors.health.moderate.main, bg: designSystem.colors.health.moderate.light }
+        : { label: 'Élevé', color: designSystem.colors.health.danger.main, bg: designSystem.colors.health.danger.light };
+
+  const shortDate = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+
+  const secondaryAccentStyle = (accent) => accent === 'gold'
+    ? { bg: designSystem.colors.accent[100], color: designSystem.colors.accent[500] }
+    : { bg: designSystem.colors.primary[100], color: designSystem.colors.primary[500] };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView 
-        style={styles.scrollView} 
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <View>
+          <AppText style={styles.topEyebrow}>MON SUIVI</AppText>
+          <AppText style={styles.topTitle}>Accueil</AppText>
+        </View>
+        <View style={styles.topActions}>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Insights')} accessibilityLabel="Insights">
+            <MaterialCommunityIcons name="brain" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Export')} accessibilityLabel="Export">
+            <MaterialCommunityIcons name="file-document-outline" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Paramètres')} accessibilityLabel="Paramètres">
+            <MaterialCommunityIcons name="cog-outline" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* En-tête : salutation + date */}
-        <View style={styles.homeHeader}>
-          <AppText variant="h2" style={styles.greetingText}>
-            {greeting}
-          </AppText>
-          <AppText variant="bodyMedium" style={styles.dateText}>
-            {todayLabel}
-          </AppText>
+        {/* Greeting */}
+        <View style={styles.greetingBlock}>
+          <AppText style={styles.greetingText}>{greeting}</AppText>
+          <View style={styles.greetingMeta}>
+            <AppText style={styles.dateText}>{todayLabel}</AppText>
+            <View style={styles.metaDot} />
+            <AppText style={[styles.statusText, { color: status.color }]}>{status.label}</AppText>
+          </View>
         </View>
 
-        {/* Section : À faire aujourd'hui */}
-        <View style={styles.todoSection}>
-          <View style={styles.todoHeader}>
-            <HealthIcon name="stethoscope" size={22} color={designSystem.colors.primary[500]} />
-            <AppText variant="h4" style={styles.todoTitle}>
-              À faire aujourd'hui
-            </AppText>
+        {/* À faire aujourd'hui */}
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionHeaderLeft}>
+            <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={17} color={designSystem.colors.primary[500]} />
+            <AppText style={styles.sectionHeaderTitle}>À faire aujourd'hui</AppText>
           </View>
-
-          {(!surveyCompleted || ibdiskAvailable || pendingTreatmentsCount > 0) ? (
-            <View style={styles.todoList}>
-              {!surveyCompleted && (
-                <ActionCard
-                  title="Bilan quotidien"
-                  description="Renseignez vos symptômes du jour"
-                  icon="clipboard-text-outline"
-                  gradient={['#4C4DDC', '#3A3AB0']}
-                  style={styles.todoActionCard}
-                  onPress={navigateToSurvey}
-                />
-              )}
-              {ibdiskAvailable && (
-                <ActionCard
-                  title="Questionnaire IBDisk"
-                  description="Évaluez votre qualité de vie (mensuel)"
-                  icon="chart-box-outline"
-                  gradient={['#6366F1', '#4F46E5']}
-                  style={styles.todoActionCard}
-                  onPress={() => navigation.navigate('IBDiskQuestionnaire')}
-                />
-              )}
-              {pendingTreatmentsCount > 0 && (
-                <ActionCard
-                  title="Traitement à prendre"
-                  description={`${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`}
-                  icon="pill"
-                  gradient={['#22C55E', '#16A34A']}
-                  style={styles.todoActionCard}
-                  onPress={() => navigation.navigate('Traitement')}
-                />
-              )}
+          {pendingTasks.length > 0 && (
+            <View style={styles.countPill}>
+              <AppText style={styles.countPillText}>{pendingTasks.length} tâche{pendingTasks.length > 1 ? 's' : ''}</AppText>
             </View>
-          ) : (
-            <AppCard variant="success" style={styles.allDoneCard}>
-              <View style={styles.allDoneContent}>
-                <MaterialCommunityIcons name="check-circle" size={28} color={designSystem.colors.health.excellent.main} />
-                <View style={styles.allDoneTextWrap}>
-                  <AppText variant="bodyLarge" style={styles.allDoneTitle}>
-                    Tout est à jour
-                  </AppText>
-                  <AppText variant="bodySmall" style={styles.allDoneSubtitle}>
-                    Aucune action requise pour aujourd'hui
-                  </AppText>
-                </View>
-              </View>
-            </AppCard>
           )}
         </View>
 
-        {/* Section Aujourd'hui */}
-        <AppCard style={styles.todaySection}>
-          <View style={styles.sectionHeader}>
-            <HealthIcon name="calendar" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Aujourd'hui
-            </AppText>
+        {pendingTasks.length > 0 ? (
+          <View style={styles.todoList}>
+            {pendingTasks.map((task, index) => {
+              const isPrimary = index === 0;
+              if (isPrimary) {
+                return (
+                  <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
+                    <View style={styles.taskPrimaryIcon}>
+                      <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.taskTextWrap}>
+                      <View style={styles.taskTitleRow}>
+                        <AppText style={styles.taskPrimaryTitle}>{task.title}</AppText>
+                        <View style={styles.taskPrimaryBadge}>
+                          <AppText style={styles.taskPrimaryBadgeText}>{task.badge}</AppText>
+                        </View>
+                      </View>
+                      <AppText style={styles.taskPrimaryDesc}>{task.description}</AppText>
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
+                  </TouchableOpacity>
+                );
+              }
+              const tint = secondaryAccentStyle(task.accent);
+              return (
+                <TouchableOpacity key={task.key} style={styles.taskSecondary} onPress={task.onPress} activeOpacity={0.85}>
+                  <View style={[styles.taskSecondaryIcon, { backgroundColor: tint.bg }]}>
+                    <MaterialCommunityIcons name={task.icon} size={24} color={tint.color} />
+                  </View>
+                  <View style={styles.taskTextWrap}>
+                    <View style={styles.taskTitleRow}>
+                      <AppText style={styles.taskSecondaryTitle}>{task.title}</AppText>
+                      <View style={[styles.taskSecondaryBadge, { backgroundColor: tint.bg }]}>
+                        <AppText style={[styles.taskSecondaryBadgeText, { color: tint.color }]}>{task.badge}</AppText>
+                      </View>
+                    </View>
+                    <AppText style={styles.taskSecondaryDesc}>{task.description}</AppText>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={designSystem.colors.text.tertiary} />
+                </TouchableOpacity>
+              );
+            })}
           </View>
-
-          <View style={styles.todayStatsRow}>
-            {/* Selles */}
-            <View style={[styles.todayStat, styles.todayStatLeft]}>
-              <View style={styles.todayStatIcon}>
-                <MaterialCommunityIcons name="toilet" size={Platform.OS === 'web' ? 32 : 28} color="#4C4DDC" />
-              </View>
-              <View style={styles.todayStatContent}>
-                <AppText variant="labelMedium" style={styles.todayStatLabel}>
-                  Selles
-                </AppText>
-                <AppText variant="displayMedium" style={styles.todayStatValue}>
-                  {dailyCount}
-                </AppText>
-              </View>
+        ) : (
+          <View style={styles.allDoneCard}>
+            <View style={styles.allDoneIcon}>
+              <MaterialCommunityIcons name="check" size={22} color={designSystem.colors.health.excellent.main} />
             </View>
-
-            {/* Score */}
-            <View
-              style={[styles.todayStat, styles.todayStatRight]}
-              {...(Platform.OS === 'web' && {
-                onMouseEnter: () => setScoreTooltipVisible(true),
-                onMouseLeave: () => setScoreTooltipVisible(false),
-              })}
-            >
-              <View style={styles.todayStatIcon}>
-                <MaterialCommunityIcons
-                  name="chart-bar"
-                  size={Platform.OS === 'web' ? 32 : 28}
-                  color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? '#16A34A' : todayProvisionalScore <= 10 ? '#F59E0B' : '#DC2626') : '#A3A3A3'}
-                />
-              </View>
-              <View style={styles.todayStatContent}>
-                <View style={styles.todayScoreHeader}>
-                  <AppText variant="labelMedium" style={styles.todayStatLabel}>
-                    Score
-                  </AppText>
-                  {Platform.OS === 'web' && (
-                    <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
-                  )}
-                </View>
-                <AppText variant="displayMedium" style={[
-                  styles.todayStatValue,
-                  todayProvisionalScore !== null && (
-                    todayProvisionalScore < 5 ? styles.scoreGood :
-                    todayProvisionalScore <= 10 ? styles.scoreWarning :
-                    styles.scoreError
-                  )
-                ]}>
-                  {todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
-                </AppText>
-              </View>
-
-              {/* Tooltip au survol (web uniquement) */}
-              {Platform.OS === 'web' && scoreTooltipVisible && (
-                <>
-                  <Animated.View
-                    style={[
-                      styles.scoreTooltip,
-                      {
-                        opacity: tooltipOpacity,
-                        transform: [{ scale: tooltipScale }],
-                      },
-                    ]}
-                    pointerEvents="none"
-                  >
-                    <View style={styles.scoreTooltipHeader}>
-                      <MaterialCommunityIcons name="chart-line" size={14} color="#4C4DDC" />
-                      <AppText variant="labelSmall" style={styles.scoreTooltipTitle}>
-                        Score de Lichtiger
-                      </AppText>
-                    </View>
-                    <AppText variant="labelSmall" style={styles.scoreTooltipText}>
-                      Évalue l'activité de la maladie
-                    </AppText>
-                    <View style={styles.scoreTooltipScale}>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • 0-4 : Rémission
-                      </AppText>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • 5-10 : Modérée
-                      </AppText>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • {'>'} 10 : Sévère
-                      </AppText>
-                    </View>
-                  </Animated.View>
-
-                  {/* Flèche du tooltip */}
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[
-                      styles.scoreTooltipArrow,
-                      {
-                        opacity: tooltipOpacity,
-                        transform: [{ scale: tooltipScale }],
-                      },
-                    ]}
-                  />
-                </>
-              )}
+            <View style={styles.taskTextWrap}>
+              <AppText style={styles.allDoneTitle}>Tout est à jour</AppText>
+              <AppText style={styles.allDoneSubtitle}>Aucune action requise aujourd'hui</AppText>
             </View>
           </View>
-        </AppCard>
+        )}
 
-
-        {/* Actualités de l'association MICI */}
-        <AppCard style={styles.newsCard}>
-          <View style={styles.newsHeader}>
-            <HealthIcon name="report" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.newsTitle}>
-              Actualités AFA
-            </AppText>
+        {/* Aujourd'hui */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
+          <AppText style={styles.sectionHeaderTitle}>Aujourd'hui</AppText>
+          <View style={styles.sectionHeaderLeft}>
+            <MaterialCommunityIcons name="calendar-blank-outline" size={14} color={designSystem.colors.text.secondary} />
+            <AppText style={styles.datePillText}>{shortDate}</AppText>
           </View>
-          <AppText variant="bodyMedium" style={styles.newsDescription}>
-            Découvrez les dernières actualités de l'Association François Aupetit (AFA)
-          </AppText>
-          
+        </View>
+
+        <View style={styles.statGrid}>
+          {/* Selles */}
+          <View style={styles.statCard}>
+            <View style={styles.statCardTop}>
+              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
+                <MaterialCommunityIcons name="toilet" size={21} color={designSystem.colors.primary[500]} />
+              </View>
+              <AppText style={styles.statLabel}>SELLES</AppText>
+            </View>
+            <View style={styles.statCardBottom}>
+              <View style={styles.statValueRow}>
+                <AppText style={styles.statValue}>{dailyCount}</AppText>
+                <AppText style={styles.statUnit}>/ jour</AppText>
+              </View>
+              <TouchableOpacity style={styles.statAddBtn} onPress={showModal} activeOpacity={0.85} accessibilityLabel="Ajouter une selle">
+                <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Score */}
+          <View style={styles.statCard}>
+            <View style={styles.statCardTop}>
+              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.health.excellent.light }]}>
+                <MaterialCommunityIcons name="pulse" size={21} color={designSystem.colors.health.excellent.main} />
+              </View>
+              <View style={styles.statLabelRow}>
+                <AppText style={styles.statLabel}>SCORE</AppText>
+                <MaterialCommunityIcons name="information-outline" size={13} color={designSystem.colors.text.tertiary} />
+              </View>
+            </View>
+            <View style={styles.statCardBottom}>
+              <View style={styles.statValueRow}>
+                <AppText style={[styles.statValue, { color: scoreTone.color }]}>
+                  {todayProvisionalScore != null ? todayProvisionalScore : '—'}
+                </AppText>
+                <AppText style={styles.statUnit}>/ 12</AppText>
+              </View>
+              <View style={[styles.scorePill, { backgroundColor: scoreTone.bg }]}>
+                <AppText style={[styles.scorePillText, { color: scoreTone.color }]}>{scoreTone.label}</AppText>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Actualités AFA */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
+          <AppText style={styles.sectionHeaderTitle}>Actualités AFA</AppText>
+          <TouchableOpacity onPress={() => openArticle('https://www.afa.asso.fr/')}>
+            <AppText style={styles.seeAllText}>Tout voir</AppText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.newsCard}>
+
           {rssLoading ? (
             <SkeletonCard count={3} />
           ) : rssArticles.length > 0 ? (
@@ -834,17 +859,7 @@ export default function HomeScreen({ route }) {
               </AppText>
             </View>
           )}
-          
-          <PrimaryButton 
-            onPress={() => openArticle('https://www.afa.asso.fr/')}
-            variant="primary"
-            outlined
-            style={styles.newsButton}
-            icon="open-in-new"
-          >
-            Voir toutes les actualités
-          </PrimaryButton>
-        </AppCard>
+        </View>
 
       </ScrollView>
 
@@ -932,7 +947,7 @@ export default function HomeScreen({ route }) {
         <Modal visible={treatmentModalVisible} onDismiss={hideTreatmentModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView>
-              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#1E293B' }} />
+              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#312620' }} />
               
               <Card.Content>
                 {/* Date et Heure */}
@@ -958,7 +973,7 @@ export default function HomeScreen({ route }) {
                   label="Ex: Pentasa, Humira..."
                   value={treatmentName}
                   onChangeText={handleTreatmentNameChange}
-                  style={[styles.treatmentInput, { backgroundColor: '#F8FAFB', borderRadius: 16 }]}
+                  style={[styles.treatmentInput, { backgroundColor: '#F5EFE8', borderRadius: 16 }]}
                   mode="outlined"
                   outlineStyle={{ borderRadius: 16 }}
                   autoCapitalize="words"
@@ -1037,138 +1052,336 @@ export default function HomeScreen({ route }) {
   );
 }
 
+const { colors } = designSystem;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: designSystem.colors.background.primary,
+    backgroundColor: colors.background.primary,
+  },
+  // Top bar
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 22,
+    paddingTop: Platform.OS === 'web' ? 18 : 52,
+    paddingBottom: 12,
+    backgroundColor: colors.background.primary,
+  },
+  topEyebrow: {
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colors.primary[400],
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  topTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    color: colors.text.primary,
+  },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    backgroundColor: colors.background.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: designSystem.spacing[5], // Augmenté de [4] à [5] pour plus d'air
+    paddingHorizontal: 22,
   },
   scrollViewContent: {
-    paddingTop: designSystem.spacing[4], // Ajout d'un padding top
-    paddingBottom: 120, // Augmenté de 100 à 120 pour la tab bar
+    paddingTop: 8,
+    paddingBottom: 130,
   },
-  homeHeader: {
-    marginTop: designSystem.spacing[2],
-    marginBottom: designSystem.spacing[5],
+  // Greeting
+  greetingBlock: {
+    paddingTop: 14,
+    paddingBottom: 22,
   },
   greetingText: {
-    color: designSystem.colors.text.primary,
-    fontWeight: '700',
+    fontFamily: designSystem.typography.fontFamily.serif,
+    fontSize: 42,
+    lineHeight: 44,
+    fontWeight: '500',
+    letterSpacing: -0.6,
+    color: colors.text.primary,
+  },
+  greetingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
   },
   dateText: {
-    color: designSystem.colors.text.secondary,
-    marginTop: designSystem.spacing[1],
+    fontSize: 15,
+    color: colors.text.secondary,
+    fontWeight: '500',
   },
-  todoSection: {
-    marginBottom: designSystem.spacing[6],
+  metaDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.neutral[300],
   },
-  todoHeader: {
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Section headers
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: designSystem.spacing[2],
-    marginBottom: designSystem.spacing[4],
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  todoTitle: {
-    color: designSystem.colors.text.primary,
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 16,
     fontWeight: '700',
+    letterSpacing: -0.2,
+    color: colors.text.primary,
   },
+  countPill: {
+    backgroundColor: colors.primary[100],
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  countPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[500],
+  },
+  datePillText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text.secondary,
+  },
+  // Tasks
   todoList: {
-    gap: designSystem.spacing[1],
+    gap: 12,
   },
-  todoActionCard: {
-    marginHorizontal: 0, // Neutralise l'inset interne d'ActionCard (le ScrollView gère le padding)
+  taskPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: colors.primary[500],
+    borderRadius: 22,
+    padding: 20,
+    ...designSystem.shadows.terracotta,
+  },
+  taskPrimaryIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  taskTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  taskPrimaryTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: '#FFFFFF',
+  },
+  taskPrimaryBadge: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  taskPrimaryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  taskPrimaryDesc: {
+    fontSize: 13.5,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 3,
+  },
+  taskSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  taskSecondaryIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskSecondaryTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.text.primary,
+  },
+  taskSecondaryBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  taskSecondaryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  taskSecondaryDesc: {
+    fontSize: 13.5,
+    color: colors.text.secondary,
+    marginTop: 3,
   },
   allDoneCard: {
-    marginBottom: 0,
-  },
-  allDoneContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: designSystem.spacing[3],
+    gap: 16,
+    backgroundColor: colors.health.excellent.light,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.health.excellent.main + '33',
   },
-  allDoneTextWrap: {
-    flex: 1,
+  allDoneIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   allDoneTitle: {
-    color: designSystem.colors.health.excellent.dark,
+    fontSize: 16,
     fontWeight: '700',
+    color: colors.health.excellent.dark,
   },
   allDoneSubtitle: {
-    color: designSystem.colors.text.secondary,
+    fontSize: 13.5,
+    color: colors.text.secondary,
     marginTop: 2,
   },
-  statsContainer: {
-    marginBottom: designSystem.spacing[6],
-  },
-  mainActionsContainer: {
-    marginBottom: designSystem.spacing[6],
-    paddingHorizontal: designSystem.spacing[4],
-    paddingTop: designSystem.spacing[4],
-  },
-  actionsGrid: {
-    flexDirection: 'column',
-    gap: designSystem.spacing[3],
-  },
-  actionCard: {
+  // Stat grid
+  statGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: designSystem.colors.background.tertiary,
-    borderRadius: designSystem.borderRadius.lg,
-    padding: designSystem.spacing[4],
-    ...designSystem.shadows.md,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
+    borderColor: colors.border.light,
+    borderRadius: 20,
+    padding: 16,
+    gap: 14,
   },
-  actionCardDisabled: {
-    opacity: 0.6,
-  },
-  actionCardContent: {
+  statCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    gap: designSystem.spacing[3],
+    justifyContent: 'space-between',
   },
-  actionTitle: {
-    flex: 1,
-    color: designSystem.colors.text.primary,
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionTitleDisabled: {
-    color: designSystem.colors.text.secondary,
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.text.tertiary,
   },
-  actionButtons: {
-    gap: designSystem.spacing[4],
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  primaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[1],
+  statCardBottom: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
-  secondaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[1],
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
   },
+  statValue: {
+    fontSize: 38,
+    fontWeight: '800',
+    lineHeight: 38,
+    letterSpacing: -1,
+    color: colors.text.primary,
+  },
+  statUnit: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text.tertiary,
+  },
+  statAddBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...designSystem.shadows.terracotta,
+  },
+  scorePill: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  scorePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[500],
+  },
+  // News
   newsCard: {
-    backgroundColor: designSystem.colors.background.tertiary,
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
-    ...designSystem.shadows.base,
-  },
-  newsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: designSystem.spacing[3],
-  },
-  newsTitle: {
-    marginLeft: designSystem.spacing[3],
-    color: designSystem.colors.text.primary,
-  },
-  newsDescription: {
-    color: designSystem.colors.text.secondary,
-    marginBottom: designSystem.spacing[5],
+    borderColor: colors.border.light,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
   },
   newsItems: {
     marginBottom: designSystem.spacing[5],
@@ -1370,7 +1583,7 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.lg,
     padding: designSystem.spacing[4],
     borderWidth: 2,
-    borderColor: '#E5E5F4',
+    borderColor: '#E6E0DA',
     gap: designSystem.spacing[3],
     // Sur mobile, ne pas étirer en hauteur
     ...(Platform.OS !== 'web' && {
@@ -1390,7 +1603,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     justifyContent: 'center',
     alignItems: 'center',
     // Sur mobile, icône plus petite
@@ -1474,29 +1687,29 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   scoreTooltipTitle: {
-    color: '#101010',
+    color: '#312620',
     fontWeight: '700',
   },
   scoreTooltipText: {
-    color: '#101010',
+    color: '#312620',
     marginBottom: 6,
   },
   scoreTooltipScale: {
     gap: 2,
   },
   scoreTooltipScaleItem: {
-    color: '#101010',
+    color: '#312620',
     fontSize: 11,
     lineHeight: 16,
   },
   scoreGood: {
-    color: '#16A34A',
+    color: '#397852',
   },
   scoreWarning: {
-    color: '#F59E0B',
+    color: '#AD7130',
   },
   scoreError: {
-    color: '#DC2626',
+    color: '#C0392B',
   },
   emptyTodayState: {
     paddingVertical: designSystem.spacing[6],
@@ -1522,14 +1735,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   stoolMainWithBlood: {
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     borderWidth: 2,
   },
   bristolBadge: {
@@ -1567,7 +1780,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   // Styles pour le calendrier
   calendarCard: {
@@ -1600,11 +1813,11 @@ const styles = StyleSheet.create({
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   legendTextCentered: {
     color: designSystem.colors.text.primary,
@@ -1634,11 +1847,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   navButtonDisabled: {
     opacity: 0.5,
@@ -1662,11 +1875,11 @@ const styles = StyleSheet.create({
   symptomMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FBF1EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: '#F3C9BC',
   },
   symptomIcon: {
     width: 40,
@@ -1715,11 +1928,11 @@ const styles = StyleSheet.create({
   noteMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FFF9F0',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: '#F0D9A8',
   },
   noteIcon: {
     width: 40,
@@ -1765,13 +1978,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
   },
   noteSharedText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '500',
   },
   // Badges IA
@@ -1779,14 +1992,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiProcessingText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '600',
     fontSize: 10,
   },
@@ -1794,14 +2007,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#D7F4E0',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiCompleteText: {
-    color: '#16A34A',
+    color: '#397852',
     fontWeight: '600',
     fontSize: 10,
   },

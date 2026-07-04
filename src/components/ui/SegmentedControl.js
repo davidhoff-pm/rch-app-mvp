@@ -42,11 +42,11 @@ export default function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 16,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   segment: {
     flex: 1,
@@ -72,15 +72,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   segmentText: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '500',
     fontSize: 14,
   },
   selectedText: {
-    color: '#4C4DDC', // Color 01
+    color: '#C16046', // Color 01
     fontWeight: '600',
   },
 });

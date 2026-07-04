@@ -106,10 +106,10 @@ export default function HistoryOverview() {
   };
 
   const getBristolColor = (bristol) => {
-    if (bristol <= 2) return '#4C4DDC';
-    if (bristol <= 4) return '#4C4DDC';
-    if (bristol <= 5) return '#C8C8F4';
-    return '#101010';
+    if (bristol <= 2) return '#C16046';
+    if (bristol <= 4) return '#C16046';
+    if (bristol <= 5) return '#E6E0DA';
+    return '#312620';
   };
 
   const handlePreviousIbdisk = () => {
@@ -200,10 +200,10 @@ export default function HistoryOverview() {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => stoolManagement.handleEditStool(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => stoolManagement.handleDeleteStool(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -213,8 +213,8 @@ export default function HistoryOverview() {
                   {item.entryType === 'symptom' && (
                     <View style={styles.symptomItem}>
                       <View style={styles.symptomMain}>
-                        <View style={[styles.symptomIcon, { backgroundColor: '#FEE2E2' }]}>
-                          <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
+                        <View style={[styles.symptomIcon, { backgroundColor: '#FBE3DF' }]}>
+                          <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#C0392B" />
                         </View>
                         <View style={styles.symptomInfo}>
                           <AppText variant="bodyMedium" style={styles.symptomType}>
@@ -238,10 +238,10 @@ export default function HistoryOverview() {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => symptomManagement.handleEditSymptom(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => symptomManagement.handleDeleteSymptom(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -251,11 +251,11 @@ export default function HistoryOverview() {
                   {item.entryType === 'note' && (
                     <View style={styles.noteItem}>
                       <View style={styles.noteMain}>
-                        <View style={[styles.noteIcon, { backgroundColor: '#FEF3C7' }]}>
+                        <View style={[styles.noteIcon, { backgroundColor: '#FFF0DA' }]}>
                           <MaterialCommunityIcons
                             name={item.sharedWithDoctor ? 'share-variant' : 'note-text-outline'}
                             size={24}
-                            color="#F59E0B"
+                            color="#AD7130"
                           />
                         </View>
                         <View style={styles.noteInfo}>
@@ -265,7 +265,7 @@ export default function HistoryOverview() {
                             </AppText>
                             {!item.aiProcessed && (
                               <View style={styles.aiProcessingBadge}>
-                                <MaterialCommunityIcons name="brain" size={12} color="#4C4DDC" />
+                                <MaterialCommunityIcons name="brain" size={12} color="#C16046" />
                                 <AppText variant="labelSmall" style={styles.aiProcessingText}>
                                   IA...
                                 </AppText>
@@ -273,7 +273,7 @@ export default function HistoryOverview() {
                             )}
                             {item.aiProcessed && item.tags && item.tags.length > 0 && (
                               <View style={styles.aiCompleteBadge}>
-                                <MaterialCommunityIcons name="tag-multiple" size={12} color="#16A34A" />
+                                <MaterialCommunityIcons name="tag-multiple" size={12} color="#397852" />
                                 <AppText variant="labelSmall" style={styles.aiCompleteText}>
                                   {item.tags.length}
                                 </AppText>
@@ -293,7 +293,7 @@ export default function HistoryOverview() {
                             )}
                             {item.sharedWithDoctor && (
                               <View style={styles.noteShared}>
-                                <MaterialCommunityIcons name="share-variant" size={12} color="#4C4DDC" />
+                                <MaterialCommunityIcons name="share-variant" size={12} color="#C16046" />
                                 <AppText variant="labelSmall" style={styles.noteSharedText}>
                                   Partagé
                                 </AppText>
@@ -303,10 +303,10 @@ export default function HistoryOverview() {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => noteManagement.handleEditNote(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => noteManagement.handleDeleteNote(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -343,15 +343,15 @@ export default function HistoryOverview() {
           {calendarMode === 'score' ? (
             <>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#16A34A' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#397852' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#F59E0B' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#AD7130' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#DC2626' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#C0392B' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
               </View>
             </>
@@ -383,7 +383,7 @@ export default function HistoryOverview() {
                   <MaterialCommunityIcons
                     name="chevron-left"
                     size={24}
-                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#101010'}
+                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#312620'}
                   />
                 </TouchableOpacity>
 
@@ -399,7 +399,7 @@ export default function HistoryOverview() {
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={24}
-                    color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#101010'}
+                    color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#312620'}
                   />
                 </TouchableOpacity>
               </View>
@@ -535,14 +535,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   stoolMainWithBlood: {
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     borderWidth: 2,
   },
   bristolBadge: {
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   calendarCard: {
     marginHorizontal: designSystem.spacing[4],
@@ -613,11 +613,11 @@ const styles = StyleSheet.create({
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   legendTextCentered: {
     color: designSystem.colors.text.primary,
@@ -647,11 +647,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   navButtonDisabled: {
     opacity: 0.5,
@@ -670,11 +670,11 @@ const styles = StyleSheet.create({
   symptomMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FBF1EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: '#F3C9BC',
   },
   symptomIcon: {
     width: 40,
@@ -722,11 +722,11 @@ const styles = StyleSheet.create({
   noteMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FFF9F0',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: '#F0D9A8',
   },
   noteIcon: {
     width: 40,
@@ -772,27 +772,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
   },
   noteSharedText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '500',
   },
   aiProcessingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiProcessingText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '600',
     fontSize: 10,
   },
@@ -800,14 +800,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#D7F4E0',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiCompleteText: {
-    color: '#16A34A',
+    color: '#397852',
     fontWeight: '600',
     fontSize: 10,
   },

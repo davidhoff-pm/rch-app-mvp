@@ -115,7 +115,7 @@ function MainTabs() {
         )
       })}
     >
-      <Tab.Screen name="Accueil" component={HomeScreen} />
+      <Tab.Screen name="Accueil" component={HomeScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Bilan" component={SurveyScreen} />
       <Tab.Screen name="Statistiques" component={StatsScreen} />
       <Tab.Screen name="Traitement" component={TreatmentScreen} />

@@ -188,7 +188,7 @@ export default function DailySurveyScreen() {
           onPress={handleSave} 
           disabled={!hasChanges()} 
           style={styles.save}
-          buttonColor="#4C4DDC"
+          buttonColor="#C16046"
         >
           Enregistrer mon bilan
         </PrimaryButton>
@@ -235,20 +235,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
     minWidth: 60,
     alignItems: 'center'
   },
   buttonText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#101010',
+    color: '#312620',
     textAlign: 'center'
   },
   selectedButtonText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '600'
   },
   selectedIndicator: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4C4DDC'
+    backgroundColor: '#C16046'
   },
   save: {
     marginTop: 16, // Réduit de 32 à 16 pour économiser l'espace

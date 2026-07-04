@@ -34,7 +34,7 @@ const IBDiskChart = ({ data, date }) => {
   // Fonction pour obtenir la couleur selon le score
   const getScoreColor = (value) => {
     if (value <= 3) return '#10B981'; // Vert pour les bons scores (0-3)
-    if (value <= 6) return '#F59E0B'; // Orange pour les scores moyens (4-6)
+    if (value <= 6) return '#AD7130'; // Orange pour les scores moyens (4-6)
     return '#EF4444'; // Rouge pour les mauvais scores (7-10)
   };
 
@@ -114,7 +114,7 @@ const IBDiskChart = ({ data, date }) => {
           <Polygon
             points={polygonPoints}
             fill="rgba(100, 116, 139, 0.1)"
-            stroke="#64748B"
+            stroke="#84776F"
             strokeWidth="1"
           />
 
@@ -141,7 +141,7 @@ const IBDiskChart = ({ data, date }) => {
                 y={pos.y}
                 fontSize="10"
                 fontWeight="600"
-                fill="#64748B"
+                fill="#84776F"
                 textAnchor="middle"
               >
                 {question.shortLabel}
@@ -183,7 +183,7 @@ const IBDiskChart = ({ data, date }) => {
             </AppText>
           </View>
           <View style={styles.colorLegendItem}>
-            <View style={[styles.colorLegendDot, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.colorLegendDot, { backgroundColor: '#AD7130' }]} />
             <AppText variant="labelSmall" style={styles.colorLegendText}>
               4-6 : Modérément satisfaisant
             </AppText>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     fontWeight: '600',
   },
   chartContainer: {
@@ -254,14 +254,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendLabel: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     flex: 1,
   },
   legendValue: {
     fontWeight: '700',
   },
   colorLegendContainer: {
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   colorLegendText: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     fontSize: 11,
   },
   interpretationContainer: {

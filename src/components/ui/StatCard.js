@@ -18,12 +18,12 @@ export default function StatCard({
   
   const getColor = () => {
     switch (color) {
-      case 'success': return '#16A34A'; // Vert pastel pour amélioration/minimum
+      case 'success': return '#397852'; // Vert pastel pour amélioration/minimum
       case 'warning': return theme.colors.warning;
-      case 'error': return '#DC2626'; // Rouge pastel pour dégradation/maximum
+      case 'error': return '#C0392B'; // Rouge pastel pour dégradation/maximum
       case 'info': return theme.colors.info;
-      case 'improvement': return '#16A34A'; // Vert pastel
-      case 'decline': return '#DC2626'; // Rouge pastel
+      case 'improvement': return '#397852'; // Vert pastel
+      case 'decline': return '#C0392B'; // Rouge pastel
       default: return theme.colors.primary;
     }
   };
@@ -53,8 +53,8 @@ export default function StatCard({
       <Card.Content style={styles.content}>
         <View style={styles.header}>
           <View style={[styles.iconContainer, { 
-            backgroundColor: (color === 'success' || color === 'improvement') ? '#D1FAE5' : 
-                            (color === 'error' || color === 'decline') ? '#FEE2E2' : 
+            backgroundColor: (color === 'success' || color === 'improvement') ? '#D7F4E0' : 
+                            (color === 'error' || color === 'decline') ? '#FBE3DF' : 
                             getColor() + '15' 
           }]}>
             <MaterialCommunityIcons name={icon} size={28} color={getColor()} />
@@ -94,15 +94,15 @@ export default function StatCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 16, // borderRadius.lg - angles maîtrisés
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E8E8FB', // bordure très légère
-    shadowColor: '#1E1B4B', // ombre douce teintée indigo
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: '#E6E0DA', // bordure beige chaude
+    shadowColor: '#5E402F', // ombre douce chaude
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 2,
   },
   content: {
     padding: 20,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 6,
     fontWeight: '500',
   },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     lineHeight: 44,
   },
   subtitle: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     fontWeight: '400',
   },
 });

@@ -45,9 +45,9 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
 
   // Palette bleue (clair -> foncé)
   const colorForValue = (v) => {
-    if (maxAvg <= 0) return '#EDEDFC';
+    if (maxAvg <= 0) return '#FFF3EE';
     const t = Math.min(1, v / maxAvg);
-    // Interpolation simple entre #EDEDFC (clair) et #4C4DDC (foncé)
+    // Interpolation simple entre #FFF3EE (clair) et #C16046 (foncé)
     // t^0.6 pour un peu plus de contraste dans les faibles valeurs
     const k = Math.pow(t, 0.6);
     const from = { r: 237, g: 237, b: 252 }; // EDEDFC
@@ -99,7 +99,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
-        <MaterialCommunityIcons name="clock-outline" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
+        <MaterialCommunityIcons name="clock-outline" size={28} color="#C16046" style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
           Répartition horaire des Selles
         </AppText>
@@ -139,7 +139,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                       width={segmentWidth}
                       height={barHeight}
                       fill={fill}
-                      stroke={hover && hover.hour === hour ? '#101010' : 'transparent'}
+                      stroke={hover && hover.hour === hour ? '#312620' : 'transparent'}
                       strokeWidth={hover && hover.hour === hour ? 2 : 0}
                       onMouseMove={(e) => handleMouseMove(e, hour, avg)}
                       onMouseLeave={handleMouseLeave}
@@ -154,8 +154,8 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                 const x = (t / 24) * chartWidth;
                 return (
                   <g key={idx}>
-                    <line x1={x} y1={barHeight} x2={x} y2={barHeight + 4} stroke="#C8C8F4" strokeWidth="1" />
-                    <text x={x} y={barHeight + 18} fontSize="11" fill="#101010" textAnchor="middle" fontWeight="600">
+                    <line x1={x} y1={barHeight} x2={x} y2={barHeight + 4} stroke="#E6E0DA" strokeWidth="1" />
+                    <text x={x} y={barHeight + 18} fontSize="11" fill="#312620" textAnchor="middle" fontWeight="600">
                       {t}
                     </text>
                   </g>
@@ -178,7 +178,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                   pointerEvents="none"
                 >
                   <View style={styles.tooltipHeader}>
-                    <MaterialCommunityIcons name="clock-outline" size={14} color="#4C4DDC" />
+                    <MaterialCommunityIcons name="clock-outline" size={14} color="#C16046" />
                     <AppText variant="labelSmall" style={styles.tooltipHour}>
                       {String(hover.hour).padStart(2, '0')}h - {String((hover.hour + 1) % 24).padStart(2, '0')}h
                     </AppText>
@@ -222,9 +222,9 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
       <View style={styles.legendRow}>
         <AppText variant="labelSmall" style={styles.legendLabel}>Intensité moyenne (selles/heure)</AppText>
         <View style={styles.legendScale}>
-          <View style={[styles.legendSwatch, { backgroundColor: '#EDEDFC' }]} />
+          <View style={[styles.legendSwatch, { backgroundColor: '#FFF3EE' }]} />
           <View style={[styles.legendSwatch, { backgroundColor: '#B4B6EF' }]} />
-          <View style={[styles.legendSwatch, { backgroundColor: '#4C4DDC' }]} />
+          <View style={[styles.legendSwatch, { backgroundColor: '#C16046' }]} />
         </View>
       </View>
     </AppCard>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   titleContainer: {
     flexDirection: 'row',
@@ -247,11 +247,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    color: '#101010',
+    color: '#312620',
     fontWeight: '700',
   },
   subtitle: {
-    color: '#101010',
+    color: '#312620',
     marginBottom: 12,
   },
   chartWrapper: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#101010',
+    color: '#312620',
   },
   legendRow: {
     marginTop: 8,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legendLabel: {
-    color: '#101010',
+    color: '#312620',
   },
   legendScale: {
     flexDirection: 'row',
@@ -330,15 +330,15 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   tooltipHour: {
-    color: '#101010',
+    color: '#312620',
     fontWeight: '700',
   },
   tooltipValue: {
-    color: '#101010',
+    color: '#312620',
     fontWeight: '600',
   },
   tooltipSub: {
-    color: '#101010',
+    color: '#312620',
     opacity: 0.8,
     marginTop: 2,
   },
