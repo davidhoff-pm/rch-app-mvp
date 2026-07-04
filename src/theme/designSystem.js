@@ -30,34 +30,35 @@ export const colors = {
     900: '#14532D',
   },
   
-  // États de santé - Utilisant uniquement la palette unifiée
+  // États de santé - Couleurs sémantiques (vert = bon, ambre = vigilance, rouge = alerte)
+  // La marque reste l'indigo (primary), mais les états cliniques parlent en couleur.
   health: {
     excellent: {
-      main: '#4C4DDC', // Color 01 - pour les états positifs
-      light: '#EDEDFC', // Color 02 - fond clair
-      dark: '#4C4DDC', // Color 01
+      main: '#16A34A', // Vert - état excellent
+      light: '#DCFCE7', // Vert très clair - fond
+      dark: '#15803D', // Vert foncé
     },
     good: {
-      main: '#4C4DDC', // Color 01
-      light: '#C8C8F4', // Color 04 - fond lavande
-      dark: '#4C4DDC', // Color 01
+      main: '#22C55E', // Vert clair - bon état
+      light: '#DCFCE7', // Vert très clair - fond
+      dark: '#16A34A', // Vert
     },
     moderate: {
-      main: '#4C4DDC', // Color 01 - avec opacité pour distinction
-      light: '#C8C8F4', // Color 04
-      dark: '#4C4DDC', // Color 01
+      main: '#F59E0B', // Ambre - vigilance
+      light: '#FEF3C7', // Ambre très clair - fond
+      dark: '#D97706', // Ambre foncé
     },
     warning: {
-      main: '#4C4DDC', // Color 01
-      light: '#EDEDFC', // Color 02
-      dark: '#4C4DDC', // Color 01
+      main: '#F97316', // Orange - attention
+      light: '#FFEDD5', // Orange très clair - fond
+      dark: '#EA580C', // Orange foncé
     },
     danger: {
-      main: '#101010', // Color 03 - noir pour les alertes
-      light: '#EDEDFC', // Color 02
-      dark: '#101010', // Color 03
+      main: '#DC2626', // Rouge - alerte, consulter
+      light: '#FEE2E2', // Rouge très clair - fond
+      dark: '#B91C1C', // Rouge foncé
     },
-    // Couleurs pastel pour amélioration/dégradation
+    // Couleurs pastel pour amélioration/dégradation (tendances)
     improvement: {
       main: '#86EFAC', // Vert pastel pour amélioration
       light: '#D1FAE5', // Vert pastel très clair
@@ -237,16 +238,18 @@ export const spacing = {
 
 export const borderRadius = {
   none: 0,
-  sm: 8,
-  base: 16, // Augmenté de 12 à 16
-  md: 20, // Augmenté de 16 à 20
-  lg: 24, // Augmenté de 20 à 24
-  xl: 28, // Augmenté de 24 à 28
-  '2xl': 32, // Augmenté de 28 à 32
-  '3xl': 40, // Nouveau
+  sm: 6, // Petits éléments (badges, puces)
+  base: 10, // Boutons, inputs
+  md: 12, // Cards secondaires
+  lg: 16, // Cards principales (look santé moderne)
+  xl: 20, // Grands conteneurs
+  '2xl': 24, // Sections héro
+  '3xl': 28, // Cas exceptionnels
   full: 9999,
 };
 
+// Ombres douces teintées indigo (#1E1B4B) plutôt que noir pur, pour une profondeur
+// moderne sans effet "flat" ni drop-shadow lourd.
 export const shadows = {
   none: {
     shadowColor: 'transparent',
@@ -256,39 +259,39 @@ export const shadows = {
     elevation: 0,
   },
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 2,
   },
   base: {
-    shadowColor: '#000',
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
     elevation: 3,
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
-    shadowRadius: 12,
+    shadowRadius: 16,
     elevation: 5,
   },
+  lg: {
+    shadowColor: '#1E1B4B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    elevation: 8,
+  },
   xl: {
-    shadowColor: '#000',
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOpacity: 0.16,
+    shadowRadius: 32,
+    elevation: 12,
   },
 };
 

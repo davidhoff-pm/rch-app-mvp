@@ -110,8 +110,10 @@ const CalendarSection = ({
             const score = calculateLichtigerScore(dateStr, storage);
             if (score !== null) {
               hasData = true;
-              let scoreColor = '#4C4DDC';
-              if (score >= 10) scoreColor = '#101010';
+              // Couleurs sémantiques alignées sur la légende : vert / ambre / rouge
+              let scoreColor = '#16A34A'; // Excellent (0-3)
+              if (score >= 10) scoreColor = '#DC2626'; // Préoccupant (10+)
+              else if (score >= 4) scoreColor = '#F59E0B'; // Acceptable (4-9)
 
               cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
               cellContent = (

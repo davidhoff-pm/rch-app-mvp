@@ -17,10 +17,21 @@
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "//": "Renseigner le chemin du JSON du compte de service Google Play une fois le compte créé",
+        "track": "internal"
+      },
+      "ios": {
+        "//": "Renseigner appleId, ascAppId et appleTeamId une fois le compte Apple Developer créé"
+      }
+    }
   }
 }

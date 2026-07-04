@@ -15,6 +15,7 @@ import KeyInsights from '../components/charts/KeyInsights';
 import HourlyHeatmap from '../components/charts/HourlyHeatmap';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
+import HistoryOverview from '../components/history/HistoryOverview';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import designSystem from '../theme/designSystem';
@@ -351,6 +352,9 @@ export default function StatsScreen() {
           variant="default"
         />
       )}
+
+      {/* Historique, calendrier et IBDisk (déplacés depuis l'accueil) */}
+      <HistoryOverview />
     </ScrollView>
   );
 }

@@ -14,7 +14,6 @@ import EmptyState from '../components/ui/EmptyState';
 import DateTimePicker from '../components/ui/DateTimePicker';
 import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
-import CalendarSection from '../components/home/CalendarSection';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -24,32 +23,14 @@ import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
 import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 import { useStoolModal } from '../contexts/StoolModalContext';
-import SegmentedControl from '../components/ui/SegmentedControl';
-import AnimatedListItem from '../components/ui/AnimatedListItem';
-import IBDiskChart from '../components/charts/IBDiskChart';
-import { deleteFeedback } from '../utils/haptics';
+import ActionCard from '../components/home/ActionCard';
+import usePendingTreatments from '../hooks/usePendingTreatments';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
 import { useSpeedDial } from '../contexts/SpeedDialContext';
-import {
-  getSymptoms,
-  createSymptom,
-  updateSymptom,
-  deleteSymptom,
-  getSymptomDisplayName,
-  INTENSITY_LABELS,
-} from '../utils/symptomsUtils';
-import {
-  getNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-  getCategoryLabel,
-} from '../utils/notesUtils';
 
 // Hooks personnalisés
 import { useHistoryData } from '../hooks/useHistoryData';
-import { useStoolManagement } from '../hooks/useStoolManagement';
 import { useSymptomManagement } from '../hooks/useSymptomManagement';
 import { useNoteManagement } from '../hooks/useNoteManagement';
 
@@ -64,9 +45,6 @@ export default function HomeScreen({ route }) {
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
-  const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
-  const [calendarMode, setCalendarMode] = useState('score');
-  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
 
@@ -95,11 +73,29 @@ export default function HomeScreen({ route }) {
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
 
-  const [historyFilter, setHistoryFilter] = useState('stools'); // 'stools', 'symptoms', 'notes'
 
-  // Hook pour gérer les données d'historique
-  const historyData = useHistoryData();
-  const { stools, scores, treatments, ibdiskHistory, symptoms, notes, loadHistoryData } = historyData;
+  // Chargement des données (utilisé pour rafraîchir après ajout via le bouton +)
+  const { loadHistoryData } = useHistoryData();
+
+  // Nombre de prises de traitement en attente (pour la section "À faire")
+  const pendingTreatmentsCount = usePendingTreatments();
+
+  // Salutation selon l'heure + date du jour
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 6) return 'Bonne nuit';
+    if (h < 18) return 'Bonjour';
+    return 'Bonsoir';
+  }, []);
+
+  const todayLabel = useMemo(() => {
+    const label = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, []);
 
   // Toast helper
   const showToast = (message, type = 'success') => {
@@ -108,15 +104,7 @@ export default function HomeScreen({ route }) {
     setToastVisible(true);
   };
 
-  // Hook pour gérer les selles
-  const stoolManagement = useStoolManagement({
-    onDataChange: () => {
-      loadHistoryData();
-      setDailyCount(computeTodayCount());
-    }
-  });
-
-  // Hook pour gérer les symptômes
+  // Hook pour gérer les symptômes (ajout via le bouton + de la barre de navigation)
   const symptomManagement = useSymptomManagement({
     onDataChange: loadHistoryData,
     showToast
@@ -341,58 +329,6 @@ export default function HomeScreen({ route }) {
 
   const hideModal = () => {
     closeModal();
-  };
-
-  const formatCompactDate = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const isToday = date.toDateString() === today.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-    if (isToday) return `Aujourd'hui ${time}`;
-    if (isYesterday) return `Hier ${time}`;
-
-    return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
-  };
-
-  // Format date sans heure (pour symptômes et notes)
-  const formatCompactDateOnly = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const isToday = date.toDateString() === today.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    if (isToday) return `Aujourd'hui`;
-    if (isYesterday) return `Hier`;
-
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-  };
-
-  const getBristolColor = (bristol) => {
-    if (bristol <= 2) return '#4C4DDC';
-    if (bristol <= 4) return '#4C4DDC';
-    if (bristol <= 5) return '#C8C8F4';
-    return '#101010';
-  };
-
-  const handlePreviousIbdisk = () => {
-    if (currentIbdiskIndex < ibdiskHistory.length - 1) {
-      setCurrentIbdiskIndex(currentIbdiskIndex + 1);
-    }
-  };
-
-  const handleNextIbdisk = () => {
-    if (currentIbdiskIndex > 0) {
-      setCurrentIbdiskIndex(currentIbdiskIndex - 1);
-    }
   };
 
   // Fonctions pour la modale de traitement
@@ -663,6 +599,75 @@ export default function HomeScreen({ route }) {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* En-tête : salutation + date */}
+        <View style={styles.homeHeader}>
+          <AppText variant="h2" style={styles.greetingText}>
+            {greeting}
+          </AppText>
+          <AppText variant="bodyMedium" style={styles.dateText}>
+            {todayLabel}
+          </AppText>
+        </View>
+
+        {/* Section : À faire aujourd'hui */}
+        <View style={styles.todoSection}>
+          <View style={styles.todoHeader}>
+            <HealthIcon name="stethoscope" size={22} color={designSystem.colors.primary[500]} />
+            <AppText variant="h4" style={styles.todoTitle}>
+              À faire aujourd'hui
+            </AppText>
+          </View>
+
+          {(!surveyCompleted || ibdiskAvailable || pendingTreatmentsCount > 0) ? (
+            <View style={styles.todoList}>
+              {!surveyCompleted && (
+                <ActionCard
+                  title="Bilan quotidien"
+                  description="Renseignez vos symptômes du jour"
+                  icon="clipboard-text-outline"
+                  gradient={['#4C4DDC', '#3A3AB0']}
+                  style={styles.todoActionCard}
+                  onPress={navigateToSurvey}
+                />
+              )}
+              {ibdiskAvailable && (
+                <ActionCard
+                  title="Questionnaire IBDisk"
+                  description="Évaluez votre qualité de vie (mensuel)"
+                  icon="chart-box-outline"
+                  gradient={['#6366F1', '#4F46E5']}
+                  style={styles.todoActionCard}
+                  onPress={() => navigation.navigate('IBDiskQuestionnaire')}
+                />
+              )}
+              {pendingTreatmentsCount > 0 && (
+                <ActionCard
+                  title="Traitement à prendre"
+                  description={`${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`}
+                  icon="pill"
+                  gradient={['#22C55E', '#16A34A']}
+                  style={styles.todoActionCard}
+                  onPress={() => navigation.navigate('Traitement')}
+                />
+              )}
+            </View>
+          ) : (
+            <AppCard variant="success" style={styles.allDoneCard}>
+              <View style={styles.allDoneContent}>
+                <MaterialCommunityIcons name="check-circle" size={28} color={designSystem.colors.health.excellent.main} />
+                <View style={styles.allDoneTextWrap}>
+                  <AppText variant="bodyLarge" style={styles.allDoneTitle}>
+                    Tout est à jour
+                  </AppText>
+                  <AppText variant="bodySmall" style={styles.allDoneSubtitle}>
+                    Aucune action requise pour aujourd'hui
+                  </AppText>
+                </View>
+              </View>
+            </AppCard>
+          )}
+        </View>
+
         {/* Section Aujourd'hui */}
         <AppCard style={styles.todaySection}>
           <View style={styles.sectionHeader}>
@@ -841,332 +846,6 @@ export default function HomeScreen({ route }) {
           </PrimaryButton>
         </AppCard>
 
-        {/* Section Historique */}
-        <AppCard style={styles.historySection}>
-          <View style={styles.sectionHeader}>
-            <HealthIcon name="journal" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Historique
-            </AppText>
-          </View>
-
-          {/* Onglets de filtrage */}
-          <View style={styles.historyTabsContainer}>
-            <SegmentedControl
-              options={[
-                { value: 'stools', label: 'Selles' },
-                { value: 'symptoms', label: 'Symptômes' },
-                { value: 'notes', label: 'Notes' }
-              ]}
-              selectedValue={historyFilter}
-              onValueChange={setHistoryFilter}
-            />
-          </View>
-
-          {/* Liste filtrée */}
-          {(() => {
-            // Filtrer les entrées selon l'onglet sélectionné
-            let filteredEntries = [];
-
-            if (historyFilter === 'stools') {
-              filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, entryType: 'stool' }))];
-            }
-            if (historyFilter === 'symptoms') {
-              filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, entryType: 'symptom' }))];
-            }
-            if (historyFilter === 'notes') {
-              filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, entryType: 'note' }))];
-            }
-
-            // Trier par timestamp
-            filteredEntries.sort((a, b) => b.timestamp - a.timestamp);
-
-            // Limiter à 20 entrées
-            filteredEntries = filteredEntries.slice(0, 20);
-
-            if (filteredEntries.length === 0) {
-              let emptyMessage = '';
-              if (historyFilter === 'stools') emptyMessage = 'Aucune selle enregistrée';
-              else if (historyFilter === 'symptoms') emptyMessage = 'Aucun symptôme enregistré';
-              else if (historyFilter === 'notes') emptyMessage = 'Aucune note enregistrée';
-              else emptyMessage = 'Aucune donnée enregistrée';
-
-              return (
-                <EmptyState
-                  healthIcon="empty"
-                  title={emptyMessage}
-                  description="Utilisez le bouton + en bas pour ajouter une entrée"
-                  size="compact"
-                />
-              );
-            }
-
-            return (
-              <View>
-                {filteredEntries.map((item, index) => (
-                  <AnimatedListItem key={`${item.entryType}-${item.id}`} index={index} delay={30}>
-                    {item.entryType === 'stool' && (
-                      <View style={styles.stoolItem}>
-                        <View style={[
-                          styles.stoolMain,
-                          item.hasBlood && styles.stoolMainWithBlood
-                        ]}>
-                          <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                            <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                              {item.bristolScale}
-                            </AppText>
-                          </View>
-                          <View style={styles.stoolInfo}>
-                            <View style={styles.stoolDateContainer}>
-                              <AppText variant="bodyMedium" style={styles.stoolDate}>
-                                {formatCompactDate(item.timestamp)}
-                              </AppText>
-                            </View>
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => stoolManagement.handleEditStool(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => stoolManagement.handleDeleteStool(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-
-                    {item.entryType === 'symptom' && (
-                      <View style={styles.symptomItem}>
-                        <View style={styles.symptomMain}>
-                          <View style={[styles.symptomIcon, { backgroundColor: '#FEE2E2' }]}>
-                            <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
-                          </View>
-                          <View style={styles.symptomInfo}>
-                            <AppText variant="bodyMedium" style={styles.symptomType}>
-                              {getSymptomDisplayName(item)}
-                            </AppText>
-                            <View style={styles.symptomMeta}>
-                              <AppText variant="labelSmall" style={styles.symptomDate}>
-                                {formatCompactDateOnly(item.timestamp)}
-                              </AppText>
-                              <View style={styles.symptomIntensity}>
-                                <AppText variant="labelSmall" style={styles.symptomIntensityText}>
-                                  Intensité: {item.intensity}/5 ({INTENSITY_LABELS[item.intensity]})
-                                </AppText>
-                              </View>
-                            </View>
-                            {item.note && (
-                              <AppText variant="labelSmall" style={styles.symptomNote}>
-                                {item.note}
-                              </AppText>
-                            )}
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => symptomManagement.handleEditSymptom(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => symptomManagement.handleDeleteSymptom(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-
-                    {item.entryType === 'note' && (
-                      <View style={styles.noteItem}>
-                        <View style={styles.noteMain}>
-                          <View style={[styles.noteIcon, { backgroundColor: '#FEF3C7' }]}>
-                            <MaterialCommunityIcons
-                              name={item.sharedWithDoctor ? "share-variant" : "note-text-outline"}
-                              size={24}
-                              color="#F59E0B"
-                            />
-                          </View>
-                          <View style={styles.noteInfo}>
-                            <View style={styles.noteHeader}>
-                              <AppText variant="bodyMedium" style={styles.noteContent}>
-                                {item.content.length > 80 ? item.content.substring(0, 80) + '...' : item.content}
-                              </AppText>
-                              {/* Badge de traitement IA */}
-                              {!item.aiProcessed && (
-                                <View style={styles.aiProcessingBadge}>
-                                  <MaterialCommunityIcons name="brain" size={12} color="#4C4DDC" />
-                                  <AppText variant="labelSmall" style={styles.aiProcessingText}>
-                                    IA...
-                                  </AppText>
-                                </View>
-                              )}
-                              {item.aiProcessed && item.tags && item.tags.length > 0 && (
-                                <View style={styles.aiCompleteBadge}>
-                                  <MaterialCommunityIcons name="tag-multiple" size={12} color="#16A34A" />
-                                  <AppText variant="labelSmall" style={styles.aiCompleteText}>
-                                    {item.tags.length}
-                                  </AppText>
-                                </View>
-                              )}
-                            </View>
-                            <View style={styles.noteMeta}>
-                              <AppText variant="labelSmall" style={styles.noteDate}>
-                                {formatCompactDateOnly(item.timestamp)}
-                              </AppText>
-                              {item.category && (
-                                <View style={styles.noteCategory}>
-                                  <AppText variant="labelSmall" style={styles.noteCategoryText}>
-                                    {getCategoryLabel(item.category)}
-                                  </AppText>
-                                </View>
-                              )}
-                              {item.sharedWithDoctor && (
-                                <View style={styles.noteShared}>
-                                  <MaterialCommunityIcons name="share-variant" size={12} color="#4C4DDC" />
-                                  <AppText variant="labelSmall" style={styles.noteSharedText}>
-                                    Partagé
-                                  </AppText>
-                                </View>
-                              )}
-                            </View>
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => noteManagement.handleEditNote(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => noteManagement.handleDeleteNote(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-                  </AnimatedListItem>
-                ))}
-              </View>
-            );
-          })()}
-        </AppCard>
-
-        {/* Calendrier moderne */}
-        <AppCard style={styles.calendarCard}>
-          <View style={styles.calendarHeaderSection}>
-            <SegmentedControl
-              options={[
-                { value: 'score', label: 'Score' },
-                { value: 'bristol', label: 'Selles' }
-              ]}
-              selectedValue={calendarMode}
-              onValueChange={setCalendarMode}
-            />
-          </View>
-
-          <CalendarSection
-            calendarMonthOffset={calendarMonthOffset}
-            setCalendarMonthOffset={setCalendarMonthOffset}
-            calendarMode={calendarMode}
-            stools={stools}
-          />
-
-          {/* Légende */}
-          <View style={styles.legend}>
-            {calendarMode === 'score' ? (
-              <>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#101010' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
-                </View>
-              </>
-            ) : (
-              <View style={styles.legendFullWidth}>
-                <AppText variant="labelSmall" style={styles.legendTextCentered}>
-                  💡 Le chiffre indique le nombre de selles enregistrées ce jour-là
-                </AppText>
-              </View>
-            )}
-          </View>
-        </AppCard>
-
-        {/* Historique IBDisk */}
-        {ibdiskHistory.length > 0 && (
-          <AppCard style={styles.ibdiskCard}>
-            <View style={styles.ibdiskHeader}>
-              <AppText variant="headlineLarge" style={styles.cardTitle}>
-                Historique IBDisk
-              </AppText>
-              
-              {ibdiskHistory.length > 1 ? (
-                <View style={styles.ibdiskNavigation}>
-                  <TouchableOpacity
-                    onPress={handlePreviousIbdisk}
-                    disabled={currentIbdiskIndex >= ibdiskHistory.length - 1}
-                    style={[
-                      styles.navButton,
-                      currentIbdiskIndex >= ibdiskHistory.length - 1 && styles.navButtonDisabled
-                    ]}
-                  >
-                    <MaterialCommunityIcons 
-                      name="chevron-left" 
-                      size={24} 
-                      color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#101010'} 
-                    />
-                  </TouchableOpacity>
-                  
-                  <AppText variant="labelMedium" style={styles.navText}>
-                    {currentIbdiskIndex + 1} / {ibdiskHistory.length}
-                  </AppText>
-                  
-                  <TouchableOpacity
-                    onPress={handleNextIbdisk}
-                    disabled={currentIbdiskIndex <= 0}
-                    style={[
-                      styles.navButton,
-                      currentIbdiskIndex <= 0 && styles.navButtonDisabled
-                    ]}
-                  >
-                    <MaterialCommunityIcons 
-                      name="chevron-right" 
-                      size={24} 
-                      color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#101010'} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <AppText variant="labelSmall" style={styles.singleQuestionnaireText}>
-                  Premier questionnaire IBDisk
-                </AppText>
-              )}
-            </View>
-            
-            <IBDiskChart 
-              data={ibdiskHistory[currentIbdiskIndex]?.answers || {}} 
-              date={ibdiskHistory[currentIbdiskIndex]?.date || ''} 
-            />
-          </AppCard>
-        )}
       </ScrollView>
 
       {/* Modal d'enregistrement de selle */}
@@ -1235,86 +914,6 @@ export default function HomeScreen({ route }) {
                 </PrimaryButton>
                 <PrimaryButton 
                   onPress={hideModal} 
-                  style={styles.cancelButton}
-                  variant="neutral"
-                  size="medium"
-                  outlined
-                >
-                  Annuler
-                </PrimaryButton>
-              </View>
-            </ScrollView>
-          </AppCard>
-        </Modal>
-      </Portal>
-
-      {/* Modal d'édition de selle */}
-      <Portal>
-        <Modal visible={stoolManagement.editModalVisible} onDismiss={stoolManagement.hideEditModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard style={styles.modalCard}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <AppText variant="h2" style={styles.modalTitle}>
-                Modifier la selle
-              </AppText>
-
-              <View style={styles.dateTimeSection}>
-                <AppText style={styles.fieldLabel}>Date et heure</AppText>
-                <DateTimePicker
-                  dateValue={stoolManagement.editDateInput}
-                  timeValue={stoolManagement.editTimeInput}
-                  onDateChange={stoolManagement.setEditDateInput}
-                  onTimeChange={stoolManagement.setEditTimeInput}
-                  dateLabel="Date (DD/MM/YYYY)"
-                  timeLabel="Heure (HH:MM)"
-                />
-                <AppText variant="labelSmall" style={styles.dateTimeHint}>
-                  Format: Date DD/MM/YYYY, Heure HH:MM (24h)
-                </AppText>
-              </View>
-
-              <View style={styles.bristolSection}>
-                <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={7}
-                  step={1}
-                  value={stoolManagement.editBristol}
-                  onValueChange={stoolManagement.setEditBristol}
-                  style={styles.slider}
-                  minimumTrackTintColor={theme.colors.primary}
-                  maximumTrackTintColor={theme.colors.outline}
-                  thumbStyle={{ backgroundColor: theme.colors.primary }}
-                />
-                <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[stoolManagement.editBristol]}
-                </AppText>
-              </View>
-
-              <View style={styles.bloodSection}>
-                <View style={styles.switchRow}>
-                  <AppText variant="bodyLarge">Présence de sang</AppText>
-                  <Switch
-                    value={stoolManagement.editHasBlood}
-                    onValueChange={(value) => {
-                      toggleFeedback();
-                      stoolManagement.setEditHasBlood(value);
-                    }}
-                    color={theme.colors.error}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.modalActions}>
-                <PrimaryButton
-                  onPress={stoolManagement.handleSaveEdit}
-                  style={styles.saveButton}
-                  variant="primary"
-                  size="medium"
-                >
-                  Enregistrer
-                </PrimaryButton>
-                <PrimaryButton
-                  onPress={stoolManagement.hideEditModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
@@ -1450,6 +1049,56 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingTop: designSystem.spacing[4], // Ajout d'un padding top
     paddingBottom: 120, // Augmenté de 100 à 120 pour la tab bar
+  },
+  homeHeader: {
+    marginTop: designSystem.spacing[2],
+    marginBottom: designSystem.spacing[5],
+  },
+  greetingText: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+  },
+  dateText: {
+    color: designSystem.colors.text.secondary,
+    marginTop: designSystem.spacing[1],
+  },
+  todoSection: {
+    marginBottom: designSystem.spacing[6],
+  },
+  todoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    marginBottom: designSystem.spacing[4],
+  },
+  todoTitle: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+  },
+  todoList: {
+    gap: designSystem.spacing[1],
+  },
+  todoActionCard: {
+    marginHorizontal: 0, // Neutralise l'inset interne d'ActionCard (le ScrollView gère le padding)
+  },
+  allDoneCard: {
+    marginBottom: 0,
+  },
+  allDoneContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[3],
+  },
+  allDoneTextWrap: {
+    flex: 1,
+  },
+  allDoneTitle: {
+    color: designSystem.colors.health.excellent.dark,
+    fontWeight: '700',
+  },
+  allDoneSubtitle: {
+    color: designSystem.colors.text.secondary,
+    marginTop: 2,
   },
   statsContainer: {
     marginBottom: designSystem.spacing[6],

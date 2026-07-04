@@ -2,20 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
-import NotificationBadge from '../ui/NotificationBadge';
 import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
 import { useSpeedDial } from '../../contexts/SpeedDialContext';
 import { buttonPressFeedback } from '../../utils/haptics';
-import usePendingQuestionnaires from '../../hooks/usePendingQuestionnaires';
-import usePendingTreatments from '../../hooks/usePendingTreatments';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const { openModal } = useStoolModal();
   const { handlers } = useSpeedDial();
   const { colors } = designSystem;
-  const pendingQuestionnairesCount = usePendingQuestionnaires();
-  const pendingTreatmentsCount = usePendingTreatments();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -230,14 +225,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
               size={24}
               color={isFocused ? colors.primary[500] : colors.text.tertiary}
             />
-            {/* Badge pour l'onglet Bilan */}
-            {route.name === 'Bilan' && (
-              <NotificationBadge count={pendingQuestionnairesCount} size="medium" />
-            )}
-            {/* Badge pour l'onglet Traitement */}
-            {route.name === 'Traitement' && (
-              <NotificationBadge count={pendingTreatmentsCount} size="medium" />
-            )}
+            {/* Les rappels (bilan / traitement) sont désormais affichés sur l'écran d'accueil */}
           </View>
           <AppText
             variant="caption"
