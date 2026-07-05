@@ -22,7 +22,6 @@
     "submit:ios": "eas submit --platform ios --profile production --latest"
   },
   "dependencies": {
-    "@google/genai": "^1.29.1",
     "@react-native-community/datetimepicker": "^8.4.5",
     "@react-native-community/slider": "^5.0.1",
     "@react-navigation/bottom-tabs": "^7.4.8",

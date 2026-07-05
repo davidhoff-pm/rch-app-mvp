@@ -263,22 +263,6 @@ export default function HistoryOverview() {
                             <AppText variant="bodyMedium" style={styles.noteContent}>
                               {item.content.length > 80 ? item.content.substring(0, 80) + '...' : item.content}
                             </AppText>
-                            {!item.aiProcessed && (
-                              <View style={styles.aiProcessingBadge}>
-                                <MaterialCommunityIcons name="brain" size={12} color="#C16046" />
-                                <AppText variant="labelSmall" style={styles.aiProcessingText}>
-                                  IA...
-                                </AppText>
-                              </View>
-                            )}
-                            {item.aiProcessed && item.tags && item.tags.length > 0 && (
-                              <View style={styles.aiCompleteBadge}>
-                                <MaterialCommunityIcons name="tag-multiple" size={12} color="#397852" />
-                                <AppText variant="labelSmall" style={styles.aiCompleteText}>
-                                  {item.tags.length}
-                                </AppText>
-                              </View>
-                            )}
                           </View>
                           <View style={styles.noteMeta}>
                             <AppText variant="labelSmall" style={styles.noteDate}>
