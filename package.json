@@ -11,7 +11,15 @@
     "deploy": "vercel --prod",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "update:preview": "eas update --branch preview",
+    "update:prod": "eas update --branch production",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "build:android:prod": "eas build --platform android --profile production",
+    "build:ios:preview": "eas build --platform ios --profile preview",
+    "build:ios:prod": "eas build --platform ios --profile production",
+    "submit:android": "eas submit --platform android --profile production --latest",
+    "submit:ios": "eas submit --platform ios --profile production --latest"
   },
   "dependencies": {
     "@google/genai": "^1.29.1",

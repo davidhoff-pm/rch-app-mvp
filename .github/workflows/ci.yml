@@ -1,0 +1,30 @@
+name: CI
+
+# Filet de sécurité : à chaque PR (et push sur main), on vérifie que les tests
+# passent et que le bundle web se construit. Si ça casse, la PR le signale.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --ci
+
+      - name: Build web (validation du bundle)
+        run: npx expo export --platform web
