@@ -65,60 +65,12 @@ function MainTabs() {
           if (route.name === 'Paramètres') iconName = 'cog';
           return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
         },
-        headerRight: ({ tintColor }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-            {/* Icône Insights (visible sur tous les écrans sauf Insights) */}
-            {route.name !== 'Insights' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Insights')}
-                style={{ marginRight: 16 }}
-                accessibilityRole="button"
-                accessibilityLabel="Insights IA"
-              >
-                <MaterialCommunityIcons
-                  name="brain"
-                  size={24}
-                  color={tintColor || designSystem.colors.text.primary}
-                />
-              </TouchableOpacity>
-            )}
-            {/* Icône Export (visible sur tous les écrans sauf Export) */}
-            {route.name !== 'Export' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Export')}
-                style={{ marginRight: 16 }}
-                accessibilityRole="button"
-                accessibilityLabel="Export PDF"
-              >
-                <MaterialCommunityIcons
-                  name="file-account"
-                  size={24}
-                  color={tintColor || designSystem.colors.text.primary}
-                />
-              </TouchableOpacity>
-            )}
-            {/* Icône Paramètres (visible sur tous les écrans sauf Paramètres) */}
-            {route.name !== 'Paramètres' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Paramètres')}
-                accessibilityRole="button"
-                accessibilityLabel="Paramètres"
-              >
-                <MaterialCommunityIcons
-                  name="cog"
-                  size={24}
-                  color={tintColor || designSystem.colors.text.primary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )
       })}
     >
       <Tab.Screen name="Accueil" component={HomeScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Bilan" component={SurveyScreen} />
-      <Tab.Screen name="Statistiques" component={StatsScreen} />
-      <Tab.Screen name="Traitement" component={TreatmentScreen} />
+      <Tab.Screen name="Bilan" component={SurveyScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Statistiques" component={StatsScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Traitement" component={TreatmentScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Paramètres" component={SettingsScreen} />
       <Tab.Screen
         name="Export"
