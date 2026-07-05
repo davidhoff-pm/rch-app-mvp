@@ -284,6 +284,42 @@ export async function scheduleAllReminders() {
 }
 
 /**
+ * Envoyer une notification de test bilan (dans 5s, pour dev)
+ */
+export async function sendTestBilanNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📋 Bilan du jour [TEST]',
+      body: 'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
+      data: { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' },
+      sound: true,
+    },
+    trigger: { seconds: 5 },
+  });
+}
+
+/**
+ * Envoyer une notification de test selles (dans 5s, pour dev)
+ */
+export async function sendTestStoolNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📝 Selles du jour [TEST]',
+      body: "N'oubliez pas de saisir vos selles d'aujourd'hui.",
+      data: { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' },
+      sound: true,
+    },
+    trigger: { seconds: 5 },
+  });
+}
+
+/**
  * Envoyer une notification de test
  */
 export async function sendTestNotification() {

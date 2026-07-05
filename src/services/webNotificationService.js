@@ -112,6 +112,32 @@ export function showWebNotification(title, body, data = {}) {
 }
 
 /**
+ * Envoyer une notification de test bilan (pour dev)
+ */
+export async function sendTestBilanNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+  showWebNotification(
+    '📋 Bilan du jour [TEST]',
+    'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
+    { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' }
+  );
+}
+
+/**
+ * Envoyer une notification de test selles (pour dev)
+ */
+export async function sendTestStoolNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+  showWebNotification(
+    '📝 Selles du jour [TEST]',
+    "N'oubliez pas de saisir vos selles d'aujourd'hui.",
+    { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' }
+  );
+}
+
+/**
  * Envoyer une notification de test
  */
 export async function sendTestNotification() {

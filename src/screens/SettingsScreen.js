@@ -121,15 +121,38 @@ export default function SettingsScreen() {
 
   // Tester les notifications
   const handleTestNotification = async () => {
-    console.log('🎯 Bouton Test Notification cliqué');
     try {
-      // Utiliser le service approprié selon la plateforme
       const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
       await service.sendTestNotification();
       Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la voir apparaître.');
     } catch (error) {
-      console.error('❌ Erreur test notification:', error);
       Alert.alert('Erreur', `Impossible d'envoyer la notification de test: ${error.message}`);
+    }
+  };
+
+  // Tester la notif bilan (dans 5 secondes)
+  const handleTestSurveyNotif = async () => {
+    try {
+      const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+      await service.sendTestBilanNotification();
+      Alert.alert('✅ Notif bilan', Platform.OS === 'web'
+        ? 'Notification envoyée.'
+        : "Vous la recevrez dans 5 secondes.\nSortez de l'app pour la voir apparaître.");
+    } catch (error) {
+      Alert.alert('Erreur', error.message);
+    }
+  };
+
+  // Tester la notif selles (dans 5 secondes)
+  const handleTestStoolNotif = async () => {
+    try {
+      const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+      await service.sendTestStoolNotification();
+      Alert.alert('✅ Notif selles', Platform.OS === 'web'
+        ? 'Notification envoyée.'
+        : "Vous la recevrez dans 5 secondes.\nSortez de l'app pour la voir apparaître.");
+    } catch (error) {
+      Alert.alert('Erreur', error.message);
     }
   };
 
@@ -466,14 +489,34 @@ export default function SettingsScreen() {
             IBDisk (3 questionnaires)
           </PrimaryButton>
           
-          <PrimaryButton 
-            onPress={handleTestNotification} 
+          <PrimaryButton
+            onPress={handleTestNotification}
             variant="info"
             outlined
             style={styles.scenarioButton}
             icon="bell-ring"
           >
             Test Notification
+          </PrimaryButton>
+
+          <PrimaryButton
+            onPress={handleTestSurveyNotif}
+            variant="info"
+            outlined
+            style={styles.scenarioButton}
+            icon="clipboard-text-outline"
+          >
+            Test Notif Bilan (5s)
+          </PrimaryButton>
+
+          <PrimaryButton
+            onPress={handleTestStoolNotif}
+            variant="info"
+            outlined
+            style={styles.scenarioButton}
+            icon="toilet"
+          >
+            Test Notif Selles (5s)
           </PrimaryButton>
         </View>
       </AppCard>
