@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import 'react-native-gesture-handler';
 import { Provider as PaperProvider } from 'react-native-paper';
 import * as Notifications from 'expo-notifications';
@@ -7,6 +7,7 @@ import theme from './src/theme/theme';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StoolModalProvider } from './src/contexts/StoolModalContext';
 import { SpeedDialProvider } from './src/contexts/SpeedDialContext';
+import { refreshDailyNotifications } from './src/services/notificationService';
 
 // Import du script de mise à jour PWA
 import './src/utils/pwaUpdate';
@@ -46,6 +47,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Réévaluer les notifications au démarrage (mobile seulement)
+    if (Platform.OS !== 'web') {
+      refreshDailyNotifications();
+    }
+
+    // Réévaluer au retour au premier plan
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && Platform.OS !== 'web') {
+        refreshDailyNotifications();
+      }
+    });
+
     // Écouter les notifications reçues quand l'app est ouverte
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
       console.log('📬 Notification reçue:', notification);
@@ -53,27 +66,25 @@ export default function App() {
 
     // Écouter les clics sur les notifications
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('👆 Notification cliquée:', response);
       const data = response.notification.request.content.data;
-      
-      // Si c'est un rappel de bilan, naviguer vers l'écran Accueil
+
       if (data?.action === 'OPEN_SURVEY' && navigationRef.current) {
-        console.log('🧭 Redirection vers Accueil pour compléter le bilan');
-        // Naviguer vers Main (les tabs), puis vers Accueil avec le paramètre
         navigationRef.current.navigate('Main', {
           screen: 'Accueil',
-          params: { openSurveyModal: true }
+          params: { openSurveyModal: true },
         });
+      }
+
+      // Rappel selles → ouvre l'accueil (US-006 ajoutera le mode batch)
+      if (data?.action === 'OPEN_STOOL_BATCH' && navigationRef.current) {
+        navigationRef.current.navigate('Main', { screen: 'Accueil' });
       }
     });
 
     return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
+      appStateSub.remove();
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, []);
 

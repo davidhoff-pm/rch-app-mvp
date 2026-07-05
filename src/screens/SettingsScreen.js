@@ -50,7 +50,8 @@ export default function SettingsScreen() {
     };
     
     setReminder1Time(formatHour(settings.surveyReminder1.hour, settings.surveyReminder1.minute));
-    setReminder2Time(formatHour(settings.surveyReminder2.hour, settings.surveyReminder2.minute));
+    const stool = settings.stoolReminder || { hour: 20, minute: 0 };
+    setReminder2Time(formatHour(stool.hour, stool.minute));
   };
 
   // Générer des données de test
@@ -177,7 +178,7 @@ export default function SettingsScreen() {
           if (Platform.OS === 'web') {
             WebNotificationService.scheduleAllReminders();
           } else {
-            await NotificationService.scheduleSurveyReminder(1, hours, minutes);
+            await NotificationService.scheduleSurveyReminder(hours, minutes);
           }
         }
       }
@@ -196,15 +197,16 @@ export default function SettingsScreen() {
         // Utiliser le service approprié selon la plateforme
         const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
         const settings = service.getNotificationSettings();
-        settings.surveyReminder2.hour = hours;
-        settings.surveyReminder2.minute = minutes;
+        if (!settings.stoolReminder) settings.stoolReminder = { enabled: true, hour: 20, minute: 0 };
+        settings.stoolReminder.hour = hours;
+        settings.stoolReminder.minute = minutes;
         service.saveNotificationSettings(settings);
-        
+
         if (notificationsEnabled) {
           if (Platform.OS === 'web') {
             WebNotificationService.scheduleAllReminders();
           } else {
-            await NotificationService.scheduleSurveyReminder(2, hours, minutes);
+            await NotificationService.scheduleStoolReminder(hours, minutes);
           }
         }
       }
@@ -506,43 +508,52 @@ export default function SettingsScreen() {
         
         {notificationsEnabled && (
           <>
+            {isRemission && (
+              <View style={styles.remissionNote}>
+                <MaterialCommunityIcons name="moon-waning-crescent" size={16} color={designSystem.colors.health.excellent.main} />
+                <AppText variant="bodySmall" style={styles.remissionNoteText}>
+                  En mode rémission, les rappels bilan et selles sont suspendus. Seuls les rappels traitement restent actifs.
+                </AppText>
+              </View>
+            )}
+
             <View style={styles.divider} />
-            
-            {/* Premier rappel */}
-            <View style={styles.reminderSection}>
+
+            {/* Rappel bilan matin */}
+            <View style={[styles.reminderSection, isRemission && styles.reminderSectionDisabled]}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="clock-time-four-outline" size={20} color="#C16046" />
-                <AppText variant="bodyLarge" style={styles.reminderTitle}>
-                  Premier rappel
+                <MaterialCommunityIcons name="clipboard-text-outline" size={20} color={isRemission ? designSystem.colors.text.tertiary : '#C16046'} />
+                <AppText variant="bodyLarge" style={[styles.reminderTitle, isRemission && styles.reminderTitleDisabled]}>
+                  Rappel bilan (matin)
                 </AppText>
               </View>
               <AppText variant="bodySmall" style={styles.reminderDescription}>
-                "C'est le moment de compléter votre bilan du jour."
+                Envoyé uniquement si le bilan du jour n'est pas encore complété.
               </AppText>
               <TimeInput
                 value={reminder1Time}
                 onChange={handleReminder1Change}
-                label="Heure du premier rappel"
+                label="Heure du rappel bilan"
               />
             </View>
-            
+
             <View style={styles.divider} />
-            
-            {/* Second rappel */}
-            <View style={styles.reminderSection}>
+
+            {/* Rappel selles soir */}
+            <View style={[styles.reminderSection, isRemission && styles.reminderSectionDisabled]}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="clock-time-eight-outline" size={20} color="#C16046" />
-                <AppText variant="bodyLarge" style={styles.reminderTitle}>
-                  Deuxième rappel
+                <MaterialCommunityIcons name="toilet" size={20} color={isRemission ? designSystem.colors.text.tertiary : '#C16046'} />
+                <AppText variant="bodyLarge" style={[styles.reminderTitle, isRemission && styles.reminderTitleDisabled]}>
+                  Rappel selles (soir)
                 </AppText>
               </View>
               <AppText variant="bodySmall" style={styles.reminderDescription}>
-                "Vous avez oublié de compléter votre bilan."
+                Envoyé uniquement si aucune selle n'a été saisie dans la journée.
               </AppText>
               <TimeInput
                 value={reminder2Time}
                 onChange={handleReminder2Change}
-                label="Heure du second rappel"
+                label="Heure du rappel selles"
               />
             </View>
           </>
@@ -942,8 +953,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#E6E0DA', // Color 04
     marginVertical: 16,
   },
+  remissionNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: designSystem.borderRadius.base,
+    backgroundColor: designSystem.colors.health.excellent.light,
+  },
+  remissionNoteText: {
+    flex: 1,
+    color: designSystem.colors.health.excellent.main,
+    lineHeight: 18,
+  },
   reminderSection: {
     marginTop: 8,
+  },
+  reminderSectionDisabled: {
+    opacity: 0.45,
   },
   reminderHeader: {
     flexDirection: 'row',
@@ -952,11 +980,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reminderTitle: {
-    color: '#312620', // Color 03
+    color: '#312620',
     fontWeight: '600',
   },
+  reminderTitleDisabled: {
+    color: designSystem.colors.text.tertiary,
+  },
   reminderDescription: {
-    color: '#312620', // Color 03
+    color: '#312620',
     fontStyle: 'italic',
     marginBottom: 12,
     marginLeft: 28,

@@ -38,16 +38,37 @@ export async function requestNotificationPermissions() {
 function isSurveyCompletedToday() {
   const todayKey = getSurveyDayKey(new Date(), 0);
   const json = storage.getString('dailySurvey');
-  
   if (!json) return false;
-  
   try {
     const surveys = JSON.parse(json);
     return surveys && surveys[todayKey] !== undefined;
-  } catch (error) {
-    console.error('Erreur lors de la vérification du bilan:', error);
+  } catch {
     return false;
   }
+}
+
+/**
+ * Vérifier si au moins une selle a été saisie aujourd'hui
+ */
+function isStoolLoggedToday() {
+  const json = storage.getString('dailySells');
+  if (!json) return false;
+  try {
+    const stools = JSON.parse(json);
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+    return stools.some(s => s.timestamp >= start && s.timestamp < end);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Vérifier si le mode rémission est actif
+ */
+function isRemissionMode() {
+  return storage.getString('trackingMode') === 'remission';
 }
 
 /**
@@ -117,23 +138,24 @@ export async function sendTestNotification() {
 export function getNotificationSettings() {
   const json = storage.getString('notificationSettings');
   
-  if (!json) {
-    return {
-      enabled: false,
-      surveyReminder1: { enabled: true, hour: 9, minute: 0 },
-      surveyReminder2: { enabled: true, hour: 20, minute: 0 },
-    };
-  }
-  
+  const defaults = {
+    enabled: false,
+    surveyReminder1: { enabled: true, hour: 9, minute: 0 },
+    stoolReminder: { enabled: true, hour: 20, minute: 0 },
+  };
+
+  if (!json) return defaults;
+
   try {
-    return JSON.parse(json);
+    const saved = JSON.parse(json);
+    if (saved.surveyReminder2 && !saved.stoolReminder) {
+      saved.stoolReminder = saved.surveyReminder2;
+      delete saved.surveyReminder2;
+    }
+    return { ...defaults, ...saved };
   } catch (error) {
     console.error('Erreur lors de la lecture des paramètres:', error);
-    return {
-      enabled: false,
-      surveyReminder1: { enabled: true, hour: 9, minute: 0 },
-      surveyReminder2: { enabled: true, hour: 20, minute: 0 },
-    };
+    return defaults;
   }
 }
 
@@ -185,9 +207,9 @@ export function disableNotifications() {
   cancelAllReminders();
 }
 
-// Variables pour stocker les timers des rappels
-let reminder1Timer = null;
-let reminder2Timer = null;
+// Timers des rappels
+let surveyReminderTimer = null;
+let stoolReminderTimer = null;
 
 /**
  * Calculer le délai en millisecondes jusqu'à une heure donnée
@@ -196,53 +218,53 @@ function getDelayUntilTime(hour, minute) {
   const now = new Date();
   const target = new Date();
   target.setHours(hour, minute, 0, 0);
-  
-  // Si l'heure est déjà passée aujourd'hui, programmer pour demain
-  if (target <= now) {
-    target.setDate(target.getDate() + 1);
-  }
-  
+  if (target <= now) target.setDate(target.getDate() + 1);
   return target.getTime() - now.getTime();
 }
 
 /**
- * Planifier un rappel quotidien
+ * Planifier le rappel bilan (matin)
  */
-function scheduleReminder(reminderNumber, hour, minute) {
-  console.log(`📅 Planification du rappel ${reminderNumber} à ${hour}:${minute}`);
-  
+function scheduleSurveyReminderWeb(hour, minute) {
+  if (surveyReminderTimer) clearTimeout(surveyReminderTimer);
+
   const scheduleNext = () => {
     const delay = getDelayUntilTime(hour, minute);
-    console.log(`⏰ Prochain rappel ${reminderNumber} dans ${Math.round(delay / 1000 / 60)} minutes`);
-    
-    const timer = setTimeout(() => {
-      // Vérifier si le bilan est complété
-      if (!isSurveyCompletedToday()) {
-        const title = reminderNumber === 1 
-          ? '📊 Bilan quotidien'
-          : '⏰ Rappel bilan quotidien';
-        const body = reminderNumber === 1
-          ? "C'est le moment de compléter votre bilan du jour."
-          : "Vous avez oublié de compléter votre bilan.";
-        
-        showWebNotification(title, body, {
-          type: 'SURVEY_REMINDER',
-          reminderNumber,
-          action: 'OPEN_SURVEY'
-        });
+    surveyReminderTimer = setTimeout(() => {
+      if (!isRemissionMode() && !isSurveyCompletedToday()) {
+        showWebNotification(
+          '📋 Bilan du jour',
+          'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
+          { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' }
+        );
       }
-      
-      // Reprogrammer pour le lendemain
       scheduleNext();
     }, delay);
-    
-    if (reminderNumber === 1) {
-      reminder1Timer = timer;
-    } else {
-      reminder2Timer = timer;
-    }
   };
-  
+
+  scheduleNext();
+}
+
+/**
+ * Planifier le rappel selles (soir)
+ */
+function scheduleStoolReminderWeb(hour, minute) {
+  if (stoolReminderTimer) clearTimeout(stoolReminderTimer);
+
+  const scheduleNext = () => {
+    const delay = getDelayUntilTime(hour, minute);
+    stoolReminderTimer = setTimeout(() => {
+      if (!isRemissionMode() && !isStoolLoggedToday()) {
+        showWebNotification(
+          '📝 Selles du jour',
+          "N'oubliez pas de saisir vos selles d'aujourd'hui.",
+          { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' }
+        );
+      }
+      scheduleNext();
+    }, delay);
+  };
+
   scheduleNext();
 }
 
@@ -251,24 +273,15 @@ function scheduleReminder(reminderNumber, hour, minute) {
  */
 export function scheduleAllReminders() {
   const settings = getNotificationSettings();
-  
-  if (!settings.enabled) {
-    console.log('⚠️ Notifications désactivées');
-    return;
-  }
-  
-  console.log('📅 Planification de tous les rappels...');
-  
-  // Annuler les rappels existants
+  if (!settings.enabled) return;
+
   cancelAllReminders();
-  
-  // Planifier les nouveaux rappels
+
   if (settings.surveyReminder1.enabled) {
-    scheduleReminder(1, settings.surveyReminder1.hour, settings.surveyReminder1.minute);
+    scheduleSurveyReminderWeb(settings.surveyReminder1.hour, settings.surveyReminder1.minute);
   }
-  
-  if (settings.surveyReminder2.enabled) {
-    scheduleReminder(2, settings.surveyReminder2.hour, settings.surveyReminder2.minute);
+  if (settings.stoolReminder?.enabled) {
+    scheduleStoolReminderWeb(settings.stoolReminder.hour, settings.stoolReminder.minute);
   }
 }
 
@@ -276,17 +289,8 @@ export function scheduleAllReminders() {
  * Annuler tous les rappels
  */
 export function cancelAllReminders() {
-  console.log('🗑️ Annulation de tous les rappels...');
-  
-  if (reminder1Timer) {
-    clearTimeout(reminder1Timer);
-    reminder1Timer = null;
-  }
-  
-  if (reminder2Timer) {
-    clearTimeout(reminder2Timer);
-    reminder2Timer = null;
-  }
+  if (surveyReminderTimer) { clearTimeout(surveyReminderTimer); surveyReminderTimer = null; }
+  if (stoolReminderTimer) { clearTimeout(stoolReminderTimer); stoolReminderTimer = null; }
 }
 
 // Initialiser les rappels au chargement de la page
