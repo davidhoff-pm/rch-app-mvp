@@ -18,12 +18,12 @@ export default function StatCard({
   
   const getColor = () => {
     switch (color) {
-      case 'success': return '#16A34A'; // Vert pastel pour amélioration/minimum
+      case 'success': return '#397852'; // Vert pastel pour amélioration/minimum
       case 'warning': return theme.colors.warning;
-      case 'error': return '#DC2626'; // Rouge pastel pour dégradation/maximum
+      case 'error': return '#C0392B'; // Rouge pastel pour dégradation/maximum
       case 'info': return theme.colors.info;
-      case 'improvement': return '#16A34A'; // Vert pastel
-      case 'decline': return '#DC2626'; // Rouge pastel
+      case 'improvement': return '#397852'; // Vert pastel
+      case 'decline': return '#C0392B'; // Rouge pastel
       default: return theme.colors.primary;
     }
   };
@@ -53,8 +53,8 @@ export default function StatCard({
       <Card.Content style={styles.content}>
         <View style={styles.header}>
           <View style={[styles.iconContainer, { 
-            backgroundColor: (color === 'success' || color === 'improvement') ? '#D1FAE5' : 
-                            (color === 'error' || color === 'decline') ? '#FEE2E2' : 
+            backgroundColor: (color === 'success' || color === 'improvement') ? '#D7F4E0' : 
+                            (color === 'error' || color === 'decline') ? '#FBE3DF' : 
                             getColor() + '15' 
           }]}>
             <MaterialCommunityIcons name={icon} size={28} color={getColor()} />
@@ -93,29 +93,29 @@ export default function StatCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 20,
-    borderRadius: 24, // Augmenté à 24px (borderRadius.xl) pour plus de modernité
+    marginBottom: 16,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    borderColor: '#E6E0DA', // bordure beige chaude
+    shadowColor: '#5E402F', // ombre douce chaude
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
     elevation: 2,
   },
   content: {
-    padding: 24, // Augmenté de 20px à 24px
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20, // Augmenté de 16px à 20px
+    marginBottom: 16,
   },
   iconContainer: {
-    width: 56, // Augmenté de 48px à 56px (touch target)
-    height: 56,
-    borderRadius: 20, // Augmenté de 16px à 20px (borderRadius.lg)
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 6,
     fontWeight: '500',
   },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     lineHeight: 44,
   },
   subtitle: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     fontWeight: '400',
   },
 });

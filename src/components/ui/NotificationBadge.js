@@ -56,7 +56,7 @@ const NotificationBadge = ({ count = 0, size = 'medium' }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: '#DC2626', // Rouge pour attirer l'attention
+    backgroundColor: '#C0392B', // Rouge pour attirer l'attention
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',

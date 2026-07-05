@@ -187,8 +187,83 @@ eas update:list
 
 ---
 
+## 🏪 Publication sur les stores (Google Play & App Store)
+
+> Objectif : passer de la distribution interne à une **publication publique** sur les stores.
+> Cette section liste les étapes à suivre **une fois les comptes développeur créés**.
+
+### Prérequis (comptes à créer)
+
+| Store | Compte | Coût | Délai de validation |
+|-------|--------|------|---------------------|
+| Google Play | [Google Play Console](https://play.google.com/console) | 25 $ (unique) | quelques heures à 2 jours |
+| App Store | [Apple Developer Program](https://developer.apple.com/programs/) | 99 $/an | 1 à 3 jours |
+
+### Étape 0 : lier le projet à votre compte Expo
+
+1. Créez un compte sur [expo.dev](https://expo.dev) puis `eas login`.
+2. Ajoutez le champ `owner` dans `app.json` (`expo.owner`) avec **votre nom d'utilisateur Expo**
+   (indispensable pour les builds et updates rattachés à votre compte). Exemple :
+   ```json
+   { "expo": { "owner": "votre-username-expo", "...": "..." } }
+   ```
+   ⚠️ Ne pas inventer cette valeur : elle doit correspondre exactement au compte Expo.
+3. Vérifiez que `extra.eas.projectId` (déjà présent) pointe bien vers votre projet.
+
+### Étape 1 : builds de production
+
+```bash
+# Android : génère un AAB (App Bundle) pour le Play Store
+eas build --platform android --profile production
+
+# iOS : génère un IPA signé pour l'App Store (nécessite le compte Apple Developer)
+eas build --platform ios --profile production
+```
+
+Le profil `production` (voir `eas.json`) est configuré avec `android.buildType: "app-bundle"`
+(format requis par le Play Store) et `autoIncrement` (incrémente automatiquement le build number).
+
+### Étape 2 : première soumission
+
+#### Google Play
+1. Dans la Play Console, créez l'application (nom, description, catégorie **Médical**, captures d'écran).
+2. Générez un **compte de service** (Google Cloud → IAM) et téléchargez son fichier JSON ;
+   renseignez son chemin dans `eas.json` → `submit.production.android`.
+3. Soumettez :
+   ```bash
+   eas submit --platform android --profile production --latest
+   ```
+   La première soumission peut aussi se faire manuellement en uploadant l'AAB dans la Play Console.
+
+#### App Store
+1. Dans [App Store Connect](https://appstoreconnect.apple.com), créez la fiche app
+   (bundle `com.rchsuivi.app`, déjà défini dans `app.json`).
+2. Renseignez `appleId`, `ascAppId`, `appleTeamId` dans `eas.json` → `submit.production.ios`.
+3. Soumettez :
+   ```bash
+   eas submit --platform ios --profile production --latest
+   ```
+
+### Étape 3 : mises à jour ultérieures
+
+- **Corrections JS/UI** → `eas update --branch production` (OTA, sans repasser par les stores).
+- **Nouvelles dépendances natives / changement de permissions / nouvelle version** →
+  rebuild `production` puis nouvelle soumission `eas submit`.
+
+### ⚠️ Points d'attention réglementaires (santé)
+
+Cette app manipule des **données de santé**. Avant une publication publique, prévoir :
+- une **politique de confidentialité** (URL obligatoire sur les deux stores) ;
+- le questionnaire **Data safety** (Google Play) / **App Privacy** (Apple) — préciser que les
+  données restent **stockées localement** sur l'appareil ;
+- un **disclaimer médical** clair (déjà présent dans le README) : l'app n'est pas un dispositif
+  médical certifié.
+
+---
+
 ## 📞 Besoin d'aide ?
 
 - Documentation EAS : https://docs.expo.dev/eas/
+- Soumission stores : https://docs.expo.dev/submit/introduction/
 - Discord Expo : https://chat.expo.dev
 

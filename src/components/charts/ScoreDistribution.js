@@ -54,7 +54,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '0-3',
           count: excellent,
           percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
-          color: '#4C4DDC', // Color 01
+          color: '#C16046', // Color 01
           icon: 'circle'
         },
         {
@@ -62,7 +62,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '4-9',
           count: acceptable,
           percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
-          color: '#4C4DDC', // Color 01
+          color: '#C16046', // Color 01
           icon: 'circle'
         },
         {
@@ -70,7 +70,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '10+',
           count: preoccupant,
           percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
-          color: '#101010', // Color 03 - Noir pour alertes
+          color: '#312620', // Color 03 - Noir pour alertes
           icon: 'circle'
         }
       ];
@@ -87,7 +87,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '0-3',
           count: bon,
           percentage: total > 0 ? ((bon / total) * 100).toFixed(0) : 0,
-          color: '#4C4DDC', // Color 01
+          color: '#C16046', // Color 01
           icon: 'circle'
         },
         {
@@ -95,7 +95,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '4-6',
           count: moyen,
           percentage: total > 0 ? ((moyen / total) * 100).toFixed(0) : 0,
-          color: '#4C4DDC', // Color 01
+          color: '#C16046', // Color 01
           icon: 'circle'
         },
         {
@@ -103,7 +103,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '7+',
           count: eleve,
           percentage: total > 0 ? ((eleve / total) * 100).toFixed(0) : 0,
-          color: '#101010', // Color 03 - Noir pour alertes
+          color: '#312620', // Color 03 - Noir pour alertes
           icon: 'circle'
         }
       ];
@@ -113,7 +113,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
-        <MaterialCommunityIcons name="chart-bar" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
+        <MaterialCommunityIcons name="chart-bar" size={28} color="#C16046" style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
           {dataType === 'score' ? 'Répartition des Scores' : 'Répartition des Selles'}
         </AppText>
@@ -127,9 +127,9 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
       {/* Barres d'histogramme */}
       <View style={styles.chartContainer}>
         {distribution.filter(d => d.count > 0).map((item) => {
-          let barColor = '#4C4DDC'; // Color 01
-          if (item.score >= 10) barColor = '#101010'; // Color 03 - Noir pour alertes
-          else if (item.score >= 4) barColor = '#4C4DDC'; // Color 01
+          let barColor = '#C16046'; // Color 01
+          if (item.score >= 10) barColor = '#312620'; // Color 03 - Noir pour alertes
+          else if (item.score >= 4) barColor = '#C16046'; // Color 01
 
           return (
             <View key={item.score} style={styles.barContainer}>
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   titleContainer: {
     flexDirection: 'row',
@@ -199,11 +199,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '700',
   },
   subtitle: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     marginBottom: 20,
   },
   chartContainer: {
@@ -233,12 +233,12 @@ const styles = StyleSheet.create({
     minHeight: 4,
   },
   barValue: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '600',
     marginTop: 4,
   },
   barLabel: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
     marginTop: 4,
     fontWeight: '600',
   },
@@ -248,12 +248,12 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     flex: 1,
-    backgroundColor: '#EDEDFC', // Color 02
+    backgroundColor: '#FFF3EE', // Color 02
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4', // Color 04
+    borderColor: '#E6E0DA', // Color 04
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryRange: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '700',
   },
   categoryPercentage: {
@@ -273,12 +273,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   categoryLabel: {
-    color: '#101010', // Color 03
+    color: '#312620', // Color 03
     fontWeight: '600',
     marginBottom: 2,
   },
   categoryCount: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
   },
 });
 

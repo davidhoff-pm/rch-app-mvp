@@ -2,20 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
-import NotificationBadge from '../ui/NotificationBadge';
 import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
 import { useSpeedDial } from '../../contexts/SpeedDialContext';
 import { buttonPressFeedback } from '../../utils/haptics';
-import usePendingQuestionnaires from '../../hooks/usePendingQuestionnaires';
-import usePendingTreatments from '../../hooks/usePendingTreatments';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const { openModal } = useStoolModal();
   const { handlers } = useSpeedDial();
   const { colors } = designSystem;
-  const pendingQuestionnairesCount = usePendingQuestionnaires();
-  const pendingTreatmentsCount = usePendingTreatments();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -230,14 +225,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
               size={24}
               color={isFocused ? colors.primary[500] : colors.text.tertiary}
             />
-            {/* Badge pour l'onglet Bilan */}
-            {route.name === 'Bilan' && (
-              <NotificationBadge count={pendingQuestionnairesCount} size="medium" />
-            )}
-            {/* Badge pour l'onglet Traitement */}
-            {route.name === 'Traitement' && (
-              <NotificationBadge count={pendingTreatmentsCount} size="medium" />
-            )}
+            {/* Les rappels (bilan / traitement) sont désormais affichés sur l'écran d'accueil */}
           </View>
           <AppText
             variant="caption"
@@ -296,7 +284,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#4C4DDC' }]}
+                  style={[styles.secondaryButton, { backgroundColor: designSystem.colors.primary[500] }]}
                   onPress={handleStoolPress}
                   activeOpacity={0.8}
                 >
@@ -317,7 +305,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#DC2626' }]}
+                  style={[styles.secondaryButton, { backgroundColor: '#C0392B' }]}
                   onPress={handleSymptomPress}
                   activeOpacity={0.8}
                 >
@@ -338,7 +326,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#F59E0B' }]}
+                  style={[styles.secondaryButton, { backgroundColor: designSystem.colors.accent[500] }]}
                   onPress={handleNotePress}
                   activeOpacity={0.8}
                 >
@@ -399,14 +387,14 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: Platform.OS === 'ios' ? 88 : 72,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    paddingTop: 8,
-    paddingHorizontal: 8,
-    borderTopWidth: 0,
-    backgroundColor: designSystem.colors.background.tertiary,
-    ...designSystem.shadows.xl,
-    alignItems: 'center',
+    height: Platform.OS === 'ios' ? 96 : 82,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 14,
+    paddingTop: 12,
+    paddingHorizontal: 10,
+    borderTopWidth: 1,
+    borderTopColor: designSystem.colors.border.light,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'flex-start',
     justifyContent: 'space-around',
     zIndex: 2,
   },
@@ -420,16 +408,14 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: designSystem.borderRadius.lg,
-    minWidth: 60,
+    paddingVertical: 2,
+    gap: 5,
+    minWidth: 56,
   },
   tabContentFocused: {
-    backgroundColor: designSystem.colors.primary[50],
+    // Actif = simple couleur terracotta (pas de pastille)
   },
   tabLabel: {
-    marginTop: 2,
     fontWeight: '600',
     fontSize: 11,
   },
@@ -446,15 +432,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   centralButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 58,
+    height: 58,
+    borderRadius: 20,
     backgroundColor: designSystem.colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: -24,
     marginBottom: 8,
-    ...designSystem.shadows.lg,
-    elevation: 8,
+    ...designSystem.shadows.terracotta,
     zIndex: 3,
   },
   secondaryButtonWrapper: {

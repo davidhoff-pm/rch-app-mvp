@@ -354,7 +354,7 @@ const IBDiskQuestionnaireScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
   },
   headerCard: {
     margin: 20,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressText: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   scaleContainer: {
     marginTop: 8,
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   scoreLabel: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   markerText: {
-    color: '#94A3B8',
+    color: '#A99B93',
     fontWeight: '600',
     fontSize: 10,
     textAlign: 'center',
@@ -480,14 +480,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#E2E8F0',
   },
   scaleLabelLeft: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
     textAlign: 'left',
   },
   scaleLabelRight: {
-    color: '#101010', // Noir pour meilleure lisibilité
+    color: '#312620', // Noir pour meilleure lisibilité
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',

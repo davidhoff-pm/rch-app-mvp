@@ -46,3 +46,9 @@ yarn-error.*
 
 # OS
 Thumbs.db
+
+# Backlog local (US gérées hors versionnement)
+backlog/
+
+# Claude Code (config locale de l'agent)
+.claude/

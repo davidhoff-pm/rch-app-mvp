@@ -14,7 +14,6 @@ import EmptyState from '../components/ui/EmptyState';
 import DateTimePicker from '../components/ui/DateTimePicker';
 import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
-import CalendarSection from '../components/home/CalendarSection';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -24,32 +23,14 @@ import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
 import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 import { useStoolModal } from '../contexts/StoolModalContext';
-import SegmentedControl from '../components/ui/SegmentedControl';
-import AnimatedListItem from '../components/ui/AnimatedListItem';
-import IBDiskChart from '../components/charts/IBDiskChart';
-import { deleteFeedback } from '../utils/haptics';
+import ActionCard from '../components/home/ActionCard';
+import usePendingTreatments from '../hooks/usePendingTreatments';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
 import { useSpeedDial } from '../contexts/SpeedDialContext';
-import {
-  getSymptoms,
-  createSymptom,
-  updateSymptom,
-  deleteSymptom,
-  getSymptomDisplayName,
-  INTENSITY_LABELS,
-} from '../utils/symptomsUtils';
-import {
-  getNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-  getCategoryLabel,
-} from '../utils/notesUtils';
 
 // Hooks personnalisés
 import { useHistoryData } from '../hooks/useHistoryData';
-import { useStoolManagement } from '../hooks/useStoolManagement';
 import { useSymptomManagement } from '../hooks/useSymptomManagement';
 import { useNoteManagement } from '../hooks/useNoteManagement';
 
@@ -64,9 +45,6 @@ export default function HomeScreen({ route }) {
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
-  const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
-  const [calendarMode, setCalendarMode] = useState('score');
-  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
 
@@ -95,11 +73,29 @@ export default function HomeScreen({ route }) {
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
 
-  const [historyFilter, setHistoryFilter] = useState('stools'); // 'stools', 'symptoms', 'notes'
 
-  // Hook pour gérer les données d'historique
-  const historyData = useHistoryData();
-  const { stools, scores, treatments, ibdiskHistory, symptoms, notes, loadHistoryData } = historyData;
+  // Chargement des données (utilisé pour rafraîchir après ajout via le bouton +)
+  const { loadHistoryData } = useHistoryData();
+
+  // Nombre de prises de traitement en attente (pour la section "À faire")
+  const pendingTreatmentsCount = usePendingTreatments();
+
+  // Salutation selon l'heure + date du jour
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 6) return 'Bonne nuit';
+    if (h < 18) return 'Bonjour';
+    return 'Bonsoir';
+  }, []);
+
+  const todayLabel = useMemo(() => {
+    const label = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }, []);
 
   // Toast helper
   const showToast = (message, type = 'success') => {
@@ -108,15 +104,7 @@ export default function HomeScreen({ route }) {
     setToastVisible(true);
   };
 
-  // Hook pour gérer les selles
-  const stoolManagement = useStoolManagement({
-    onDataChange: () => {
-      loadHistoryData();
-      setDailyCount(computeTodayCount());
-    }
-  });
-
-  // Hook pour gérer les symptômes
+  // Hook pour gérer les symptômes (ajout via le bouton + de la barre de navigation)
   const symptomManagement = useSymptomManagement({
     onDataChange: loadHistoryData,
     showToast
@@ -341,58 +329,6 @@ export default function HomeScreen({ route }) {
 
   const hideModal = () => {
     closeModal();
-  };
-
-  const formatCompactDate = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const isToday = date.toDateString() === today.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-    if (isToday) return `Aujourd'hui ${time}`;
-    if (isYesterday) return `Hier ${time}`;
-
-    return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
-  };
-
-  // Format date sans heure (pour symptômes et notes)
-  const formatCompactDateOnly = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const isToday = date.toDateString() === today.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    if (isToday) return `Aujourd'hui`;
-    if (isYesterday) return `Hier`;
-
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-  };
-
-  const getBristolColor = (bristol) => {
-    if (bristol <= 2) return '#4C4DDC';
-    if (bristol <= 4) return '#4C4DDC';
-    if (bristol <= 5) return '#C8C8F4';
-    return '#101010';
-  };
-
-  const handlePreviousIbdisk = () => {
-    if (currentIbdiskIndex < ibdiskHistory.length - 1) {
-      setCurrentIbdiskIndex(currentIbdiskIndex + 1);
-    }
-  };
-
-  const handleNextIbdisk = () => {
-    if (currentIbdiskIndex > 0) {
-      setCurrentIbdiskIndex(currentIbdiskIndex - 1);
-    }
   };
 
   // Fonctions pour la modale de traitement
@@ -656,139 +592,233 @@ export default function HomeScreen({ route }) {
     }
   };
 
+  // Construire la liste des tâches en attente (la 1re est mise en avant en terracotta)
+  const pendingTasks = [];
+  if (!surveyCompleted) {
+    pendingTasks.push({
+      key: 'bilan',
+      title: 'Bilan quotidien',
+      description: 'Renseignez vos symptômes du jour',
+      badge: '2 min',
+      icon: 'clipboard-text-outline',
+      accent: 'primary',
+      onPress: navigateToSurvey,
+    });
+  }
+  if (ibdiskAvailable) {
+    pendingTasks.push({
+      key: 'ibdisk',
+      title: 'Questionnaire IBDisk',
+      description: 'Évaluez votre qualité de vie',
+      badge: 'Mensuel',
+      icon: 'chart-box-outline',
+      accent: 'gold',
+      onPress: () => navigation.navigate('IBDiskQuestionnaire'),
+    });
+  }
+  if (pendingTreatmentsCount > 0) {
+    pendingTasks.push({
+      key: 'treatment',
+      title: 'Traitement à prendre',
+      description: `${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`,
+      badge: `${pendingTreatmentsCount}`,
+      icon: 'pill',
+      accent: 'primary',
+      onPress: () => navigation.navigate('Traitement'),
+    });
+  }
+
+  // Statut clinique dérivé du score du jour
+  const status = todayProvisionalScore == null
+    ? { label: 'Pas encore de score', color: designSystem.colors.text.tertiary }
+    : todayProvisionalScore <= 4
+      ? { label: 'En rémission', color: designSystem.colors.health.excellent.main }
+      : todayProvisionalScore <= 10
+        ? { label: 'Activité modérée', color: designSystem.colors.health.moderate.main }
+        : { label: 'Poussée', color: designSystem.colors.health.danger.main };
+
+  const scoreTone = todayProvisionalScore == null
+    ? { label: '—', color: designSystem.colors.text.tertiary, bg: designSystem.colors.background.secondary }
+    : todayProvisionalScore < 5
+      ? { label: 'Faible', color: designSystem.colors.health.excellent.main, bg: designSystem.colors.health.excellent.light }
+      : todayProvisionalScore <= 10
+        ? { label: 'Modéré', color: designSystem.colors.health.moderate.main, bg: designSystem.colors.health.moderate.light }
+        : { label: 'Élevé', color: designSystem.colors.health.danger.main, bg: designSystem.colors.health.danger.light };
+
+  const shortDate = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+
+  const secondaryAccentStyle = (accent) => accent === 'gold'
+    ? { bg: designSystem.colors.accent[100], color: designSystem.colors.accent[500] }
+    : { bg: designSystem.colors.primary[100], color: designSystem.colors.primary[500] };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView 
-        style={styles.scrollView} 
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <View>
+          <AppText style={styles.topEyebrow}>MON SUIVI</AppText>
+          <AppText style={styles.topTitle}>Accueil</AppText>
+        </View>
+        <View style={styles.topActions}>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Insights')} accessibilityLabel="Insights">
+            <MaterialCommunityIcons name="brain" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Export')} accessibilityLabel="Export">
+            <MaterialCommunityIcons name="file-document-outline" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Paramètres')} accessibilityLabel="Paramètres">
+            <MaterialCommunityIcons name="cog-outline" size={19} color={designSystem.colors.text.secondary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section Aujourd'hui */}
-        <AppCard style={styles.todaySection}>
-          <View style={styles.sectionHeader}>
-            <HealthIcon name="calendar" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Aujourd'hui
-            </AppText>
+        {/* Greeting */}
+        <View style={styles.greetingBlock}>
+          <AppText style={styles.greetingText}>{greeting}</AppText>
+          <View style={styles.greetingMeta}>
+            <AppText style={styles.dateText}>{todayLabel}</AppText>
+            <View style={styles.metaDot} />
+            <AppText style={[styles.statusText, { color: status.color }]}>{status.label}</AppText>
           </View>
+        </View>
 
-          <View style={styles.todayStatsRow}>
-            {/* Selles */}
-            <View style={[styles.todayStat, styles.todayStatLeft]}>
-              <View style={styles.todayStatIcon}>
-                <MaterialCommunityIcons name="toilet" size={Platform.OS === 'web' ? 32 : 28} color="#4C4DDC" />
-              </View>
-              <View style={styles.todayStatContent}>
-                <AppText variant="labelMedium" style={styles.todayStatLabel}>
-                  Selles
-                </AppText>
-                <AppText variant="displayMedium" style={styles.todayStatValue}>
-                  {dailyCount}
-                </AppText>
-              </View>
+        {/* À faire aujourd'hui */}
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionHeaderLeft}>
+            <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={17} color={designSystem.colors.primary[500]} />
+            <AppText style={styles.sectionHeaderTitle}>À faire aujourd'hui</AppText>
+          </View>
+          {pendingTasks.length > 0 && (
+            <View style={styles.countPill}>
+              <AppText style={styles.countPillText}>{pendingTasks.length} tâche{pendingTasks.length > 1 ? 's' : ''}</AppText>
             </View>
+          )}
+        </View>
 
-            {/* Score */}
-            <View
-              style={[styles.todayStat, styles.todayStatRight]}
-              {...(Platform.OS === 'web' && {
-                onMouseEnter: () => setScoreTooltipVisible(true),
-                onMouseLeave: () => setScoreTooltipVisible(false),
-              })}
-            >
-              <View style={styles.todayStatIcon}>
-                <MaterialCommunityIcons
-                  name="chart-bar"
-                  size={Platform.OS === 'web' ? 32 : 28}
-                  color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? '#16A34A' : todayProvisionalScore <= 10 ? '#F59E0B' : '#DC2626') : '#A3A3A3'}
-                />
-              </View>
-              <View style={styles.todayStatContent}>
-                <View style={styles.todayScoreHeader}>
-                  <AppText variant="labelMedium" style={styles.todayStatLabel}>
-                    Score
-                  </AppText>
-                  {Platform.OS === 'web' && (
-                    <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
-                  )}
-                </View>
-                <AppText variant="displayMedium" style={[
-                  styles.todayStatValue,
-                  todayProvisionalScore !== null && (
-                    todayProvisionalScore < 5 ? styles.scoreGood :
-                    todayProvisionalScore <= 10 ? styles.scoreWarning :
-                    styles.scoreError
-                  )
-                ]}>
-                  {todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
-                </AppText>
-              </View>
-
-              {/* Tooltip au survol (web uniquement) */}
-              {Platform.OS === 'web' && scoreTooltipVisible && (
-                <>
-                  <Animated.View
-                    style={[
-                      styles.scoreTooltip,
-                      {
-                        opacity: tooltipOpacity,
-                        transform: [{ scale: tooltipScale }],
-                      },
-                    ]}
-                    pointerEvents="none"
-                  >
-                    <View style={styles.scoreTooltipHeader}>
-                      <MaterialCommunityIcons name="chart-line" size={14} color="#4C4DDC" />
-                      <AppText variant="labelSmall" style={styles.scoreTooltipTitle}>
-                        Score de Lichtiger
-                      </AppText>
+        {pendingTasks.length > 0 ? (
+          <View style={styles.todoList}>
+            {pendingTasks.map((task, index) => {
+              const isPrimary = index === 0;
+              if (isPrimary) {
+                return (
+                  <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
+                    <View style={styles.taskPrimaryIcon}>
+                      <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
                     </View>
-                    <AppText variant="labelSmall" style={styles.scoreTooltipText}>
-                      Évalue l'activité de la maladie
-                    </AppText>
-                    <View style={styles.scoreTooltipScale}>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • 0-4 : Rémission
-                      </AppText>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • 5-10 : Modérée
-                      </AppText>
-                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
-                        • {'>'} 10 : Sévère
-                      </AppText>
+                    <View style={styles.taskTextWrap}>
+                      <View style={styles.taskTitleRow}>
+                        <AppText style={styles.taskPrimaryTitle}>{task.title}</AppText>
+                        <View style={styles.taskPrimaryBadge}>
+                          <AppText style={styles.taskPrimaryBadgeText}>{task.badge}</AppText>
+                        </View>
+                      </View>
+                      <AppText style={styles.taskPrimaryDesc}>{task.description}</AppText>
                     </View>
-                  </Animated.View>
-
-                  {/* Flèche du tooltip */}
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[
-                      styles.scoreTooltipArrow,
-                      {
-                        opacity: tooltipOpacity,
-                        transform: [{ scale: tooltipScale }],
-                      },
-                    ]}
-                  />
-                </>
-              )}
+                    <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
+                  </TouchableOpacity>
+                );
+              }
+              const tint = secondaryAccentStyle(task.accent);
+              return (
+                <TouchableOpacity key={task.key} style={styles.taskSecondary} onPress={task.onPress} activeOpacity={0.85}>
+                  <View style={[styles.taskSecondaryIcon, { backgroundColor: tint.bg }]}>
+                    <MaterialCommunityIcons name={task.icon} size={24} color={tint.color} />
+                  </View>
+                  <View style={styles.taskTextWrap}>
+                    <View style={styles.taskTitleRow}>
+                      <AppText style={styles.taskSecondaryTitle}>{task.title}</AppText>
+                      <View style={[styles.taskSecondaryBadge, { backgroundColor: tint.bg }]}>
+                        <AppText style={[styles.taskSecondaryBadgeText, { color: tint.color }]}>{task.badge}</AppText>
+                      </View>
+                    </View>
+                    <AppText style={styles.taskSecondaryDesc}>{task.description}</AppText>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={designSystem.colors.text.tertiary} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.allDoneCard}>
+            <View style={styles.allDoneIcon}>
+              <MaterialCommunityIcons name="check" size={22} color={designSystem.colors.health.excellent.main} />
+            </View>
+            <View style={styles.taskTextWrap}>
+              <AppText style={styles.allDoneTitle}>Tout est à jour</AppText>
+              <AppText style={styles.allDoneSubtitle}>Aucune action requise aujourd'hui</AppText>
             </View>
           </View>
-        </AppCard>
+        )}
 
-
-        {/* Actualités de l'association MICI */}
-        <AppCard style={styles.newsCard}>
-          <View style={styles.newsHeader}>
-            <HealthIcon name="report" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.newsTitle}>
-              Actualités AFA
-            </AppText>
+        {/* Aujourd'hui */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
+          <AppText style={styles.sectionHeaderTitle}>Aujourd'hui</AppText>
+          <View style={styles.sectionHeaderLeft}>
+            <MaterialCommunityIcons name="calendar-blank-outline" size={14} color={designSystem.colors.text.secondary} />
+            <AppText style={styles.datePillText}>{shortDate}</AppText>
           </View>
-          <AppText variant="bodyMedium" style={styles.newsDescription}>
-            Découvrez les dernières actualités de l'Association François Aupetit (AFA)
-          </AppText>
-          
+        </View>
+
+        <View style={styles.statGrid}>
+          {/* Selles */}
+          <View style={styles.statCard}>
+            <View style={styles.statCardTop}>
+              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
+                <MaterialCommunityIcons name="toilet" size={21} color={designSystem.colors.primary[500]} />
+              </View>
+              <AppText style={styles.statLabel}>SELLES</AppText>
+            </View>
+            <View style={styles.statCardBottom}>
+              <View style={styles.statValueRow}>
+                <AppText style={styles.statValue}>{dailyCount}</AppText>
+                <AppText style={styles.statUnit}>/ jour</AppText>
+              </View>
+              <TouchableOpacity style={styles.statAddBtn} onPress={showModal} activeOpacity={0.85} accessibilityLabel="Ajouter une selle">
+                <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Score */}
+          <View style={styles.statCard}>
+            <View style={styles.statCardTop}>
+              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.health.excellent.light }]}>
+                <MaterialCommunityIcons name="pulse" size={21} color={designSystem.colors.health.excellent.main} />
+              </View>
+              <View style={styles.statLabelRow}>
+                <AppText style={styles.statLabel}>SCORE</AppText>
+                <MaterialCommunityIcons name="information-outline" size={13} color={designSystem.colors.text.tertiary} />
+              </View>
+            </View>
+            <View style={styles.statCardBottom}>
+              <View style={styles.statValueRow}>
+                <AppText style={[styles.statValue, { color: scoreTone.color }]}>
+                  {todayProvisionalScore != null ? todayProvisionalScore : '—'}
+                </AppText>
+                <AppText style={styles.statUnit}>/ 12</AppText>
+              </View>
+              <View style={[styles.scorePill, { backgroundColor: scoreTone.bg }]}>
+                <AppText style={[styles.scorePillText, { color: scoreTone.color }]}>{scoreTone.label}</AppText>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Actualités AFA */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
+          <AppText style={styles.sectionHeaderTitle}>Actualités AFA</AppText>
+          <TouchableOpacity onPress={() => openArticle('https://www.afa.asso.fr/')}>
+            <AppText style={styles.seeAllText}>Tout voir</AppText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.newsCard}>
+
           {rssLoading ? (
             <SkeletonCard count={3} />
           ) : rssArticles.length > 0 ? (
@@ -829,344 +859,8 @@ export default function HomeScreen({ route }) {
               </AppText>
             </View>
           )}
-          
-          <PrimaryButton 
-            onPress={() => openArticle('https://www.afa.asso.fr/')}
-            variant="primary"
-            outlined
-            style={styles.newsButton}
-            icon="open-in-new"
-          >
-            Voir toutes les actualités
-          </PrimaryButton>
-        </AppCard>
+        </View>
 
-        {/* Section Historique */}
-        <AppCard style={styles.historySection}>
-          <View style={styles.sectionHeader}>
-            <HealthIcon name="journal" size={28} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Historique
-            </AppText>
-          </View>
-
-          {/* Onglets de filtrage */}
-          <View style={styles.historyTabsContainer}>
-            <SegmentedControl
-              options={[
-                { value: 'stools', label: 'Selles' },
-                { value: 'symptoms', label: 'Symptômes' },
-                { value: 'notes', label: 'Notes' }
-              ]}
-              selectedValue={historyFilter}
-              onValueChange={setHistoryFilter}
-            />
-          </View>
-
-          {/* Liste filtrée */}
-          {(() => {
-            // Filtrer les entrées selon l'onglet sélectionné
-            let filteredEntries = [];
-
-            if (historyFilter === 'stools') {
-              filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, entryType: 'stool' }))];
-            }
-            if (historyFilter === 'symptoms') {
-              filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, entryType: 'symptom' }))];
-            }
-            if (historyFilter === 'notes') {
-              filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, entryType: 'note' }))];
-            }
-
-            // Trier par timestamp
-            filteredEntries.sort((a, b) => b.timestamp - a.timestamp);
-
-            // Limiter à 20 entrées
-            filteredEntries = filteredEntries.slice(0, 20);
-
-            if (filteredEntries.length === 0) {
-              let emptyMessage = '';
-              if (historyFilter === 'stools') emptyMessage = 'Aucune selle enregistrée';
-              else if (historyFilter === 'symptoms') emptyMessage = 'Aucun symptôme enregistré';
-              else if (historyFilter === 'notes') emptyMessage = 'Aucune note enregistrée';
-              else emptyMessage = 'Aucune donnée enregistrée';
-
-              return (
-                <EmptyState
-                  healthIcon="empty"
-                  title={emptyMessage}
-                  description="Utilisez le bouton + en bas pour ajouter une entrée"
-                  size="compact"
-                />
-              );
-            }
-
-            return (
-              <View>
-                {filteredEntries.map((item, index) => (
-                  <AnimatedListItem key={`${item.entryType}-${item.id}`} index={index} delay={30}>
-                    {item.entryType === 'stool' && (
-                      <View style={styles.stoolItem}>
-                        <View style={[
-                          styles.stoolMain,
-                          item.hasBlood && styles.stoolMainWithBlood
-                        ]}>
-                          <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                            <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                              {item.bristolScale}
-                            </AppText>
-                          </View>
-                          <View style={styles.stoolInfo}>
-                            <View style={styles.stoolDateContainer}>
-                              <AppText variant="bodyMedium" style={styles.stoolDate}>
-                                {formatCompactDate(item.timestamp)}
-                              </AppText>
-                            </View>
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => stoolManagement.handleEditStool(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => stoolManagement.handleDeleteStool(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-
-                    {item.entryType === 'symptom' && (
-                      <View style={styles.symptomItem}>
-                        <View style={styles.symptomMain}>
-                          <View style={[styles.symptomIcon, { backgroundColor: '#FEE2E2' }]}>
-                            <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
-                          </View>
-                          <View style={styles.symptomInfo}>
-                            <AppText variant="bodyMedium" style={styles.symptomType}>
-                              {getSymptomDisplayName(item)}
-                            </AppText>
-                            <View style={styles.symptomMeta}>
-                              <AppText variant="labelSmall" style={styles.symptomDate}>
-                                {formatCompactDateOnly(item.timestamp)}
-                              </AppText>
-                              <View style={styles.symptomIntensity}>
-                                <AppText variant="labelSmall" style={styles.symptomIntensityText}>
-                                  Intensité: {item.intensity}/5 ({INTENSITY_LABELS[item.intensity]})
-                                </AppText>
-                              </View>
-                            </View>
-                            {item.note && (
-                              <AppText variant="labelSmall" style={styles.symptomNote}>
-                                {item.note}
-                              </AppText>
-                            )}
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => symptomManagement.handleEditSymptom(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => symptomManagement.handleDeleteSymptom(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-
-                    {item.entryType === 'note' && (
-                      <View style={styles.noteItem}>
-                        <View style={styles.noteMain}>
-                          <View style={[styles.noteIcon, { backgroundColor: '#FEF3C7' }]}>
-                            <MaterialCommunityIcons
-                              name={item.sharedWithDoctor ? "share-variant" : "note-text-outline"}
-                              size={24}
-                              color="#F59E0B"
-                            />
-                          </View>
-                          <View style={styles.noteInfo}>
-                            <View style={styles.noteHeader}>
-                              <AppText variant="bodyMedium" style={styles.noteContent}>
-                                {item.content.length > 80 ? item.content.substring(0, 80) + '...' : item.content}
-                              </AppText>
-                              {/* Badge de traitement IA */}
-                              {!item.aiProcessed && (
-                                <View style={styles.aiProcessingBadge}>
-                                  <MaterialCommunityIcons name="brain" size={12} color="#4C4DDC" />
-                                  <AppText variant="labelSmall" style={styles.aiProcessingText}>
-                                    IA...
-                                  </AppText>
-                                </View>
-                              )}
-                              {item.aiProcessed && item.tags && item.tags.length > 0 && (
-                                <View style={styles.aiCompleteBadge}>
-                                  <MaterialCommunityIcons name="tag-multiple" size={12} color="#16A34A" />
-                                  <AppText variant="labelSmall" style={styles.aiCompleteText}>
-                                    {item.tags.length}
-                                  </AppText>
-                                </View>
-                              )}
-                            </View>
-                            <View style={styles.noteMeta}>
-                              <AppText variant="labelSmall" style={styles.noteDate}>
-                                {formatCompactDateOnly(item.timestamp)}
-                              </AppText>
-                              {item.category && (
-                                <View style={styles.noteCategory}>
-                                  <AppText variant="labelSmall" style={styles.noteCategoryText}>
-                                    {getCategoryLabel(item.category)}
-                                  </AppText>
-                                </View>
-                              )}
-                              {item.sharedWithDoctor && (
-                                <View style={styles.noteShared}>
-                                  <MaterialCommunityIcons name="share-variant" size={12} color="#4C4DDC" />
-                                  <AppText variant="labelSmall" style={styles.noteSharedText}>
-                                    Partagé
-                                  </AppText>
-                                </View>
-                              )}
-                            </View>
-                          </View>
-                          <View style={styles.stoolActions}>
-                            <TouchableOpacity
-                              onPress={() => noteManagement.handleEditNote(item)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => noteManagement.handleDeleteNote(item.id)}
-                              style={styles.actionButton}
-                            >
-                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-                  </AnimatedListItem>
-                ))}
-              </View>
-            );
-          })()}
-        </AppCard>
-
-        {/* Calendrier moderne */}
-        <AppCard style={styles.calendarCard}>
-          <View style={styles.calendarHeaderSection}>
-            <SegmentedControl
-              options={[
-                { value: 'score', label: 'Score' },
-                { value: 'bristol', label: 'Selles' }
-              ]}
-              selectedValue={calendarMode}
-              onValueChange={setCalendarMode}
-            />
-          </View>
-
-          <CalendarSection
-            calendarMonthOffset={calendarMonthOffset}
-            setCalendarMonthOffset={setCalendarMonthOffset}
-            calendarMode={calendarMode}
-            stools={stools}
-          />
-
-          {/* Légende */}
-          <View style={styles.legend}>
-            {calendarMode === 'score' ? (
-              <>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendSquare, { backgroundColor: '#101010' }]} />
-                  <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
-                </View>
-              </>
-            ) : (
-              <View style={styles.legendFullWidth}>
-                <AppText variant="labelSmall" style={styles.legendTextCentered}>
-                  💡 Le chiffre indique le nombre de selles enregistrées ce jour-là
-                </AppText>
-              </View>
-            )}
-          </View>
-        </AppCard>
-
-        {/* Historique IBDisk */}
-        {ibdiskHistory.length > 0 && (
-          <AppCard style={styles.ibdiskCard}>
-            <View style={styles.ibdiskHeader}>
-              <AppText variant="headlineLarge" style={styles.cardTitle}>
-                Historique IBDisk
-              </AppText>
-              
-              {ibdiskHistory.length > 1 ? (
-                <View style={styles.ibdiskNavigation}>
-                  <TouchableOpacity
-                    onPress={handlePreviousIbdisk}
-                    disabled={currentIbdiskIndex >= ibdiskHistory.length - 1}
-                    style={[
-                      styles.navButton,
-                      currentIbdiskIndex >= ibdiskHistory.length - 1 && styles.navButtonDisabled
-                    ]}
-                  >
-                    <MaterialCommunityIcons 
-                      name="chevron-left" 
-                      size={24} 
-                      color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#101010'} 
-                    />
-                  </TouchableOpacity>
-                  
-                  <AppText variant="labelMedium" style={styles.navText}>
-                    {currentIbdiskIndex + 1} / {ibdiskHistory.length}
-                  </AppText>
-                  
-                  <TouchableOpacity
-                    onPress={handleNextIbdisk}
-                    disabled={currentIbdiskIndex <= 0}
-                    style={[
-                      styles.navButton,
-                      currentIbdiskIndex <= 0 && styles.navButtonDisabled
-                    ]}
-                  >
-                    <MaterialCommunityIcons 
-                      name="chevron-right" 
-                      size={24} 
-                      color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#101010'} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <AppText variant="labelSmall" style={styles.singleQuestionnaireText}>
-                  Premier questionnaire IBDisk
-                </AppText>
-              )}
-            </View>
-            
-            <IBDiskChart 
-              data={ibdiskHistory[currentIbdiskIndex]?.answers || {}} 
-              date={ibdiskHistory[currentIbdiskIndex]?.date || ''} 
-            />
-          </AppCard>
-        )}
       </ScrollView>
 
       {/* Modal d'enregistrement de selle */}
@@ -1248,92 +942,12 @@ export default function HomeScreen({ route }) {
         </Modal>
       </Portal>
 
-      {/* Modal d'édition de selle */}
-      <Portal>
-        <Modal visible={stoolManagement.editModalVisible} onDismiss={stoolManagement.hideEditModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard style={styles.modalCard}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <AppText variant="h2" style={styles.modalTitle}>
-                Modifier la selle
-              </AppText>
-
-              <View style={styles.dateTimeSection}>
-                <AppText style={styles.fieldLabel}>Date et heure</AppText>
-                <DateTimePicker
-                  dateValue={stoolManagement.editDateInput}
-                  timeValue={stoolManagement.editTimeInput}
-                  onDateChange={stoolManagement.setEditDateInput}
-                  onTimeChange={stoolManagement.setEditTimeInput}
-                  dateLabel="Date (DD/MM/YYYY)"
-                  timeLabel="Heure (HH:MM)"
-                />
-                <AppText variant="labelSmall" style={styles.dateTimeHint}>
-                  Format: Date DD/MM/YYYY, Heure HH:MM (24h)
-                </AppText>
-              </View>
-
-              <View style={styles.bristolSection}>
-                <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={7}
-                  step={1}
-                  value={stoolManagement.editBristol}
-                  onValueChange={stoolManagement.setEditBristol}
-                  style={styles.slider}
-                  minimumTrackTintColor={theme.colors.primary}
-                  maximumTrackTintColor={theme.colors.outline}
-                  thumbStyle={{ backgroundColor: theme.colors.primary }}
-                />
-                <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[stoolManagement.editBristol]}
-                </AppText>
-              </View>
-
-              <View style={styles.bloodSection}>
-                <View style={styles.switchRow}>
-                  <AppText variant="bodyLarge">Présence de sang</AppText>
-                  <Switch
-                    value={stoolManagement.editHasBlood}
-                    onValueChange={(value) => {
-                      toggleFeedback();
-                      stoolManagement.setEditHasBlood(value);
-                    }}
-                    color={theme.colors.error}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.modalActions}>
-                <PrimaryButton
-                  onPress={stoolManagement.handleSaveEdit}
-                  style={styles.saveButton}
-                  variant="primary"
-                  size="medium"
-                >
-                  Enregistrer
-                </PrimaryButton>
-                <PrimaryButton
-                  onPress={stoolManagement.hideEditModal}
-                  style={styles.cancelButton}
-                  variant="neutral"
-                  size="medium"
-                  outlined
-                >
-                  Annuler
-                </PrimaryButton>
-              </View>
-            </ScrollView>
-          </AppCard>
-        </Modal>
-      </Portal>
-
       {/* Modale de prise de traitement */}
       <Portal>
         <Modal visible={treatmentModalVisible} onDismiss={hideTreatmentModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView>
-              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#1E293B' }} />
+              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#312620' }} />
               
               <Card.Content>
                 {/* Date et Heure */}
@@ -1359,7 +973,7 @@ export default function HomeScreen({ route }) {
                   label="Ex: Pentasa, Humira..."
                   value={treatmentName}
                   onChangeText={handleTreatmentNameChange}
-                  style={[styles.treatmentInput, { backgroundColor: '#F8FAFB', borderRadius: 16 }]}
+                  style={[styles.treatmentInput, { backgroundColor: '#F5EFE8', borderRadius: 16 }]}
                   mode="outlined"
                   outlineStyle={{ borderRadius: 16 }}
                   autoCapitalize="words"
@@ -1438,88 +1052,336 @@ export default function HomeScreen({ route }) {
   );
 }
 
+const { colors } = designSystem;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: designSystem.colors.background.primary,
+    backgroundColor: colors.background.primary,
+  },
+  // Top bar
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 22,
+    paddingTop: Platform.OS === 'web' ? 18 : 52,
+    paddingBottom: 12,
+    backgroundColor: colors.background.primary,
+  },
+  topEyebrow: {
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colors.primary[400],
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  topTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    color: colors.text.primary,
+  },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    backgroundColor: colors.background.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: designSystem.spacing[5], // Augmenté de [4] à [5] pour plus d'air
+    paddingHorizontal: 22,
   },
   scrollViewContent: {
-    paddingTop: designSystem.spacing[4], // Ajout d'un padding top
-    paddingBottom: 120, // Augmenté de 100 à 120 pour la tab bar
+    paddingTop: 8,
+    paddingBottom: 130,
   },
-  statsContainer: {
-    marginBottom: designSystem.spacing[6],
+  // Greeting
+  greetingBlock: {
+    paddingTop: 14,
+    paddingBottom: 22,
   },
-  mainActionsContainer: {
-    marginBottom: designSystem.spacing[6],
-    paddingHorizontal: designSystem.spacing[4],
-    paddingTop: designSystem.spacing[4],
+  greetingText: {
+    fontFamily: designSystem.typography.fontFamily.serif,
+    fontSize: 42,
+    lineHeight: 44,
+    fontWeight: '500',
+    letterSpacing: -0.6,
+    color: colors.text.primary,
   },
-  actionsGrid: {
-    flexDirection: 'column',
-    gap: designSystem.spacing[3],
-  },
-  actionCard: {
+  greetingMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: designSystem.colors.background.tertiary,
-    borderRadius: designSystem.borderRadius.lg,
-    padding: designSystem.spacing[4],
-    ...designSystem.shadows.md,
+    gap: 8,
+    marginTop: 12,
+  },
+  dateText: {
+    fontSize: 15,
+    color: colors.text.secondary,
+    fontWeight: '500',
+  },
+  metaDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.neutral[300],
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Section headers
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    color: colors.text.primary,
+  },
+  countPill: {
+    backgroundColor: colors.primary[100],
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  countPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[500],
+  },
+  datePillText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text.secondary,
+  },
+  // Tasks
+  todoList: {
+    gap: 12,
+  },
+  taskPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: colors.primary[500],
+    borderRadius: 22,
+    padding: 20,
+    ...designSystem.shadows.terracotta,
+  },
+  taskPrimaryIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  taskTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  taskPrimaryTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: '#FFFFFF',
+  },
+  taskPrimaryBadge: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  taskPrimaryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  taskPrimaryDesc: {
+    fontSize: 13.5,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 3,
+  },
+  taskSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 22,
+    padding: 20,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
+    borderColor: colors.border.light,
   },
-  actionCardDisabled: {
-    opacity: 0.6,
+  taskSecondaryIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionCardContent: {
+  taskSecondaryTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.text.primary,
+  },
+  taskSecondaryBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  taskSecondaryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  taskSecondaryDesc: {
+    fontSize: 13.5,
+    color: colors.text.secondary,
+    marginTop: 3,
+  },
+  allDoneCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
+    backgroundColor: colors.health.excellent.light,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.health.excellent.main + '33',
+  },
+  allDoneIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  allDoneTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.health.excellent.dark,
+  },
+  allDoneSubtitle: {
+    fontSize: 13.5,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  // Stat grid
+  statGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
     flex: 1,
-    gap: designSystem.spacing[3],
+    backgroundColor: colors.background.tertiary,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    borderRadius: 20,
+    padding: 16,
+    gap: 14,
   },
-  actionTitle: {
-    flex: 1,
-    color: designSystem.colors.text.primary,
+  statCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  actionTitleDisabled: {
-    color: designSystem.colors.text.secondary,
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionButtons: {
-    gap: designSystem.spacing[4],
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.text.tertiary,
   },
-  primaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[1],
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  secondaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[1],
+  statCardBottom: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 38,
+    fontWeight: '800',
+    lineHeight: 38,
+    letterSpacing: -1,
+    color: colors.text.primary,
+  },
+  statUnit: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text.tertiary,
+  },
+  statAddBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...designSystem.shadows.terracotta,
+  },
+  scorePill: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  scorePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[500],
+  },
+  // News
   newsCard: {
-    backgroundColor: designSystem.colors.background.tertiary,
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
-    ...designSystem.shadows.base,
-  },
-  newsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: designSystem.spacing[3],
-  },
-  newsTitle: {
-    marginLeft: designSystem.spacing[3],
-    color: designSystem.colors.text.primary,
-  },
-  newsDescription: {
-    color: designSystem.colors.text.secondary,
-    marginBottom: designSystem.spacing[5],
+    borderColor: colors.border.light,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
   },
   newsItems: {
     marginBottom: designSystem.spacing[5],
@@ -1721,7 +1583,7 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.lg,
     padding: designSystem.spacing[4],
     borderWidth: 2,
-    borderColor: '#E5E5F4',
+    borderColor: '#E6E0DA',
     gap: designSystem.spacing[3],
     // Sur mobile, ne pas étirer en hauteur
     ...(Platform.OS !== 'web' && {
@@ -1741,7 +1603,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     justifyContent: 'center',
     alignItems: 'center',
     // Sur mobile, icône plus petite
@@ -1825,29 +1687,29 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   scoreTooltipTitle: {
-    color: '#101010',
+    color: '#312620',
     fontWeight: '700',
   },
   scoreTooltipText: {
-    color: '#101010',
+    color: '#312620',
     marginBottom: 6,
   },
   scoreTooltipScale: {
     gap: 2,
   },
   scoreTooltipScaleItem: {
-    color: '#101010',
+    color: '#312620',
     fontSize: 11,
     lineHeight: 16,
   },
   scoreGood: {
-    color: '#16A34A',
+    color: '#397852',
   },
   scoreWarning: {
-    color: '#F59E0B',
+    color: '#AD7130',
   },
   scoreError: {
-    color: '#DC2626',
+    color: '#C0392B',
   },
   emptyTodayState: {
     paddingVertical: designSystem.spacing[6],
@@ -1873,14 +1735,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   stoolMainWithBlood: {
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     borderWidth: 2,
   },
   bristolBadge: {
@@ -1918,7 +1780,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   // Styles pour le calendrier
   calendarCard: {
@@ -1951,11 +1813,11 @@ const styles = StyleSheet.create({
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   legendTextCentered: {
     color: designSystem.colors.text.primary,
@@ -1985,11 +1847,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: '#E6E0DA',
   },
   navButtonDisabled: {
     opacity: 0.5,
@@ -2013,11 +1875,11 @@ const styles = StyleSheet.create({
   symptomMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FBF1EE',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: '#F3C9BC',
   },
   symptomIcon: {
     width: 40,
@@ -2066,11 +1928,11 @@ const styles = StyleSheet.create({
   noteMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FFF9F0',
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: '#F0D9A8',
   },
   noteIcon: {
     width: 40,
@@ -2116,13 +1978,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
   },
   noteSharedText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '500',
   },
   // Badges IA
@@ -2130,14 +1992,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDEDFC',
+    backgroundColor: '#FFF3EE',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiProcessingText: {
-    color: '#4C4DDC',
+    color: '#C16046',
     fontWeight: '600',
     fontSize: 10,
   },
@@ -2145,14 +2007,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#D7F4E0',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiCompleteText: {
-    color: '#16A34A',
+    color: '#397852',
     fontWeight: '600',
     fontSize: 10,
   },

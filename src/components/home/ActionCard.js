@@ -14,6 +14,7 @@ export default function ActionCard({
   gradient,
   onPress,
   disabled = false,
+  style,
 }) {
   const content = (
     <View style={styles.content}>
@@ -41,14 +42,14 @@ export default function ActionCard({
 
   if (disabled) {
     return (
-      <View style={[styles.card, styles.disabled]}>
+      <View style={[styles.card, styles.disabled, style]}>
         {content}
       </View>
     );
   }
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.card}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[styles.card, style]}>
       <LinearGradient
         colors={gradient}
         start={{ x: 0, y: 0 }}

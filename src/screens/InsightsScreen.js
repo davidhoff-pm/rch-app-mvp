@@ -53,7 +53,7 @@ export default function InsightsScreen() {
         text: designSystem.colors.health.decline.dark,
       },
       medium: {
-        bg: '#FEF3C7',
+        bg: '#FFF0DA',
         border: '#FCD34D',
         text: '#92400E',
       },
@@ -218,7 +218,7 @@ export default function InsightsScreen() {
         <MaterialCommunityIcons
           name="lightbulb-outline"
           size={20}
-          color="#F59E0B"
+          color="#AD7130"
         />
         <AppText variant="bodySmall" style={styles.footerText}>
           Ces corrélations sont indicatives. Consultez votre médecin pour un diagnostic personnalisé.
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   footerCard: {
     margin: designSystem.spacing[4],
     marginTop: designSystem.spacing[5],
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFF0DA',
     borderWidth: 1,
     borderColor: '#FCD34D',
     flexDirection: 'row',

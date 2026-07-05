@@ -178,9 +178,9 @@ const DateTimePicker = ({
                 width: '100%',
                 padding: '12px 16px',
                 fontSize: '16px',
-                border: `1px solid ${!dateValidation.valid ? '#DC2626' : '#E2E8F0'}`,
+                border: `1px solid ${!dateValidation.valid ? '#C0392B' : '#E2E8F0'}`,
                 borderRadius: '12px',
-                backgroundColor: '#F8FAFB',
+                backgroundColor: '#F5EFE8',
                 fontFamily: 'inherit',
                 outline: 'none',
                 cursor: 'pointer',
@@ -206,9 +206,9 @@ const DateTimePicker = ({
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
-                  border: `1px solid ${!timeValidation.valid ? '#DC2626' : '#E2E8F0'}`,
+                  border: `1px solid ${!timeValidation.valid ? '#C0392B' : '#E2E8F0'}`,
                   borderRadius: '12px',
-                  backgroundColor: '#F8FAFB',
+                  backgroundColor: '#F5EFE8',
                   fontFamily: 'inherit',
                   outline: 'none',
                   cursor: 'pointer',
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   webError: {
-    color: '#DC2626',
+    color: '#C0392B',
     marginTop: designSystem.spacing[1],
   },
   // Styles mobile
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: '#F8FAFB',
+    backgroundColor: '#F5EFE8',
   },
   dateInput: {
     marginRight: 0,

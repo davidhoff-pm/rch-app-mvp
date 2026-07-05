@@ -15,6 +15,7 @@ import KeyInsights from '../components/charts/KeyInsights';
 import HourlyHeatmap from '../components/charts/HourlyHeatmap';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
+import HistoryOverview from '../components/history/HistoryOverview';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import designSystem from '../theme/designSystem';
@@ -195,7 +196,7 @@ export default function StatsScreen() {
           style={styles.segmentedButtons}
           theme={{
             colors: {
-              secondaryContainer: '#4C4DDC', // Color 01 pour le bouton sélectionné
+              secondaryContainer: '#C16046', // Color 01 pour le bouton sélectionné
               onSecondaryContainer: '#FFFFFF',
             }
           }}
@@ -281,7 +282,7 @@ export default function StatsScreen() {
           {/* Graphique d'évolution - style de titre harmonisé */}
           <AppCard style={styles.chartCard}>
             <View style={styles.titleRow}>
-              <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
+              <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#C16046" style={{ marginRight: 12 }} />
               <AppText variant="headlineLarge" style={styles.chartTitle}>
                 {dataType === 'score' ? 'Indicateurs' : 'Évolution des Selles'}
               </AppText>
@@ -351,6 +352,9 @@ export default function StatsScreen() {
           variant="default"
         />
       )}
+
+      {/* Historique, calendrier et IBDisk (déplacés depuis l'accueil) */}
+      <HistoryOverview />
     </ScrollView>
   );
 }

@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     backgroundColor: designSystem.colors.background.secondary,
   },
   warningText: {
-    color: '#F59E0B',
+    color: '#AD7130',
     marginTop: designSystem.spacing[2],
     fontStyle: 'italic',
   },

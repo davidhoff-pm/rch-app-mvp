@@ -187,7 +187,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
     const tagType = getTagType(tag);
     if (tagType === 'aggravant') {
       return {
-        backgroundColor: '#FEE2E2', // rouge clair
+        backgroundColor: '#FBE3DF', // rouge clair
         borderColor: '#EF4444',     // rouge
         textColor: '#991B1B',       // rouge foncé
       };
@@ -223,7 +223,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
           <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name="note-text-outline" size={32} color="#F59E0B" />
+              <MaterialCommunityIcons name="note-text-outline" size={32} color="#AD7130" />
               <AppText variant="h2" style={styles.modalTitle}>
                 {initialData ? 'Modifier la note' : 'Nouvelle note'}
               </AppText>
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
   },
   micButtonRecording: {
     backgroundColor: '#EF4444',
-    borderColor: '#DC2626',
+    borderColor: '#C0392B',
     ...designSystem.shadows.lg,
   },
   interimContainer: {
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[2],
     paddingHorizontal: designSystem.spacing[3],
     paddingVertical: designSystem.spacing[2],
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFF0DA',
     borderRadius: designSystem.borderRadius.md,
     marginTop: designSystem.spacing[2],
     borderWidth: 1,

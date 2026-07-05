@@ -217,7 +217,7 @@ export default function SurveyScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={32}
-                  color="#94A3B8"
+                  color="#A99B93"
                 />
                 <View style={styles.surveyCardContent}>
                   <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
@@ -229,7 +229,7 @@ export default function SurveyScreen() {
                 </View>
               </View>
               <View style={styles.surveyCardFooter}>
-                <MaterialCommunityIcons name="clock-outline" size={16} color="#94A3B8" />
+                <MaterialCommunityIcons name="clock-outline" size={16} color="#A99B93" />
                 <AppText variant="bodySmall" style={styles.disabledText}>
                   Ce questionnaire est disponible une fois par jour
                 </AppText>
@@ -244,7 +244,7 @@ export default function SurveyScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={32}
-                  color="#94A3B8"
+                  color="#A99B93"
                 />
                 <View style={styles.surveyCardContent}>
                   <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
@@ -258,7 +258,7 @@ export default function SurveyScreen() {
                 </View>
               </View>
               <View style={styles.surveyCardFooter}>
-                <MaterialCommunityIcons name="clock-outline" size={16} color="#94A3B8" />
+                <MaterialCommunityIcons name="clock-outline" size={16} color="#A99B93" />
                 <AppText variant="bodySmall" style={styles.disabledText}>
                   Ce questionnaire est disponible une fois par mois
                 </AppText>
@@ -495,10 +495,10 @@ const styles = StyleSheet.create({
   },
   disabledCard: {
     opacity: 0.6,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F5EFE8',
   },
   disabledText: {
-    color: '#94A3B8',
+    color: '#A99B93',
   },
 });
 
