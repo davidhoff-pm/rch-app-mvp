@@ -13,7 +13,6 @@ import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
-import InsightsScreen from '../screens/InsightsScreen';
 import CustomTabBar from '../components/navigation/CustomTabBar';
 import designSystem from '../theme/designSystem';
 
@@ -78,15 +77,6 @@ function MainTabs() {
         options={{
           tabBarButton: () => null, // Hide from tab bar
           tabBarVisible: false,
-        }}
-      />
-      <Tab.Screen
-        name="Insights"
-        component={InsightsScreen}
-        options={{
-          tabBarButton: () => null, // Hide from tab bar
-          tabBarVisible: false,
-          title: 'Insights IA',
         }}
       />
     </Tab.Navigator>
