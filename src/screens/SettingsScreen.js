@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Platform, TextInput, Switch } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, Platform, TextInput, Switch, TouchableOpacity } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
@@ -16,6 +16,7 @@ import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTest
 import designSystem from '../theme/designSystem';
 import * as NotificationService from '../services/notificationService';
 import * as WebNotificationService from '../services/webNotificationService';
+import { useTrackingMode } from '../hooks/useTrackingMode';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -23,7 +24,8 @@ export default function SettingsScreen() {
   const [importJsonText, setImportJsonText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const theme = useTheme();
-  
+  const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
+
   // États pour les notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminder1Time, setReminder1Time] = useState('09:00');
@@ -353,6 +355,35 @@ export default function SettingsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
       {/* Bouton d'installation PWA (uniquement sur web) */}
       <PWAInstallButton />
+
+      {/* Mode de suivi */}
+      <AppCard style={styles.infoCard}>
+        <View style={styles.infoHeader}>
+          <MaterialCommunityIcons name="swap-horizontal" size={28} color="#C16046" style={{ marginRight: 16 }} />
+          <AppText variant="headlineLarge" style={styles.infoTitle}>
+            Mode de suivi
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.infoDescription}>
+          En rémission, seuls les rappels de traitement restent actifs. Les bilans et selles ne sont plus proposés sur l'accueil.
+        </AppText>
+        <View style={styles.modeToggle}>
+          <TouchableOpacity
+            style={[styles.modeBtn, !isRemission && styles.modeBtnActive]}
+            onPress={() => setTrackingMode('active')}
+          >
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={!isRemission ? '#fff' : designSystem.colors.text.secondary} />
+            <AppText style={[styles.modeBtnText, !isRemission && styles.modeBtnTextActive]}>Phase active</AppText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeBtn, isRemission && styles.modeBtnActiveGreen]}
+            onPress={() => setTrackingMode('remission')}
+          >
+            <MaterialCommunityIcons name="moon-waning-crescent" size={18} color={isRemission ? '#fff' : designSystem.colors.text.secondary} />
+            <AppText style={[styles.modeBtnText, isRemission && styles.modeBtnTextActive]}>Rémission</AppText>
+          </TouchableOpacity>
+        </View>
+      </AppCard>
 
       {/* Informations sur la période nocturne */}
       <AppCard style={styles.infoCard}>
@@ -693,8 +724,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   infoDescription: {
-    color: '#312620', // Color 03
+    color: '#312620',
     fontWeight: '400',
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  modeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: designSystem.borderRadius.base,
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+    backgroundColor: designSystem.colors.background.tertiary,
+  },
+  modeBtnActive: {
+    backgroundColor: designSystem.colors.primary[500],
+    borderColor: designSystem.colors.primary[500],
+  },
+  modeBtnActiveGreen: {
+    backgroundColor: designSystem.colors.health.excellent.main,
+    borderColor: designSystem.colors.health.excellent.main,
+  },
+  modeBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: designSystem.colors.text.secondary,
+  },
+  modeBtnTextActive: {
+    color: '#fff',
   },
   devCard: {
     marginHorizontal: 20,

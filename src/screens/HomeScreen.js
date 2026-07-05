@@ -29,6 +29,7 @@ import usePendingTreatments from '../hooks/usePendingTreatments';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
 import { useSpeedDial } from '../contexts/SpeedDialContext';
+import { useTrackingMode, useSuggestion } from '../hooks/useTrackingMode';
 
 // Hooks personnalisés
 import { useHistoryData } from '../hooks/useHistoryData';
@@ -80,6 +81,10 @@ export default function HomeScreen({ route }) {
 
   // Nombre de prises de traitement en attente (pour la section "À faire")
   const pendingTreatmentsCount = usePendingTreatments();
+
+  // Mode de suivi (actif / rémission)
+  const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
+  const suggestion = useSuggestion(trackingMode);
 
   // Salutation selon l'heure + date du jour
   const greeting = useMemo(() => {
@@ -594,8 +599,9 @@ export default function HomeScreen({ route }) {
   };
 
   // Construire la liste des tâches en attente (la 1re est mise en avant en terracotta)
+  // En rémission : seul le traitement est proposé (bilan/selles restent accessibles manuellement)
   const pendingTasks = [];
-  if (!surveyCompleted) {
+  if (!isRemission && !surveyCompleted) {
     pendingTasks.push({
       key: 'bilan',
       title: 'Bilan quotidien',
@@ -605,7 +611,7 @@ export default function HomeScreen({ route }) {
       onPress: navigateToSurvey,
     });
   }
-  if (ibdiskAvailable) {
+  if (!isRemission && ibdiskAvailable) {
     pendingTasks.push({
       key: 'ibdisk',
       title: 'Questionnaire mensuel',
@@ -626,14 +632,10 @@ export default function HomeScreen({ route }) {
     });
   }
 
-  // Statut clinique dérivé du score du jour
-  const status = todayProvisionalScore == null
-    ? { label: 'Pas encore de score', color: designSystem.colors.text.tertiary }
-    : todayProvisionalScore <= 4
-      ? { label: 'En rémission', color: designSystem.colors.health.excellent.main }
-      : todayProvisionalScore <= 10
-        ? { label: 'Activité modérée', color: designSystem.colors.health.moderate.main }
-        : { label: 'Poussée', color: designSystem.colors.health.danger.main };
+  // Pastille de statut : reflète le mode de suivi choisi par l'utilisateur
+  const status = isRemission
+    ? { label: 'En rémission', color: designSystem.colors.health.excellent.main }
+    : { label: 'Phase active', color: designSystem.colors.health.moderate.main };
 
   const scoreTone = todayProvisionalScore == null
     ? { label: '—', color: designSystem.colors.text.tertiary, bg: designSystem.colors.background.secondary }
@@ -667,6 +669,32 @@ export default function HomeScreen({ route }) {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
+
+        {/* Bandeau suggestion changement de mode */}
+        {suggestion && (
+          <View style={styles.suggestionBanner}>
+            <MaterialCommunityIcons
+              name={suggestion.type === 'suggest_remission' ? 'moon-waning-crescent' : 'alert-circle-outline'}
+              size={18}
+              color={suggestion.type === 'suggest_remission' ? designSystem.colors.health.excellent.main : designSystem.colors.health.moderate.main}
+            />
+            <AppText style={styles.suggestionText}>{suggestion.message}</AppText>
+            <View style={styles.suggestionActions}>
+              <TouchableOpacity
+                style={styles.suggestionBtn}
+                onPress={() => setTrackingMode(suggestion.type === 'suggest_remission' ? 'remission' : 'active')}
+              >
+                <AppText style={styles.suggestionBtnText}>Oui</AppText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.suggestionBtnSecondary}
+                onPress={() => storage.set('suggestionDismissedAt', String(Date.now()))}
+              >
+                <AppText style={styles.suggestionBtnSecondaryText}>Non</AppText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Aujourd'hui */}
         <View style={styles.sectionHeaderRow}>
@@ -1062,6 +1090,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 12,
+  },
+  suggestionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginHorizontal: 22,
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: designSystem.borderRadius.base,
+    backgroundColor: designSystem.colors.background.secondary,
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text.primary,
+    lineHeight: 18,
+  },
+  suggestionActions: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+    marginTop: 4,
+  },
+  suggestionBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: designSystem.borderRadius.sm,
+    backgroundColor: designSystem.colors.primary[500],
+    alignItems: 'center',
+  },
+  suggestionBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  suggestionBtnSecondary: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: designSystem.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+    backgroundColor: designSystem.colors.background.tertiary,
+    alignItems: 'center',
+  },
+  suggestionBtnSecondaryText: {
+    color: colors.text.secondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   dateText: {
     fontSize: 15,
