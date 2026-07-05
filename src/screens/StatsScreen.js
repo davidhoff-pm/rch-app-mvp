@@ -16,8 +16,9 @@ import HourlyHeatmap from '../components/charts/HourlyHeatmap';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
 import HistoryOverview from '../components/history/HistoryOverview';
+import ScreenHeader from '../components/ui/ScreenHeader';
 import { useTheme } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import designSystem from '../theme/designSystem';
 
 export default function StatsScreen() {
@@ -27,6 +28,7 @@ export default function StatsScreen() {
   const [dataType, setDataType] = useState('score'); // 'score' ou 'stools'
   const [isLoading, setIsLoading] = useState(true);
   const theme = useTheme();
+  const navigation = useNavigation();
 
   useEffect(() => {
     loadData();
@@ -172,10 +174,18 @@ export default function StatsScreen() {
   }, [scores, stools, period, dataType]);
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.scrollContent}
-    >
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScreenHeader
+        title="Statistiques"
+        actions={[
+          { icon: 'cog-outline', onPress: () => navigation.navigate('Paramètres'), label: 'Paramètres' },
+          { icon: 'file-document-outline', onPress: () => navigation.navigate('Export'), label: 'Exporter en PDF' },
+        ]}
+      />
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        contentContainerStyle={styles.scrollContent}
+      >
       {/* Sélecteur de type de données */}
       <View style={styles.dataTypeSection}>
         <SegmentedButtons
@@ -356,6 +366,7 @@ export default function StatsScreen() {
       {/* Historique, calendrier et IBDisk (déplacés depuis l'accueil) */}
       <HistoryOverview />
     </ScrollView>
+    </View>
   );
 }
 

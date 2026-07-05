@@ -8,6 +8,7 @@ import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
+import ScreenHeader from '../components/ui/ScreenHeader';
 import Toast from '../components/ui/Toast';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
@@ -598,8 +599,7 @@ export default function HomeScreen({ route }) {
     pendingTasks.push({
       key: 'bilan',
       title: 'Bilan quotidien',
-      description: 'Renseignez vos symptômes du jour',
-      badge: '2 min',
+      description: 'Comment allez-vous ?',
       icon: 'clipboard-text-outline',
       accent: 'primary',
       onPress: navigateToSurvey,
@@ -608,9 +608,8 @@ export default function HomeScreen({ route }) {
   if (ibdiskAvailable) {
     pendingTasks.push({
       key: 'ibdisk',
-      title: 'Questionnaire IBDisk',
+      title: 'Questionnaire mensuel',
       description: 'Évaluez votre qualité de vie',
-      badge: 'Mensuel',
       icon: 'chart-box-outline',
       accent: 'gold',
       onPress: () => navigation.navigate('IBDiskQuestionnaire'),
@@ -621,7 +620,6 @@ export default function HomeScreen({ route }) {
       key: 'treatment',
       title: 'Traitement à prendre',
       description: `${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`,
-      badge: `${pendingTreatmentsCount}`,
       icon: 'pill',
       accent: 'primary',
       onPress: () => navigation.navigate('Traitement'),
@@ -653,46 +651,26 @@ export default function HomeScreen({ route }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <View>
-          <AppText style={styles.topEyebrow}>MON SUIVI</AppText>
-          <AppText style={styles.topTitle}>Accueil</AppText>
+      <ScreenHeader
+        title={greeting}
+        actions={[{ icon: 'cog-outline', onPress: () => navigation.navigate('Paramètres'), label: 'Paramètres' }]}
+      >
+        <View style={styles.greetingMeta}>
+          <AppText style={styles.dateText}>{todayLabel}</AppText>
+          <View style={styles.metaDot} />
+          <AppText style={[styles.statusText, { color: status.color }]}>{status.label}</AppText>
         </View>
-        <View style={styles.topActions}>
-          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Insights')} accessibilityLabel="Insights">
-            <MaterialCommunityIcons name="brain" size={19} color={designSystem.colors.text.secondary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Export')} accessibilityLabel="Export">
-            <MaterialCommunityIcons name="file-document-outline" size={19} color={designSystem.colors.text.secondary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.topIconBtn} onPress={() => navigation.navigate('Paramètres')} accessibilityLabel="Paramètres">
-            <MaterialCommunityIcons name="cog-outline" size={19} color={designSystem.colors.text.secondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScreenHeader>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting */}
-        <View style={styles.greetingBlock}>
-          <AppText style={styles.greetingText}>{greeting}</AppText>
-          <View style={styles.greetingMeta}>
-            <AppText style={styles.dateText}>{todayLabel}</AppText>
-            <View style={styles.metaDot} />
-            <AppText style={[styles.statusText, { color: status.color }]}>{status.label}</AppText>
-          </View>
-        </View>
 
-        {/* À faire aujourd'hui */}
+        {/* Aujourd'hui */}
         <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionHeaderLeft}>
-            <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={17} color={designSystem.colors.primary[500]} />
-            <AppText style={styles.sectionHeaderTitle}>À faire aujourd'hui</AppText>
-          </View>
+          <AppText style={styles.sectionHeaderTitle}>Aujourd'hui</AppText>
           {pendingTasks.length > 0 && (
             <View style={styles.countPill}>
               <AppText style={styles.countPillText}>{pendingTasks.length} tâche{pendingTasks.length > 1 ? 's' : ''}</AppText>
@@ -711,13 +689,10 @@ export default function HomeScreen({ route }) {
                       <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
                     </View>
                     <View style={styles.taskTextWrap}>
-                      <View style={styles.taskTitleRow}>
-                        <AppText style={styles.taskPrimaryTitle}>{task.title}</AppText>
-                        <View style={styles.taskPrimaryBadge}>
-                          <AppText style={styles.taskPrimaryBadgeText}>{task.badge}</AppText>
-                        </View>
-                      </View>
-                      <AppText style={styles.taskPrimaryDesc}>{task.description}</AppText>
+                      <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
+                      <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
+                        {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                      </AppText>
                     </View>
                     <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
                   </TouchableOpacity>
@@ -730,13 +705,10 @@ export default function HomeScreen({ route }) {
                     <MaterialCommunityIcons name={task.icon} size={24} color={tint.color} />
                   </View>
                   <View style={styles.taskTextWrap}>
-                    <View style={styles.taskTitleRow}>
-                      <AppText style={styles.taskSecondaryTitle}>{task.title}</AppText>
-                      <View style={[styles.taskSecondaryBadge, { backgroundColor: tint.bg }]}>
-                        <AppText style={[styles.taskSecondaryBadgeText, { color: tint.color }]}>{task.badge}</AppText>
-                      </View>
-                    </View>
-                    <AppText style={styles.taskSecondaryDesc}>{task.description}</AppText>
+                    <AppText style={styles.taskSecondaryTitle} numberOfLines={1}>{task.title}</AppText>
+                    <AppText style={styles.taskSecondaryDesc} numberOfLines={1}>
+                      {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                    </AppText>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={20} color={designSystem.colors.text.tertiary} />
                 </TouchableOpacity>
@@ -744,77 +716,41 @@ export default function HomeScreen({ route }) {
             })}
           </View>
         ) : (
-          <View style={styles.allDoneCard}>
-            <View style={styles.allDoneIcon}>
-              <MaterialCommunityIcons name="check" size={22} color={designSystem.colors.health.excellent.main} />
-            </View>
-            <View style={styles.taskTextWrap}>
-              <AppText style={styles.allDoneTitle}>Tout est à jour</AppText>
-              <AppText style={styles.allDoneSubtitle}>Aucune action requise aujourd'hui</AppText>
-            </View>
-          </View>
+          <AppText style={styles.noActionText}>Rien à faire aujourd'hui, tout est à jour.</AppText>
         )}
 
-        {/* Aujourd'hui */}
-        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
-          <AppText style={styles.sectionHeaderTitle}>Aujourd'hui</AppText>
-          <View style={styles.sectionHeaderLeft}>
-            <MaterialCommunityIcons name="calendar-blank-outline" size={14} color={designSystem.colors.text.secondary} />
-            <AppText style={styles.datePillText}>{shortDate}</AppText>
-          </View>
-        </View>
-
-        <View style={styles.statGrid}>
+        <View style={[styles.statGrid, { marginTop: 16 }]}>
           {/* Selles */}
           <View style={styles.statCard}>
-            <View style={styles.statCardTop}>
+            <View style={styles.statCardLeft}>
               <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
-                <MaterialCommunityIcons name="toilet" size={21} color={designSystem.colors.primary[500]} />
+                <MaterialCommunityIcons name="toilet" size={20} color={designSystem.colors.primary[500]} />
               </View>
               <AppText style={styles.statLabel}>SELLES</AppText>
             </View>
-            <View style={styles.statCardBottom}>
-              <View style={styles.statValueRow}>
-                <AppText style={styles.statValue}>{dailyCount}</AppText>
-                <AppText style={styles.statUnit}>/ jour</AppText>
-              </View>
-              <TouchableOpacity style={styles.statAddBtn} onPress={showModal} activeOpacity={0.85} accessibilityLabel="Ajouter une selle">
-                <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
+            <AppText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{dailyCount}</AppText>
           </View>
 
           {/* Score */}
           <View style={styles.statCard}>
-            <View style={styles.statCardTop}>
-              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.health.excellent.light }]}>
-                <MaterialCommunityIcons name="pulse" size={21} color={designSystem.colors.health.excellent.main} />
+            <View style={styles.statCardLeft}>
+              <View style={[styles.statIcon, { backgroundColor: scoreTone.bg }]}>
+                <MaterialCommunityIcons name="pulse" size={20} color={scoreTone.color} />
               </View>
               <View style={styles.statLabelRow}>
                 <AppText style={styles.statLabel}>SCORE</AppText>
                 <MaterialCommunityIcons name="information-outline" size={13} color={designSystem.colors.text.tertiary} />
               </View>
             </View>
-            <View style={styles.statCardBottom}>
-              <View style={styles.statValueRow}>
-                <AppText style={[styles.statValue, { color: scoreTone.color }]}>
-                  {todayProvisionalScore != null ? todayProvisionalScore : '—'}
-                </AppText>
-                <AppText style={styles.statUnit}>/ 12</AppText>
-              </View>
-              <View style={[styles.scorePill, { backgroundColor: scoreTone.bg }]}>
-                <AppText style={[styles.scorePillText, { color: scoreTone.color }]}>{scoreTone.label}</AppText>
-              </View>
-            </View>
+            <AppText style={[styles.statValue, { color: scoreTone.color }]} numberOfLines={1} adjustsFontSizeToFit>
+              {todayProvisionalScore != null ? todayProvisionalScore : '—'}
+            </AppText>
           </View>
         </View>
 
         {/* Actualités AFA */}
         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
           <AppText style={styles.sectionHeaderTitle}>Actualités AFA</AppText>
-          <TouchableOpacity onPress={() => openArticle('https://www.afa.asso.fr/')}>
-            <AppText style={styles.seeAllText}>Tout voir</AppText>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.newsCard}>
@@ -1059,15 +995,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  // Top bar
-  topBar: {
+  // Header (Bonjour pleine largeur + Paramètres)
+  header: {
+    paddingHorizontal: 22,
+    paddingTop: Platform.OS === 'web' ? 18 : 52,
+    paddingBottom: 16,
+    backgroundColor: colors.background.primary,
+  },
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 22,
-    paddingTop: Platform.OS === 'web' ? 18 : 52,
-    paddingBottom: 12,
-    backgroundColor: colors.background.primary,
   },
   topEyebrow: {
     fontSize: 12,
@@ -1174,6 +1112,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text.secondary,
   },
+  noActionText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: colors.text.tertiary,
+    paddingVertical: 4,
+  },
   // Tasks
   todoList: {
     gap: 12,
@@ -1222,7 +1166,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   taskPrimaryDesc: {
-    fontSize: 13.5,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.85)',
     marginTop: 3,
   },
@@ -1259,7 +1203,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   taskSecondaryDesc: {
-    fontSize: 13.5,
+    fontSize: 12,
     color: colors.text.secondary,
     marginTop: 3,
   },
@@ -1298,17 +1242,21 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.background.tertiary,
     borderWidth: 1,
     borderColor: colors.border.light,
     borderRadius: 20,
     padding: 16,
-    gap: 14,
+    gap: 8,
   },
-  statCardTop: {
+  statCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    flexShrink: 1,
+    gap: 8,
   },
   statIcon: {
     width: 40,
@@ -1336,13 +1284,14 @@ const styles = StyleSheet.create({
   },
   statValueRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   statValue: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '800',
-    lineHeight: 38,
+    lineHeight: 36,
     letterSpacing: -1,
     color: colors.text.primary,
   },

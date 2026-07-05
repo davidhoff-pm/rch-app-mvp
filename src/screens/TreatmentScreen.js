@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import EmptyState from '../components/ui/EmptyState';
@@ -13,6 +13,7 @@ import AddFreeIntakeModal from '../components/treatment/AddFreeIntakeModal';
 import DateTimeInput, { isValidDate } from '../components/ui/DateTimeInput';
 import { Portal, Modal, TextInput, HelperText } from 'react-native-paper';
 import AppCard from '../components/ui/AppCard';
+import ScreenHeader from '../components/ui/ScreenHeader';
 import designSystem from '../theme/designSystem';
 import {
   getActiveTherapeuticSchemas,
@@ -35,7 +36,8 @@ import { buttonPressFeedback } from '../utils/haptics';
 
 const TreatmentScreen = () => {
   const { width } = useWindowDimensions();
-  const isMobile = width < 768; // Mobile si largeur < 768px
+  const isMobile = width < 768;
+  const navigation = useNavigation();
 
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'history'
   const [historyView, setHistoryView] = useState('intakes'); // 'intakes' | 'schemas'
@@ -483,6 +485,12 @@ const TreatmentScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScreenHeader
+        title="Traitement"
+        actions={[
+          { icon: 'cog-outline', onPress: () => navigation.navigate('Paramètres'), label: 'Paramètres' },
+        ]}
+      />
       {/* Header with action buttons and history link (only in active view) */}
       {activeTab === 'active' && (
         <View style={styles.header}>

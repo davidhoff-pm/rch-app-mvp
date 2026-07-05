@@ -9,6 +9,7 @@ import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import designSystem from '../theme/designSystem';
 import EmptyState from '../components/ui/EmptyState';
+import ScreenHeader from '../components/ui/ScreenHeader';
 
 function getTodayKey() {
   return getSurveyDayKey(new Date(), 0);
@@ -110,7 +111,13 @@ export default function SurveyScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScreenHeader
+        title="Bilan"
+        actions={[
+          { icon: 'cog-outline', onPress: () => navigation.navigate('Paramètres'), label: 'Paramètres' },
+        ]}
+      />
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

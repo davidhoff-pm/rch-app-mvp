@@ -42,6 +42,11 @@ l'architecture et les réflexes de dev en amont, expliquer les choix.
 
 ## Règles
 
-- Après une modif de code previewable : vérifier au preview (pas juste supposer).
-- Garder les tests verts. Ajouter des tests pour la logique métier (scores, observance).
+- **Les tests / la vérification visuelle sont faits par David**, pas par l'agent. Après avoir
+  implémenté une US, livrer et laisser David tester ; il fait un retour. Ne PAS lancer le
+  preview pour vérifier soi-même, ni dérouler une boucle de vérification.
+- L'agent peut faire un contrôle de compilation léger (build/typecheck) si utile, mais pas
+  de tests manuels ni de preview.
+- Garder le code prêt à passer les tests verts (la CI lance Jest en PR). Ajouter des tests
+  pour la logique métier (scores, observance) quand c'est pertinent.
 - Ne pas embarquer de secrets. Données santé = stockage local uniquement (MMKV).
