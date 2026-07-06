@@ -630,6 +630,16 @@ export default function HomeScreen({ route }) {
       onPress: () => navigation.navigate('IBDiskQuestionnaire'),
     });
   }
+  if (!isRemission && !stoolsDismissed) {
+    pendingTasks.push({
+      key: 'stools',
+      title: 'Renseigner mes selles du jour',
+      icon: 'plus',
+      accent: 'primary',
+      compact: true,
+      onPress: () => openBatchModal(),
+    });
+  }
   if (pendingTreatmentsCount > 0) {
     pendingTasks.push({
       key: 'treatment',
@@ -735,6 +745,17 @@ export default function HomeScreen({ route }) {
                   </TouchableOpacity>
                 );
               }
+              if (task.compact) {
+                return (
+                  <TouchableOpacity key={task.key} style={styles.taskCompact} onPress={task.onPress} activeOpacity={0.9}>
+                    <View style={styles.taskCompactIcon}>
+                      <MaterialCommunityIcons name={task.icon} size={18} color="#FFFFFF" />
+                    </View>
+                    <AppText style={styles.taskCompactTitle} numberOfLines={1}>{task.title}</AppText>
+                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.85)" />
+                  </TouchableOpacity>
+                );
+              }
               const tint = secondaryAccentStyle(task.accent);
               return (
                 <TouchableOpacity key={task.key} style={styles.taskSecondary} onPress={task.onPress} activeOpacity={0.85}>
@@ -758,22 +779,14 @@ export default function HomeScreen({ route }) {
 
         <View style={[styles.statGrid, { marginTop: 16 }]}>
           {/* Selles */}
-          <View style={styles.statCardWrapper}>
-            <View style={styles.statCard}>
-              <View style={styles.statCardLeft}>
-                <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
-                  <MaterialCommunityIcons name="toilet" size={20} color={designSystem.colors.primary[500]} />
-                </View>
-                <AppText style={styles.statLabel}>SELLES</AppText>
+          <View style={styles.statCard}>
+            <View style={styles.statCardLeft}>
+              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
+                <MaterialCommunityIcons name="toilet" size={20} color={designSystem.colors.primary[500]} />
               </View>
-              <AppText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{dailyCount}</AppText>
+              <AppText style={styles.statLabel}>SELLES</AppText>
             </View>
-            {!isRemission && !stoolsDismissed && (
-              <TouchableOpacity style={styles.stoolBatchBtn} onPress={openBatchModal} activeOpacity={0.8}>
-                <MaterialCommunityIcons name="plus" size={14} color={designSystem.colors.primary[500]} />
-                <AppText style={styles.stoolBatchLabel}>Renseigner mes selles du jour</AppText>
-              </TouchableOpacity>
-            )}
+            <AppText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{dailyCount}</AppText>
           </View>
 
           {/* Score */}
@@ -1315,6 +1328,30 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 3,
   },
+  taskCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.primary[500],
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    ...designSystem.shadows.terracotta,
+  },
+  taskCompactIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskCompactTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   allDoneCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1347,26 +1384,6 @@ const styles = StyleSheet.create({
   statGrid: {
     flexDirection: 'row',
     gap: 12,
-  },
-  statCardWrapper: {
-    flex: 1,
-  },
-  stoolBatchBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginTop: 8,
-    paddingVertical: 8,
-    backgroundColor: colors.primary[50],
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.primary[200],
-  },
-  stoolBatchLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary[500],
   },
   statCard: {
     flex: 1,
