@@ -10,34 +10,37 @@ import storage from '../../utils/storage';
 
 const { colors, spacing, borderRadius } = designSystem;
 
-function CountSelector({ label, icon, iconColor, value, max, onChange }) {
-  const options = [];
-  for (let i = 0; i <= max; i++) options.push(i);
+function Stepper({ value, min, max, onChange, size = 'large' }) {
+  const isLarge = size === 'large';
+  const btnSize = isLarge ? 44 : 36;
+  const iconSize = isLarge ? 22 : 18;
+  const fontSize = isLarge ? 32 : 22;
 
   return (
-    <View style={selectorStyles.container}>
-      <View style={selectorStyles.labelRow}>
-        <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
-        <AppText variant="body" weight="semiBold" style={selectorStyles.label}>{label}</AppText>
-      </View>
-      <View style={selectorStyles.chips}>
-        {options.map(n => (
-          <TouchableOpacity
-            key={n}
-            style={[selectorStyles.chip, value === n && selectorStyles.chipActive]}
-            onPress={() => { buttonPressFeedback(); onChange(n); }}
-            activeOpacity={0.7}
-          >
-            <AppText
-              variant="body"
-              weight="semiBold"
-              style={[selectorStyles.chipLabel, value === n && selectorStyles.chipLabelActive]}
-            >
-              {n}
-            </AppText>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <View style={stepperStyles.row}>
+      <TouchableOpacity
+        style={[stepperStyles.btn, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 },
+          value <= min && stepperStyles.btnDisabled]}
+        onPress={() => { if (value > min) { buttonPressFeedback(); onChange(value - 1); } }}
+        activeOpacity={0.7}
+        disabled={value <= min}
+      >
+        <MaterialCommunityIcons name="minus" size={iconSize} color={value <= min ? colors.text.disabled : colors.primary[500]} />
+      </TouchableOpacity>
+
+      <AppText style={[stepperStyles.value, { fontSize, minWidth: isLarge ? 56 : 36 }]}>
+        {value}
+      </AppText>
+
+      <TouchableOpacity
+        style={[stepperStyles.btn, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 },
+          value >= max && stepperStyles.btnDisabled]}
+        onPress={() => { if (value < max) { buttonPressFeedback(); onChange(value + 1); } }}
+        activeOpacity={0.7}
+        disabled={value >= max}
+      >
+        <MaterialCommunityIcons name="plus" size={iconSize} color={value >= max ? colors.text.disabled : colors.primary[500]} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -123,35 +126,36 @@ export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolO
           {dateLabel}
         </AppText>
 
-        <CountSelector
-          label="Nombre de selles"
-          icon="toilet"
-          iconColor={colors.primary[500]}
-          value={total}
-          max={15}
-          onChange={handleTotalChange}
-        />
+        {/* Nombre de selles — grand stepper central */}
+        <View style={styles.totalSection}>
+          <View style={styles.totalLabelRow}>
+            <MaterialCommunityIcons name="toilet" size={18} color={colors.primary[500]} />
+            <AppText variant="body" weight="semiBold">Nombre de selles</AppText>
+          </View>
+          <Stepper value={total} min={0} max={20} onChange={handleTotalChange} size="large" />
+        </View>
 
+        {/* Sanglantes + Nocturnes — deux colonnes */}
         {total > 0 && (
-          <>
-            <CountSelector
-              label="Dont sanglantes"
-              icon="water"
-              iconColor={colors.health.danger.main}
-              value={withBlood}
-              max={total}
-              onChange={setWithBlood}
-            />
+          <View style={styles.subRow}>
+            <View style={styles.subCol}>
+              <View style={styles.subLabelRow}>
+                <MaterialCommunityIcons name="water" size={16} color={colors.health.danger.main} />
+                <AppText variant="bodySmall" weight="semiBold">Sanglantes</AppText>
+              </View>
+              <Stepper value={withBlood} min={0} max={total} onChange={setWithBlood} size="small" />
+            </View>
 
-            <CountSelector
-              label="Dont nocturnes"
-              icon="moon-waning-crescent"
-              iconColor={colors.accent[500]}
-              value={nocturnal}
-              max={total}
-              onChange={setNocturnal}
-            />
-          </>
+            <View style={styles.subDivider} />
+
+            <View style={styles.subCol}>
+              <View style={styles.subLabelRow}>
+                <MaterialCommunityIcons name="moon-waning-crescent" size={16} color={colors.accent[500]} />
+                <AppText variant="bodySmall" weight="semiBold">Nocturnes</AppText>
+              </View>
+              <Stepper value={nocturnal} min={0} max={total} onChange={setNocturnal} size="small" />
+            </View>
+          </View>
         )}
 
         <View style={styles.actions}>
@@ -179,7 +183,6 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: borderRadius.lg,
     padding: spacing[5],
-    maxHeight: '88%',
   },
   header: {
     flexDirection: 'row',
@@ -190,8 +193,44 @@ const styles = StyleSheet.create({
   subtitle: {
     marginBottom: spacing[5],
   },
+  totalSection: {
+    alignItems: 'center',
+    marginBottom: spacing[5],
+  },
+  totalLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[3],
+  },
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.base,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    padding: spacing[4],
+    marginBottom: spacing[2],
+  },
+  subCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  subDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: colors.border.light,
+    marginHorizontal: spacing[3],
+  },
+  subLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    marginBottom: spacing[3],
+  },
   actions: {
-    marginTop: spacing[5],
+    marginTop: spacing[4],
     gap: spacing[3],
   },
   noStoolBtn: {
@@ -206,43 +245,26 @@ const styles = StyleSheet.create({
   },
 });
 
-const selectorStyles = StyleSheet.create({
-  container: {
-    marginBottom: spacing[4],
-  },
-  labelRow: {
+const stepperStyles = StyleSheet.create({
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[2],
-    marginBottom: spacing[2],
+    gap: spacing[3],
   },
-  label: {
-    color: colors.text.primary,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing[2],
-  },
-  chip: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  btn: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.primary[50],
     borderWidth: 1.5,
+    borderColor: colors.primary[200],
+  },
+  btnDisabled: {
+    backgroundColor: colors.background.secondary,
     borderColor: colors.border.light,
   },
-  chipActive: {
-    backgroundColor: colors.primary[500],
-    borderColor: colors.primary[500],
-  },
-  chipLabel: {
-    fontSize: 15,
-    color: colors.text.secondary,
-  },
-  chipLabelActive: {
-    color: '#fff',
+  value: {
+    fontWeight: '700',
+    color: colors.text.primary,
+    textAlign: 'center',
   },
 });
