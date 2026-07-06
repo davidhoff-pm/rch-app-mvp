@@ -727,7 +727,8 @@ export default function HomeScreen({ route }) {
 
         {pendingTasks.length > 0 ? (
           <View style={styles.todoList}>
-            {pendingTasks.map((task) => {
+            {pendingTasks.map((task, index) => {
+              const isPrimary = index === 0;
               if (task.compact) {
                 return (
                   <TouchableOpacity key={task.key} style={styles.taskCompact} onPress={task.onPress} activeOpacity={0.9}>
@@ -739,20 +740,38 @@ export default function HomeScreen({ route }) {
                   </TouchableOpacity>
                 );
               }
+              if (isPrimary) {
+                return (
+                  <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
+                    <View style={styles.taskPrimaryIcon}>
+                      <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.taskTextWrap}>
+                      <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
+                      {task.description && (
+                        <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
+                          {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                        </AppText>
+                      )}
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
+                  </TouchableOpacity>
+                );
+              }
               return (
-                <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
-                  <View style={styles.taskPrimaryIcon}>
-                    <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
+                <TouchableOpacity key={task.key} style={styles.taskOutlined} onPress={task.onPress} activeOpacity={0.85}>
+                  <View style={styles.taskOutlinedIcon}>
+                    <MaterialCommunityIcons name={task.icon} size={22} color={colors.primary[500]} />
                   </View>
                   <View style={styles.taskTextWrap}>
-                    <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
+                    <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>{task.title}</AppText>
                     {task.description && (
-                      <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
-                        {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                      <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>
+                        {task.description}
                       </AppText>
                     )}
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
                 </TouchableOpacity>
               );
             })}
@@ -1311,6 +1330,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
     marginTop: 3,
+  },
+  taskOutlined: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 18,
+    padding: 16,
+    borderTopWidth: 3,
+    borderTopColor: colors.primary[400],
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: '#C16046',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  taskOutlinedIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskOutlinedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.text.primary,
+  },
+  taskOutlinedDesc: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: 2,
   },
   taskCompact: {
     flexDirection: 'row',
