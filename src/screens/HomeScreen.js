@@ -795,7 +795,7 @@ export default function HomeScreen({ route }) {
 
           {/* Score */}
           <TouchableOpacity
-            style={[styles.statCard, styles.statCardScore]}
+            style={styles.statCard}
             onPress={() => setScoreTooltipVisible(!scoreTooltipVisible)}
             activeOpacity={0.8}
           >
@@ -808,25 +808,25 @@ export default function HomeScreen({ route }) {
             <AppText style={[styles.statValue, { color: scoreTone.color }]} numberOfLines={1} adjustsFontSizeToFit>
               {todayProvisionalScore != null ? todayProvisionalScore : '—'}
             </AppText>
-
-            {scoreTooltipVisible && (
-              <Animated.View style={[styles.scoreTooltip, { opacity: tooltipOpacity, transform: [{ scale: tooltipScale }] }]}>
-                <View style={styles.scoreTooltipHeader}>
-                  <MaterialCommunityIcons name="pulse" size={14} color={designSystem.colors.text.primary} />
-                  <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score de Lichtiger</AppText>
-                </View>
-                <AppText variant="caption" style={styles.scoreTooltipText}>
-                  Indice d'activité de la maladie (0–17)
-                </AppText>
-                <View style={styles.scoreTooltipScale}>
-                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–4 : Rémission</AppText>
-                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>5–10 : Modéré</AppText>
-                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>11+ : Sévère</AppText>
-                </View>
-              </Animated.View>
-            )}
           </TouchableOpacity>
         </View>
+
+        {scoreTooltipVisible && (
+          <Animated.View style={[styles.scoreTooltip, { opacity: tooltipOpacity, transform: [{ scale: tooltipScale }] }]}>
+            <View style={styles.scoreTooltipHeader}>
+              <MaterialCommunityIcons name="pulse" size={14} color={designSystem.colors.text.primary} />
+              <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score de Lichtiger</AppText>
+            </View>
+            <AppText variant="caption" style={styles.scoreTooltipText}>
+              Indice d'activité de la maladie (0–17)
+            </AppText>
+            <View style={styles.scoreTooltipScale}>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–4 : Rémission</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>5–10 : Modéré</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>11+ : Sévère</AppText>
+            </View>
+          </Animated.View>
+        )}
 
         {/* Actualités AFA */}
         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
@@ -1484,11 +1484,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.text.tertiary,
   },
-  statCardScore: {
-    position: 'relative',
-    overflow: 'visible',
-    zIndex: 100,
-  },
   statCardBottom: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -1814,45 +1809,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   scoreTooltip: {
-    position: 'absolute',
-    top: '100%',
-    right: 0,
     marginTop: 8,
-    minWidth: 180,
-    maxWidth: 220,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: 'rgba(200, 200, 244, 0.6)',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    zIndex: 1000,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(12px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-    }),
-  },
-  scoreTooltipArrow: {
-    position: 'absolute',
-    top: '100%',
-    right: 16,
-    marginTop: -1,
-    width: 10,
-    height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRightWidth: 1,
-    borderTopWidth: 1,
-    borderColor: 'rgba(200, 200, 244, 0.6)',
-    transform: [{ rotate: '-45deg' }],
-    zIndex: 999,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(12px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-    }),
+    borderColor: colors.border.light,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    ...designSystem.shadows.base,
   },
   scoreTooltipHeader: {
     flexDirection: 'row',
