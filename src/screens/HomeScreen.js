@@ -727,24 +727,7 @@ export default function HomeScreen({ route }) {
 
         {pendingTasks.length > 0 ? (
           <View style={styles.todoList}>
-            {pendingTasks.map((task, index) => {
-              const isPrimary = index === 0;
-              if (isPrimary) {
-                return (
-                  <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
-                    <View style={styles.taskPrimaryIcon}>
-                      <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.taskTextWrap}>
-                      <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
-                      <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
-                        {task.description}{task.duration ? ` · ${task.duration}` : ''}
-                      </AppText>
-                    </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
-                  </TouchableOpacity>
-                );
-              }
+            {pendingTasks.map((task) => {
               if (task.compact) {
                 return (
                   <TouchableOpacity key={task.key} style={styles.taskCompact} onPress={task.onPress} activeOpacity={0.9}>
@@ -756,19 +739,20 @@ export default function HomeScreen({ route }) {
                   </TouchableOpacity>
                 );
               }
-              const tint = secondaryAccentStyle(task.accent);
               return (
-                <TouchableOpacity key={task.key} style={styles.taskSecondary} onPress={task.onPress} activeOpacity={0.85}>
-                  <View style={[styles.taskSecondaryIcon, { backgroundColor: tint.bg }]}>
-                    <MaterialCommunityIcons name={task.icon} size={24} color={tint.color} />
+                <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
+                  <View style={styles.taskPrimaryIcon}>
+                    <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
                   </View>
                   <View style={styles.taskTextWrap}>
-                    <AppText style={styles.taskSecondaryTitle} numberOfLines={1}>{task.title}</AppText>
-                    <AppText style={styles.taskSecondaryDesc} numberOfLines={1}>
-                      {task.description}{task.duration ? ` · ${task.duration}` : ''}
-                    </AppText>
+                    <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
+                    {task.description && (
+                      <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
+                        {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                      </AppText>
+                    )}
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={designSystem.colors.text.tertiary} />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
                 </TouchableOpacity>
               );
             })}
