@@ -681,6 +681,59 @@ describe('calculateLichtigerScore', () => {
     });
   });
 
+  describe('Calcul du score - Flag nocturnal (batch)', () => {
+    it('devrait compter comme nocturne une selle batch avec nocturnal:true même à midi', () => {
+      const date = '2025-11-07';
+      const noonTimestamp = new Date('2025-11-07T12:00:00').getTime();
+
+      mockStorage.data.dailySells = JSON.stringify([
+        { id: '1', timestamp: noonTimestamp, bristolScale: 4, hasBlood: false, nocturnal: true, batch: true },
+        { id: '2', timestamp: noonTimestamp, bristolScale: 4, hasBlood: false, nocturnal: false, batch: true },
+      ]);
+      mockStorage.data.dailySurvey = JSON.stringify({
+        '2025-11-07': {
+          date: '2025-11-07',
+          fecalIncontinence: 'non',
+          abdominalPain: 'aucune',
+          generalState: 'parfait',
+          antidiarrheal: 'non',
+        },
+      });
+
+      const score = calculateLichtigerScore(date, mockStorage);
+      // 2 selles (score 0) + 1 nocturne via flag (score 1) = 1
+      expect(score).toBe(1);
+    });
+
+    it('ne devrait pas compter comme nocturne une selle batch avec nocturnal:false même à 23h30', () => {
+      const date = '2025-11-07';
+
+      mockStorage.data.dailySells = JSON.stringify([
+        {
+          id: '1',
+          timestamp: new Date('2025-11-07T23:30:00').getTime(),
+          bristolScale: 4,
+          hasBlood: false,
+          nocturnal: false,
+          batch: true,
+        },
+      ]);
+      mockStorage.data.dailySurvey = JSON.stringify({
+        '2025-11-07': {
+          date: '2025-11-07',
+          fecalIncontinence: 'non',
+          abdominalPain: 'aucune',
+          generalState: 'parfait',
+          antidiarrheal: 'non',
+        },
+      });
+
+      const score = calculateLichtigerScore(date, mockStorage);
+      // 1 selle (score 0) + 0 nocturne (flag false prime) = 0
+      expect(score).toBe(0);
+    });
+  });
+
   describe('Gestion des erreurs', () => {
     it('devrait retourner null en cas d\'erreur dans les données', () => {
       const date = '2025-11-07';

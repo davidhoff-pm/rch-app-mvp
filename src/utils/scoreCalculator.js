@@ -37,7 +37,9 @@ export function calculateLichtigerScore(dateStr, storage) {
     const nightEndMin = parseTimeToMinutes(nightEndStr);
 
     const stoolsCount = dayStools.length;
-    const nocturnalCount = dayStools.filter(s => isNight(s.timestamp, nightStartMin, nightEndMin)).length;
+    const nocturnalCount = dayStools.filter(s =>
+      s.nocturnal != null ? s.nocturnal : isNight(s.timestamp, nightStartMin, nightEndMin)
+    ).length;
     const bloodCount = dayStools.filter(s => s.hasBlood).length;
 
     // Sous-scores "stools" selon les règles fournies

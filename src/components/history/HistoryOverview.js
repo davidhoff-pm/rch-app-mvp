@@ -194,8 +194,14 @@ export default function HistoryOverview() {
                         <View style={styles.stoolInfo}>
                           <View style={styles.stoolDateContainer}>
                             <AppText variant="bodyMedium" style={styles.stoolDate}>
-                              {formatCompactDate(item.timestamp)}
+                              {item.batch ? formatCompactDateOnly(item.timestamp) : formatCompactDate(item.timestamp)}
                             </AppText>
+                            {item.nocturnal && (
+                              <View style={styles.nocturnalBadge}>
+                                <MaterialCommunityIcons name="moon-waning-crescent" size={12} color={designSystem.colors.accent[500]} />
+                                <AppText variant="caption" style={styles.nocturnalLabel}>Nocturne</AppText>
+                              </View>
+                            )}
                           </View>
                         </View>
                         <View style={styles.stoolActions}>
@@ -551,6 +557,22 @@ const styles = StyleSheet.create({
   stoolDate: {
     color: designSystem.colors.text.primary,
     fontWeight: '500',
+  },
+  nocturnalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginLeft: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: 2,
+    backgroundColor: designSystem.colors.accent[50],
+    borderRadius: designSystem.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: designSystem.colors.accent[200],
+  },
+  nocturnalLabel: {
+    color: designSystem.colors.accent[600],
+    fontSize: 11,
   },
   stoolActions: {
     flexDirection: 'row',

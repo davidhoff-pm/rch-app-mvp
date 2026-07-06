@@ -28,6 +28,7 @@ import ActionCard from '../components/home/ActionCard';
 import usePendingTreatments from '../hooks/usePendingTreatments';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
+import BatchStoolModal from '../components/modals/BatchStoolModal';
 import { useSpeedDial } from '../contexts/SpeedDialContext';
 import { useTrackingMode, useSuggestion } from '../hooks/useTrackingMode';
 
@@ -39,11 +40,12 @@ import { useNoteManagement } from '../hooks/useNoteManagement';
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
-  const { isModalVisible, openModal, closeModal } = useStoolModal();
+  const { isModalVisible, openModal, closeModal, isBatchModalVisible, openBatchModal, closeBatchModal } = useStoolModal();
   const { registerHandlers } = useSpeedDial();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
+  const [stoolsDismissed, setStoolsDismissed] = useState(false);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
@@ -280,7 +282,14 @@ export default function HomeScreen({ route }) {
 
   useFocusEffect(
     React.useCallback(() => {
-      setDailyCount(computeTodayCount());
+      const count = computeTodayCount();
+      setDailyCount(count);
+
+      const today = new Date();
+      const dayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const noStoolFlag = storage.getString('noStoolDay');
+      setStoolsDismissed(count > 0 || noStoolFlag === dayKey);
+
       const key = getSurveyDayKey(new Date(), 0);
       const json = storage.getString('dailySurvey');
       if (json) {
@@ -557,6 +566,7 @@ export default function HomeScreen({ route }) {
     storage.set('dailySells', JSON.stringify(updated));
     
     setDailyCount(computeTodayCount());
+    setStoolsDismissed(true);
     // refresh provisional score after add
     const tDateStr = formatDate(new Date());
     const fullToday = calculateLichtigerScore(tDateStr, storage);
@@ -619,6 +629,16 @@ export default function HomeScreen({ route }) {
       icon: 'chart-box-outline',
       accent: 'gold',
       onPress: () => navigation.navigate('IBDiskQuestionnaire'),
+    });
+  }
+  if (!isRemission && !stoolsDismissed) {
+    pendingTasks.push({
+      key: 'stools',
+      title: 'Renseigner mes selles',
+      description: 'Saisie rapide du jour',
+      icon: 'toilet',
+      accent: 'primary',
+      onPress: () => openBatchModal(),
     });
   }
   if (pendingTreatmentsCount > 0) {
@@ -905,6 +925,18 @@ export default function HomeScreen({ route }) {
           </AppCard>
         </Modal>
       </Portal>
+
+      {/* Modal saisie rapide batch selles */}
+      <BatchStoolModal
+        visible={isBatchModalVisible}
+        onClose={closeBatchModal}
+        showNoStoolOption={!stoolsDismissed}
+        onSave={() => {
+          setDailyCount(computeTodayCount());
+          setStoolsDismissed(true);
+          loadHistoryData();
+        }}
+      />
 
       {/* Modale de prise de traitement */}
       <Portal>
