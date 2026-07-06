@@ -28,6 +28,7 @@ import ActionCard from '../components/home/ActionCard';
 import usePendingTreatments from '../hooks/usePendingTreatments';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
+import BatchStoolModal from '../components/modals/BatchStoolModal';
 import { useSpeedDial } from '../contexts/SpeedDialContext';
 import { useTrackingMode, useSuggestion } from '../hooks/useTrackingMode';
 
@@ -39,11 +40,13 @@ import { useNoteManagement } from '../hooks/useNoteManagement';
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
-  const { isModalVisible, openModal, closeModal } = useStoolModal();
+  const { isModalVisible, openModal, closeModal, isBatchModalVisible, openBatchModal, closeBatchModal } = useStoolModal();
   const { registerHandlers } = useSpeedDial();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
+  const [stoolsDismissed, setStoolsDismissed] = useState(false);
+  const [batchFromForm, setBatchFromForm] = useState(false);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
@@ -280,7 +283,14 @@ export default function HomeScreen({ route }) {
 
   useFocusEffect(
     React.useCallback(() => {
-      setDailyCount(computeTodayCount());
+      const count = computeTodayCount();
+      setDailyCount(count);
+
+      const today = new Date();
+      const dayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const noStoolFlag = storage.getString('noStoolDay');
+      setStoolsDismissed(count > 0 || noStoolFlag === dayKey);
+
       const key = getSurveyDayKey(new Date(), 0);
       const json = storage.getString('dailySurvey');
       if (json) {
@@ -300,7 +310,6 @@ export default function HomeScreen({ route }) {
       loadHistoryData();
 
       // Today provisional score
-      const today = new Date();
       const tDateStr = formatDate(today);
       const fullToday = calculateLichtigerScore(tDateStr, storage);
       if (fullToday == null) {
@@ -557,6 +566,7 @@ export default function HomeScreen({ route }) {
     storage.set('dailySells', JSON.stringify(updated));
     
     setDailyCount(computeTodayCount());
+    setStoolsDismissed(true);
     // refresh provisional score after add
     const tDateStr = formatDate(new Date());
     const fullToday = calculateLichtigerScore(tDateStr, storage);
@@ -619,6 +629,16 @@ export default function HomeScreen({ route }) {
       icon: 'chart-box-outline',
       accent: 'gold',
       onPress: () => navigation.navigate('IBDiskQuestionnaire'),
+    });
+  }
+  if (!isRemission && !stoolsDismissed) {
+    pendingTasks.push({
+      key: 'stools',
+      title: 'Renseigner mes selles du jour',
+      icon: 'plus',
+      accent: 'primary',
+      compact: true,
+      onPress: () => openBatchModal(),
     });
   }
   if (pendingTreatmentsCount > 0) {
@@ -710,6 +730,17 @@ export default function HomeScreen({ route }) {
           <View style={styles.todoList}>
             {pendingTasks.map((task, index) => {
               const isPrimary = index === 0;
+              if (task.compact) {
+                return (
+                  <TouchableOpacity key={task.key} style={styles.taskCompact} onPress={task.onPress} activeOpacity={0.9}>
+                    <View style={styles.taskCompactIcon}>
+                      <MaterialCommunityIcons name={task.icon} size={18} color="#FFFFFF" />
+                    </View>
+                    <AppText style={styles.taskCompactTitle} numberOfLines={1}>{task.title}</AppText>
+                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.85)" />
+                  </TouchableOpacity>
+                );
+              }
               if (isPrimary) {
                 return (
                   <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
@@ -718,27 +749,30 @@ export default function HomeScreen({ route }) {
                     </View>
                     <View style={styles.taskTextWrap}>
                       <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
-                      <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
-                        {task.description}{task.duration ? ` · ${task.duration}` : ''}
-                      </AppText>
+                      {task.description && (
+                        <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
+                          {task.description}{task.duration ? ` · ${task.duration}` : ''}
+                        </AppText>
+                      )}
                     </View>
                     <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
                   </TouchableOpacity>
                 );
               }
-              const tint = secondaryAccentStyle(task.accent);
               return (
-                <TouchableOpacity key={task.key} style={styles.taskSecondary} onPress={task.onPress} activeOpacity={0.85}>
-                  <View style={[styles.taskSecondaryIcon, { backgroundColor: tint.bg }]}>
-                    <MaterialCommunityIcons name={task.icon} size={24} color={tint.color} />
+                <TouchableOpacity key={task.key} style={styles.taskOutlined} onPress={task.onPress} activeOpacity={0.85}>
+                  <View style={styles.taskOutlinedIcon}>
+                    <MaterialCommunityIcons name={task.icon} size={22} color={colors.primary[500]} />
                   </View>
                   <View style={styles.taskTextWrap}>
-                    <AppText style={styles.taskSecondaryTitle} numberOfLines={1}>{task.title}</AppText>
-                    <AppText style={styles.taskSecondaryDesc} numberOfLines={1}>
-                      {task.description}{task.duration ? ` · ${task.duration}` : ''}
-                    </AppText>
+                    <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>{task.title}</AppText>
+                    {task.description && (
+                      <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>
+                        {task.description}
+                      </AppText>
+                    )}
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={designSystem.colors.text.tertiary} />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
                 </TouchableOpacity>
               );
             })}
@@ -760,21 +794,39 @@ export default function HomeScreen({ route }) {
           </View>
 
           {/* Score */}
-          <View style={styles.statCard}>
+          <TouchableOpacity
+            style={styles.statCard}
+            onPress={() => setScoreTooltipVisible(!scoreTooltipVisible)}
+            activeOpacity={0.8}
+          >
             <View style={styles.statCardLeft}>
               <View style={[styles.statIcon, { backgroundColor: scoreTone.bg }]}>
                 <MaterialCommunityIcons name="pulse" size={20} color={scoreTone.color} />
               </View>
-              <View style={styles.statLabelRow}>
-                <AppText style={styles.statLabel}>SCORE</AppText>
-                <MaterialCommunityIcons name="information-outline" size={13} color={designSystem.colors.text.tertiary} />
-              </View>
+              <AppText style={styles.statLabel}>SCORE</AppText>
             </View>
             <AppText style={[styles.statValue, { color: scoreTone.color }]} numberOfLines={1} adjustsFontSizeToFit>
               {todayProvisionalScore != null ? todayProvisionalScore : '—'}
             </AppText>
-          </View>
+          </TouchableOpacity>
         </View>
+
+        {scoreTooltipVisible && (
+          <Animated.View style={[styles.scoreTooltip, { opacity: tooltipOpacity, transform: [{ scale: tooltipScale }] }]}>
+            <View style={styles.scoreTooltipHeader}>
+              <MaterialCommunityIcons name="pulse" size={14} color={designSystem.colors.text.primary} />
+              <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score de Lichtiger</AppText>
+            </View>
+            <AppText variant="caption" style={styles.scoreTooltipText}>
+              Indice d'activité de la maladie (0–17)
+            </AppText>
+            <View style={styles.scoreTooltipScale}>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–4 : Rémission</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>5–10 : Modéré</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>11+ : Sévère</AppText>
+            </View>
+          </Animated.View>
+        )}
 
         {/* Actualités AFA */}
         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
@@ -883,16 +935,16 @@ export default function HomeScreen({ route }) {
             </View>
 
               <View style={styles.modalActions}>
-                <PrimaryButton 
-                  onPress={handleSave} 
+                <PrimaryButton
+                  onPress={handleSave}
                   style={styles.saveButton}
                   variant="primary"
                   size="medium"
                 >
                   Enregistrer
                 </PrimaryButton>
-                <PrimaryButton 
-                  onPress={hideModal} 
+                <PrimaryButton
+                  onPress={hideModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
@@ -901,10 +953,31 @@ export default function HomeScreen({ route }) {
                   Annuler
                 </PrimaryButton>
               </View>
+
+              <TouchableOpacity
+                style={styles.switchToBatchBtn}
+                onPress={() => { hideModal(); setBatchFromForm(true); openBatchModal(); }}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="lightning-bolt-outline" size={16} color={designSystem.colors.primary[500]} />
+                <AppText style={styles.switchToBatchLabel}>Saisie rapide du jour</AppText>
+              </TouchableOpacity>
             </ScrollView>
           </AppCard>
         </Modal>
       </Portal>
+
+      {/* Modal saisie rapide batch selles */}
+      <BatchStoolModal
+        visible={isBatchModalVisible}
+        onClose={() => { closeBatchModal(); setBatchFromForm(false); }}
+        showNoStoolOption={!stoolsDismissed && !batchFromForm}
+        onSave={() => {
+          setDailyCount(computeTodayCount());
+          setStoolsDismissed(true);
+          loadHistoryData();
+        }}
+      />
 
       {/* Modale de prise de traitement */}
       <Portal>
@@ -1286,6 +1359,66 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 3,
   },
+  taskOutlined: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 18,
+    padding: 16,
+    borderTopWidth: 3,
+    borderTopColor: colors.primary[400],
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: '#C16046',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  taskOutlinedIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskOutlinedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.text.primary,
+  },
+  taskOutlinedDesc: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  taskCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.primary[500],
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    ...designSystem.shadows.terracotta,
+  },
+  taskCompactIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taskCompactTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   allDoneCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1350,11 +1483,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: colors.text.tertiary,
-  },
-  statLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
   statCardBottom: {
     flexDirection: 'row',
@@ -1561,6 +1689,19 @@ const styles = StyleSheet.create({
   saveButton: {
     width: '100%',
   },
+  switchToBatchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  switchToBatchLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: designSystem.colors.primary[500],
+  },
   treatmentInput: {
     marginTop: designSystem.spacing[2],
   },
@@ -1668,45 +1809,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   scoreTooltip: {
-    position: 'absolute',
-    top: '100%',
-    right: 0,
     marginTop: 8,
-    minWidth: 180,
-    maxWidth: 220,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: 'rgba(200, 200, 244, 0.6)',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    zIndex: 1000,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(12px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-    }),
-  },
-  scoreTooltipArrow: {
-    position: 'absolute',
-    top: '100%',
-    right: 16,
-    marginTop: -1,
-    width: 10,
-    height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRightWidth: 1,
-    borderTopWidth: 1,
-    borderColor: 'rgba(200, 200, 244, 0.6)',
-    transform: [{ rotate: '-45deg' }],
-    zIndex: 999,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(12px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-    }),
+    borderColor: colors.border.light,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    ...designSystem.shadows.base,
   },
   scoreTooltipHeader: {
     flexDirection: 'row',
