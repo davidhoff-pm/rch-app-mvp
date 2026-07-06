@@ -309,7 +309,6 @@ export default function HomeScreen({ route }) {
       loadHistoryData();
 
       // Today provisional score
-      const today = new Date();
       const tDateStr = formatDate(today);
       const fullToday = calculateLichtigerScore(tDateStr, storage);
       if (fullToday == null) {
