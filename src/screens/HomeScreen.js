@@ -630,16 +630,6 @@ export default function HomeScreen({ route }) {
       onPress: () => navigation.navigate('IBDiskQuestionnaire'),
     });
   }
-  if (!isRemission && !stoolsDismissed) {
-    pendingTasks.push({
-      key: 'stools',
-      title: 'Renseigner mes selles',
-      description: 'Saisie rapide du jour',
-      icon: 'toilet',
-      accent: 'primary',
-      onPress: () => openBatchModal(),
-    });
-  }
   if (pendingTreatmentsCount > 0) {
     pendingTasks.push({
       key: 'treatment',
@@ -768,14 +758,22 @@ export default function HomeScreen({ route }) {
 
         <View style={[styles.statGrid, { marginTop: 16 }]}>
           {/* Selles */}
-          <View style={styles.statCard}>
-            <View style={styles.statCardLeft}>
-              <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
-                <MaterialCommunityIcons name="toilet" size={20} color={designSystem.colors.primary[500]} />
+          <View style={styles.statCardWrapper}>
+            <View style={styles.statCard}>
+              <View style={styles.statCardLeft}>
+                <View style={[styles.statIcon, { backgroundColor: designSystem.colors.primary[100] }]}>
+                  <MaterialCommunityIcons name="toilet" size={20} color={designSystem.colors.primary[500]} />
+                </View>
+                <AppText style={styles.statLabel}>SELLES</AppText>
               </View>
-              <AppText style={styles.statLabel}>SELLES</AppText>
+              <AppText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{dailyCount}</AppText>
             </View>
-            <AppText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{dailyCount}</AppText>
+            {!isRemission && !stoolsDismissed && (
+              <TouchableOpacity style={styles.stoolBatchBtn} onPress={openBatchModal} activeOpacity={0.8}>
+                <MaterialCommunityIcons name="plus" size={14} color={designSystem.colors.primary[500]} />
+                <AppText style={styles.stoolBatchLabel}>Renseigner mes selles du jour</AppText>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Score */}
@@ -1349,6 +1347,26 @@ const styles = StyleSheet.create({
   statGrid: {
     flexDirection: 'row',
     gap: 12,
+  },
+  statCardWrapper: {
+    flex: 1,
+  },
+  stoolBatchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 8,
+    paddingVertical: 8,
+    backgroundColor: colors.primary[50],
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
+  },
+  stoolBatchLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary[500],
   },
   statCard: {
     flex: 1,
