@@ -794,20 +794,38 @@ export default function HomeScreen({ route }) {
           </View>
 
           {/* Score */}
-          <View style={styles.statCard}>
+          <TouchableOpacity
+            style={[styles.statCard, styles.statCardScore]}
+            onPress={() => setScoreTooltipVisible(!scoreTooltipVisible)}
+            activeOpacity={0.8}
+          >
             <View style={styles.statCardLeft}>
               <View style={[styles.statIcon, { backgroundColor: scoreTone.bg }]}>
                 <MaterialCommunityIcons name="pulse" size={20} color={scoreTone.color} />
               </View>
-              <View style={styles.statLabelRow}>
-                <AppText style={styles.statLabel}>SCORE</AppText>
-                <MaterialCommunityIcons name="information-outline" size={13} color={designSystem.colors.text.tertiary} />
-              </View>
+              <AppText style={styles.statLabel}>SCORE</AppText>
             </View>
             <AppText style={[styles.statValue, { color: scoreTone.color }]} numberOfLines={1} adjustsFontSizeToFit>
               {todayProvisionalScore != null ? todayProvisionalScore : '—'}
             </AppText>
-          </View>
+
+            {scoreTooltipVisible && (
+              <Animated.View style={[styles.scoreTooltip, { opacity: tooltipOpacity, transform: [{ scale: tooltipScale }] }]}>
+                <View style={styles.scoreTooltipHeader}>
+                  <MaterialCommunityIcons name="pulse" size={14} color={designSystem.colors.text.primary} />
+                  <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score de Lichtiger</AppText>
+                </View>
+                <AppText variant="caption" style={styles.scoreTooltipText}>
+                  Indice d'activité de la maladie (0–17)
+                </AppText>
+                <View style={styles.scoreTooltipScale}>
+                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–4 : Rémission</AppText>
+                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>5–10 : Modéré</AppText>
+                  <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>11+ : Sévère</AppText>
+                </View>
+              </Animated.View>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Actualités AFA */}
@@ -1466,10 +1484,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.text.tertiary,
   },
-  statLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  statCardScore: {
+    position: 'relative',
+    overflow: 'visible',
+    zIndex: 100,
   },
   statCardBottom: {
     flexDirection: 'row',
