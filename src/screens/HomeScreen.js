@@ -46,6 +46,7 @@ export default function HomeScreen({ route }) {
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
   const [stoolsDismissed, setStoolsDismissed] = useState(false);
+  const [batchFromForm, setBatchFromForm] = useState(false);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
@@ -916,16 +917,16 @@ export default function HomeScreen({ route }) {
             </View>
 
               <View style={styles.modalActions}>
-                <PrimaryButton 
-                  onPress={handleSave} 
+                <PrimaryButton
+                  onPress={handleSave}
                   style={styles.saveButton}
                   variant="primary"
                   size="medium"
                 >
                   Enregistrer
                 </PrimaryButton>
-                <PrimaryButton 
-                  onPress={hideModal} 
+                <PrimaryButton
+                  onPress={hideModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
@@ -934,6 +935,15 @@ export default function HomeScreen({ route }) {
                   Annuler
                 </PrimaryButton>
               </View>
+
+              <TouchableOpacity
+                style={styles.switchToBatchBtn}
+                onPress={() => { hideModal(); setBatchFromForm(true); openBatchModal(); }}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="lightning-bolt-outline" size={16} color={designSystem.colors.primary[500]} />
+                <AppText style={styles.switchToBatchLabel}>Saisie rapide du jour</AppText>
+              </TouchableOpacity>
             </ScrollView>
           </AppCard>
         </Modal>
@@ -942,8 +952,8 @@ export default function HomeScreen({ route }) {
       {/* Modal saisie rapide batch selles */}
       <BatchStoolModal
         visible={isBatchModalVisible}
-        onClose={closeBatchModal}
-        showNoStoolOption={!stoolsDismissed}
+        onClose={() => { closeBatchModal(); setBatchFromForm(false); }}
+        showNoStoolOption={!stoolsDismissed && !batchFromForm}
         onSave={() => {
           setDailyCount(computeTodayCount());
           setStoolsDismissed(true);
@@ -1665,6 +1675,19 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     width: '100%',
+  },
+  switchToBatchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  switchToBatchLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: designSystem.colors.primary[500],
   },
   treatmentInput: {
     marginTop: designSystem.spacing[2],
