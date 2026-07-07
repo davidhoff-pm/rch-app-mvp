@@ -5,6 +5,14 @@
 
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
+import {
+  getActiveTherapeuticSchemas,
+  getMedications,
+  getDoses,
+  getNextIntake,
+  isIntervalIntakeDone,
+  getTreatmentReminderTimes,
+} from '../utils/treatmentUtils';
 
 /**
  * Vérifier si les notifications sont supportées par le navigateur
@@ -168,6 +176,7 @@ export function getNotificationSettings() {
     enabled: false,
     surveyReminder1: { enabled: true, hour: 9, minute: 0 },
     stoolReminder: { enabled: true, hour: 20, minute: 0 },
+    treatmentRemindersEnabled: true,
   };
 
   if (!json) return defaults;
@@ -236,6 +245,7 @@ export function disableNotifications() {
 // Timers des rappels
 let surveyReminderTimer = null;
 let stoolReminderTimer = null;
+let treatmentReminderTimers = [];
 
 /**
  * Calculer le délai en millisecondes jusqu'à une heure donnée
@@ -295,6 +305,106 @@ function scheduleStoolReminderWeb(hour, minute) {
 }
 
 /**
+ * Planifier les rappels traitement web
+ */
+function scheduleTreatmentRemindersWeb() {
+  cancelTreatmentRemindersWeb();
+
+  const settings = getNotificationSettings();
+  if (!settings.enabled || settings.treatmentRemindersEnabled === false) return;
+
+  const schemas = getActiveTherapeuticSchemas();
+  const medications = getMedications();
+  const times = getTreatmentReminderTimes();
+
+  const parseTime = (str) => {
+    const [h, m] = (str || '08:00').split(':').map(Number);
+    return { hour: h, minute: m };
+  };
+
+  for (const schema of schemas) {
+    const med = medications[schema.medicationId];
+    if (!med) continue;
+
+    if (schema.frequency.type === 'daily') {
+      const doses = getDoses(schema.frequency);
+      const moments = [
+        { key: 'matin', count: doses.matin },
+        { key: 'midi', count: doses.midi },
+        { key: 'soir', count: doses.soir },
+      ];
+
+      for (const { key, count } of moments) {
+        if (count <= 0) continue;
+        const { hour, minute } = parseTime(times[key]);
+
+        const scheduleNext = () => {
+          const delay = getDelayUntilTime(hour, minute);
+          const timer = setTimeout(() => {
+            showWebNotification(
+              `💊 ${med.name}`,
+              `C'est l'heure de votre traitement (${count} prise${count > 1 ? 's' : ''})`,
+              { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', tag: `treatment-${schema.id}-${key}` }
+            );
+            scheduleNext();
+          }, delay);
+          treatmentReminderTimers.push(timer);
+        };
+
+        scheduleNext();
+      }
+    } else if (schema.frequency.type === 'interval') {
+      if (isIntervalIntakeDone(schema)) continue;
+      const { nextDate } = getNextIntake(schema);
+      const now = new Date();
+      const { hour, minute } = parseTime(times.interval || '08:00');
+
+      // Rappel le jour de la prise
+      if (nextDate >= now) {
+        const triggerDate = new Date(nextDate);
+        triggerDate.setHours(hour, minute, 0, 0);
+        if (triggerDate > now) {
+          const delay = triggerDate.getTime() - now.getTime();
+          const timer = setTimeout(() => {
+            showWebNotification(
+              `💊 ${med.name}`,
+              `C'est le jour de votre traitement`,
+              { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', tag: `treatment-${schema.id}-interval` }
+            );
+          }, delay);
+          treatmentReminderTimers.push(timer);
+        }
+      }
+
+      // Rappel stock X jours avant (intervalle >= 7 jours)
+      if (times.stockReminderEnabled !== false && schema.frequency.intervalDays >= 7) {
+        const daysBefore = times.stockReminderDays || 3;
+        const stockDate = new Date(nextDate);
+        stockDate.setDate(stockDate.getDate() - daysBefore);
+        stockDate.setHours(hour, minute, 0, 0);
+
+        if (stockDate > now) {
+          const delay = stockDate.getTime() - now.getTime();
+          const timer = setTimeout(() => {
+            showWebNotification(
+              `📦 ${med.name}`,
+              `Vous devez prendre votre traitement dans ${daysBefore} jour${daysBefore > 1 ? 's' : ''}, vérifiez votre stock`,
+              { type: 'STOCK_REMINDER', action: 'OPEN_TREATMENT', tag: `treatment-${schema.id}-stock` }
+            );
+          }, delay);
+          treatmentReminderTimers.push(timer);
+        }
+      }
+    }
+  }
+}
+
+function cancelTreatmentRemindersWeb() {
+  treatmentReminderTimers.forEach(t => clearTimeout(t));
+  treatmentReminderTimers = [];
+}
+
+/**
  * Planifier tous les rappels
  */
 export function scheduleAllReminders() {
@@ -309,6 +419,8 @@ export function scheduleAllReminders() {
   if (settings.stoolReminder?.enabled) {
     scheduleStoolReminderWeb(settings.stoolReminder.hour, settings.stoolReminder.minute);
   }
+
+  scheduleTreatmentRemindersWeb();
 }
 
 /**
@@ -317,6 +429,7 @@ export function scheduleAllReminders() {
 export function cancelAllReminders() {
   if (surveyReminderTimer) { clearTimeout(surveyReminderTimer); surveyReminderTimer = null; }
   if (stoolReminderTimer) { clearTimeout(stoolReminderTimer); stoolReminderTimer = null; }
+  cancelTreatmentRemindersWeb();
 }
 
 // Initialiser les rappels au chargement de la page

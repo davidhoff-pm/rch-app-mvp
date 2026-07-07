@@ -31,9 +31,13 @@ export default function SettingsScreen() {
   const [reminder1Time, setReminder1Time] = useState('09:00');
   const [reminder2Time, setReminder2Time] = useState('20:00');
 
+  const [treatmentRemindersEnabled, setTreatmentRemindersEnabled] = useState(true);
   const [treatmentMatin, setTreatmentMatin] = useState('08:00');
   const [treatmentMidi, setTreatmentMidi] = useState('12:00');
   const [treatmentSoir, setTreatmentSoir] = useState('19:00');
+  const [treatmentInterval, setTreatmentInterval] = useState('08:00');
+  const [stockReminderEnabled, setStockReminderEnabled] = useState(true);
+  const [stockReminderDays, setStockReminderDays] = useState('3');
 
   // Charger les paramètres de notification au démarrage
   useEffect(() => {
@@ -59,6 +63,10 @@ export default function SettingsScreen() {
     setTreatmentMatin(treatTimes.matin);
     setTreatmentMidi(treatTimes.midi);
     setTreatmentSoir(treatTimes.soir);
+    setTreatmentRemindersEnabled(settings.treatmentRemindersEnabled !== false);
+    setTreatmentInterval(treatTimes.interval || '08:00');
+    setStockReminderEnabled(treatTimes.stockReminderEnabled !== false);
+    setStockReminderDays(String(treatTimes.stockReminderDays || 3));
   };
 
   // Générer des données de test
@@ -243,8 +251,69 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleTreatmentTimeChange = (moment, timeStr) => {
-    const setter = { matin: setTreatmentMatin, midi: setTreatmentMidi, soir: setTreatmentSoir }[moment];
+  const handleToggleTreatmentReminders = async (value) => {
+    setTreatmentRemindersEnabled(value);
+    const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+    const settings = service.getNotificationSettings();
+    settings.treatmentRemindersEnabled = value;
+    service.saveNotificationSettings(settings);
+
+    if (notificationsEnabled) {
+      if (value) {
+        if (Platform.OS === 'web') {
+          WebNotificationService.scheduleAllReminders();
+        } else {
+          const { scheduleTreatmentReminders } = require('../services/notificationService');
+          await scheduleTreatmentReminders();
+        }
+      } else {
+        if (Platform.OS === 'web') {
+          WebNotificationService.scheduleAllReminders();
+        } else {
+          const { cancelTreatmentReminders } = require('../services/notificationService');
+          await cancelTreatmentReminders();
+        }
+      }
+    }
+  };
+
+  const handleToggleStockReminder = async (value) => {
+    setStockReminderEnabled(value);
+    const current = getTreatmentReminderTimes();
+    current.stockReminderEnabled = value;
+    saveTreatmentReminderTimes(current);
+
+    if (notificationsEnabled && treatmentRemindersEnabled) {
+      if (Platform.OS === 'web') {
+        WebNotificationService.scheduleAllReminders();
+      } else {
+        const { scheduleTreatmentReminders } = require('../services/notificationService');
+        await scheduleTreatmentReminders();
+      }
+    }
+  };
+
+  const handleStockDaysChange = async (text) => {
+    setStockReminderDays(text);
+    const days = parseInt(text);
+    if (!isNaN(days) && days >= 1 && days <= 30) {
+      const current = getTreatmentReminderTimes();
+      current.stockReminderDays = days;
+      saveTreatmentReminderTimes(current);
+
+      if (notificationsEnabled && treatmentRemindersEnabled && stockReminderEnabled) {
+        if (Platform.OS === 'web') {
+          WebNotificationService.scheduleAllReminders();
+        } else {
+          const { scheduleTreatmentReminders } = require('../services/notificationService');
+          await scheduleTreatmentReminders();
+        }
+      }
+    }
+  };
+
+  const handleTreatmentTimeChange = async (moment, timeStr) => {
+    const setter = { matin: setTreatmentMatin, midi: setTreatmentMidi, soir: setTreatmentSoir, interval: setTreatmentInterval }[moment];
     if (setter) setter(timeStr);
 
     if (timeStr.length === 5 && timeStr.includes(':')) {
@@ -253,6 +322,15 @@ export default function SettingsScreen() {
         const current = getTreatmentReminderTimes();
         current[moment] = timeStr;
         saveTreatmentReminderTimes(current);
+
+        if (notificationsEnabled && treatmentRemindersEnabled) {
+          if (Platform.OS === 'web') {
+            WebNotificationService.scheduleAllReminders();
+          } else {
+            const { scheduleTreatmentReminders } = require('../services/notificationService');
+            await scheduleTreatmentReminders();
+          }
+        }
       }
     }
   };
@@ -634,21 +712,85 @@ export default function SettingsScreen() {
               <AppText variant="bodySmall" style={styles.reminderDescription}>
                 Heures des rappels pour les prises matin, midi et soir. Actifs même en rémission.
               </AppText>
-              <TimeInput
-                value={treatmentMatin}
-                onChange={(v) => handleTreatmentTimeChange('matin', v)}
-                label="Matin"
-              />
-              <TimeInput
-                value={treatmentMidi}
-                onChange={(v) => handleTreatmentTimeChange('midi', v)}
-                label="Midi"
-              />
-              <TimeInput
-                value={treatmentSoir}
-                onChange={(v) => handleTreatmentTimeChange('soir', v)}
-                label="Soir"
-              />
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <MaterialCommunityIcons name="bell-ring-outline" size={20} color="#C16046" />
+                  <AppText variant="bodyMedium" style={styles.settingLabel}>
+                    Activer les rappels traitement
+                  </AppText>
+                </View>
+                <Switch
+                  value={treatmentRemindersEnabled}
+                  onValueChange={handleToggleTreatmentReminders}
+                  trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                  thumbColor={treatmentRemindersEnabled ? '#C16046' : '#FFF3EE'}
+                />
+              </View>
+              {treatmentRemindersEnabled && (
+                <>
+                  <AppText variant="bodySmall" style={[styles.reminderDescription, { marginTop: 8, marginBottom: 4 }]}>
+                    Traitements quotidiens
+                  </AppText>
+                  <TimeInput
+                    value={treatmentMatin}
+                    onChange={(v) => handleTreatmentTimeChange('matin', v)}
+                    label="Matin"
+                  />
+                  <TimeInput
+                    value={treatmentMidi}
+                    onChange={(v) => handleTreatmentTimeChange('midi', v)}
+                    label="Midi"
+                  />
+                  <TimeInput
+                    value={treatmentSoir}
+                    onChange={(v) => handleTreatmentTimeChange('soir', v)}
+                    label="Soir"
+                  />
+
+                  <View style={styles.divider} />
+
+                  <AppText variant="bodySmall" style={[styles.reminderDescription, { marginBottom: 4 }]}>
+                    Traitements espacés (tous les X jours)
+                  </AppText>
+                  <TimeInput
+                    value={treatmentInterval}
+                    onChange={(v) => handleTreatmentTimeChange('interval', v)}
+                    label="Heure du rappel"
+                  />
+
+                  <View style={[styles.settingRow, { marginTop: 8 }]}>
+                    <View style={styles.settingLabelContainer}>
+                      <MaterialCommunityIcons name="package-variant" size={20} color="#C16046" />
+                      <AppText variant="bodyMedium" style={styles.settingLabel}>
+                        Rappel de stock
+                      </AppText>
+                    </View>
+                    <Switch
+                      value={stockReminderEnabled}
+                      onValueChange={handleToggleStockReminder}
+                      trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                      thumbColor={stockReminderEnabled ? '#C16046' : '#FFF3EE'}
+                    />
+                  </View>
+                  {stockReminderEnabled && (
+                    <View style={{ marginTop: 4 }}>
+                      <AppText variant="bodySmall" style={styles.reminderDescription}>
+                        Recevez un rappel X jours avant la prise pour vérifier votre stock en pharmacie.
+                      </AppText>
+                      <TextInput
+                        value={stockReminderDays}
+                        onChangeText={handleStockDaysChange}
+                        keyboardType="number-pad"
+                        style={styles.stockDaysInput}
+                        placeholder="3"
+                      />
+                      <AppText variant="labelSmall" style={{ color: designSystem.colors.text.tertiary, fontStyle: 'italic', marginTop: 2 }}>
+                        Nombre de jours avant la prise (1 à 30)
+                      </AppText>
+                    </View>
+                  )}
+                </>
+              )}
             </View>
           </>
         )}
@@ -1085,5 +1227,16 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 12,
     marginLeft: 28,
+  },
+  stockDaysInput: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E6E0DA',
+    borderRadius: designSystem.borderRadius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    marginTop: 8,
+    width: 80,
   },
 });
