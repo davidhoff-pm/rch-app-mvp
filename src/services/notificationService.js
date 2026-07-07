@@ -2,8 +2,15 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
+import {
+  getActiveTherapeuticSchemas,
+  getMedications,
+  getDoses,
+  getNextIntake,
+  isIntervalIntakeDone,
+  getTreatmentReminderTimes,
+} from '../utils/treatmentUtils';
 
-// Configuration du comportement des notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -12,7 +19,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// IDs des notifications pour pouvoir les annuler
 const NOTIFICATION_IDS = {
   SURVEY_REMINDER_1: 'survey-reminder-1',
   STOOL_REMINDER: 'stool-reminder-evening',
@@ -167,18 +173,144 @@ export async function refreshDailyNotifications() {
 
   const remission = isRemissionMode();
 
-  // Rappel bilan matin
   if (remission || isSurveyCompletedToday()) {
     await cancelSurveyReminder();
   } else if (settings.surveyReminder1.enabled) {
     await scheduleSurveyReminder(settings.surveyReminder1.hour, settings.surveyReminder1.minute);
   }
 
-  // Rappel selles soir
   if (remission || isStoolLoggedToday()) {
     await cancelStoolReminder();
   } else if (settings.stoolReminder?.enabled) {
     await scheduleStoolReminder(settings.stoolReminder.hour, settings.stoolReminder.minute);
+  }
+
+  // Rappels traitement — actifs même en rémission
+  await scheduleTreatmentReminders();
+}
+
+/**
+ * Annuler tous les rappels traitement
+ */
+export async function cancelTreatmentReminders() {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    for (const n of all) {
+      if (n.identifier?.startsWith('treatment-')) {
+        await Notifications.cancelScheduledNotificationAsync(n.identifier);
+      }
+    }
+  } catch (error) {
+    console.error('Erreur annulation rappels traitement:', error);
+  }
+}
+
+/**
+ * Planifier les rappels traitement pour tous les traitements actifs
+ */
+export async function scheduleTreatmentReminders() {
+  const settings = getNotificationSettings();
+  if (!settings.enabled || settings.treatmentRemindersEnabled === false) return;
+
+  await cancelTreatmentReminders();
+
+  const schemas = getActiveTherapeuticSchemas();
+  const medications = getMedications();
+  const times = getTreatmentReminderTimes();
+
+  const parseTime = (str) => {
+    const [h, m] = (str || '08:00').split(':').map(Number);
+    return { hour: h, minute: m };
+  };
+
+  for (const schema of schemas) {
+    const med = medications[schema.medicationId];
+    if (!med) continue;
+
+    if (schema.frequency.type === 'daily') {
+      const doses = getDoses(schema.frequency);
+      const moments = [
+        { key: 'matin', count: doses.matin },
+        { key: 'midi', count: doses.midi },
+        { key: 'soir', count: doses.soir },
+      ];
+
+      for (const { key, count } of moments) {
+        if (count <= 0) continue;
+        const { hour, minute } = parseTime(times[key]);
+        const id = `treatment-${schema.id}-${key}`;
+
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `💊 ${med.name}`,
+              body: `C'est l'heure de votre traitement (${count} prise${count > 1 ? 's' : ''})`,
+              data: { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
+              sound: true,
+            },
+            trigger: { hour, minute, repeats: true },
+            identifier: id,
+          });
+        } catch (e) {
+          console.error(`Erreur planification rappel ${id}:`, e);
+        }
+      }
+    } else if (schema.frequency.type === 'interval') {
+      if (isIntervalIntakeDone(schema)) continue;
+      const { nextDate } = getNextIntake(schema);
+      const now = new Date();
+
+      const { hour, minute } = parseTime(times.interval || '08:00');
+
+      // Rappel le jour de la prise
+      if (nextDate >= now) {
+        const triggerDate = new Date(nextDate);
+        triggerDate.setHours(hour, minute, 0, 0);
+        if (triggerDate > now) {
+          const id = `treatment-${schema.id}-interval`;
+          try {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: `💊 ${med.name}`,
+                body: `C'est le jour de votre traitement`,
+                data: { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
+                sound: true,
+              },
+              trigger: { date: triggerDate },
+              identifier: id,
+            });
+          } catch (e) {
+            console.error(`Erreur planification rappel interval ${id}:`, e);
+          }
+        }
+      }
+
+      // Rappel stock X jours avant (uniquement si intervalle >= 7 jours)
+      if (times.stockReminderEnabled !== false && schema.frequency.intervalDays >= 7) {
+        const daysBefore = times.stockReminderDays || 3;
+        const stockDate = new Date(nextDate);
+        stockDate.setDate(stockDate.getDate() - daysBefore);
+        stockDate.setHours(hour, minute, 0, 0);
+
+        if (stockDate > now) {
+          const stockId = `treatment-${schema.id}-stock`;
+          try {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: `📦 ${med.name}`,
+                body: `Vous devez prendre votre traitement dans ${daysBefore} jour${daysBefore > 1 ? 's' : ''}, vérifiez votre stock`,
+                data: { type: 'STOCK_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
+                sound: true,
+              },
+              trigger: { date: stockDate },
+              identifier: stockId,
+            });
+          } catch (e) {
+            console.error(`Erreur planification rappel stock ${stockId}:`, e);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -204,13 +336,13 @@ export function getNotificationSettings() {
     enabled: false,
     surveyReminder1: { enabled: true, hour: 9, minute: 0 },
     stoolReminder: { enabled: true, hour: 20, minute: 0 },
+    treatmentRemindersEnabled: true,
   };
 
   if (!json) return defaults;
 
   try {
     const saved = JSON.parse(json);
-    // Migration: ancien champ surveyReminder2 → stoolReminder
     if (saved.surveyReminder2 && !saved.stoolReminder) {
       saved.stoolReminder = saved.surveyReminder2;
       delete saved.surveyReminder2;
@@ -281,6 +413,9 @@ export async function scheduleAllReminders() {
   if (!remission && settings.stoolReminder?.enabled) {
     await scheduleStoolReminder(settings.stoolReminder.hour, settings.stoolReminder.minute);
   }
+
+  // Rappels traitement — actifs même en rémission
+  await scheduleTreatmentReminders();
 }
 
 /**

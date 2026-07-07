@@ -685,6 +685,9 @@ export const TREATMENT_REMINDER_DEFAULTS = {
   matin: '08:00',
   midi: '12:00',
   soir: '19:00',
+  interval: '08:00',
+  stockReminderEnabled: true,
+  stockReminderDays: 3,
 };
 
 export const getTreatmentReminderTimes = () => {

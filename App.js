@@ -75,9 +75,12 @@ export default function App() {
         });
       }
 
-      // Rappel selles → ouvre l'accueil (US-006 ajoutera le mode batch)
       if (data?.action === 'OPEN_STOOL_BATCH' && navigationRef.current) {
         navigationRef.current.navigate('Main', { screen: 'Accueil' });
+      }
+
+      if (data?.action === 'OPEN_TREATMENT' && navigationRef.current) {
+        navigationRef.current.navigate('Main', { screen: 'Traitement' });
       }
     });
 
