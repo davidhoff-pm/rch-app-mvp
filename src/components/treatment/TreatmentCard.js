@@ -9,7 +9,9 @@ import {
   isIntervalIntakeDone,
   getNextIntake,
   formatFrequency,
-  checkOverdose
+  checkOverdose,
+  getDosesPerDay,
+  getDoses,
 } from '../../utils/treatmentUtils';
 
 /**
@@ -31,11 +33,8 @@ const TreatmentCard = ({
   const { type } = schema.frequency;
   const isDaily = type === 'daily';
 
-  // Pour les daily: nombre de prises aujourd'hui
   const todayCount = isDaily ? getTodayIntakesCount(schema) : 0;
-  const totalDoses = isDaily ? schema.frequency.dosesPerDay : 1;
-
-  console.log('[TreatmentCard] Rendering for', medication.name, 'todayCount:', todayCount, 'totalDoses:', totalDoses, 'schemaId:', schema.id);
+  const totalDoses = isDaily ? getDosesPerDay(schema.frequency) : 1;
 
   // Pour les interval: vérifier si déjà pris et calculer retard
   const isDone = !isDaily && isIntervalIntakeDone(schema);

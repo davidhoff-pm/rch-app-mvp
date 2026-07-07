@@ -95,15 +95,13 @@ export const calculateAdherence = (schema) => {
   let expectedIntakes = 0;
 
   if (schema.frequency.type === 'daily') {
-    expectedIntakes = daysDuration * schema.frequency.dosesPerDay;
+    expectedIntakes = daysDuration * getDosesPerDay(schema.frequency);
   } else if (schema.frequency.type === 'interval') {
     expectedIntakes = Math.floor(daysDuration / schema.frequency.intervalDays) + 1;
   }
 
-  // Calculer le nombre de prises effectuées
   const actualIntakes = schemaIntakes.reduce((sum, intake) => sum + intake.doses, 0);
 
-  // Calculer l'observance
   if (expectedIntakes === 0) return 0;
 
   const adherence = Math.round((actualIntakes / expectedIntakes) * 100);
@@ -133,7 +131,7 @@ export const checkOverdose = (schema) => {
   let expectedIntakes = 0;
 
   if (schema.frequency.type === 'daily') {
-    expectedIntakes = daysDuration * schema.frequency.dosesPerDay;
+    expectedIntakes = daysDuration * getDosesPerDay(schema.frequency);
   } else if (schema.frequency.type === 'interval') {
     expectedIntakes = Math.floor(daysDuration / schema.frequency.intervalDays) + 1;
   }
@@ -274,9 +272,8 @@ export const getPendingIntakesCount = () => {
 
   activeSchemas.forEach(schema => {
     if (schema.frequency.type === 'daily') {
-      // Nombre de prises restantes aujourd'hui
       const todayCount = getTodayIntakesCount(schema);
-      const remaining = schema.frequency.dosesPerDay - todayCount;
+      const remaining = getDosesPerDay(schema.frequency) - todayCount;
       count += Math.max(0, remaining);
     } else if (schema.frequency.type === 'interval') {
       // Si prise non faite et date atteinte ou dépassée
@@ -655,11 +652,51 @@ export const deleteIntake = (intakeId) => {
  */
 export const formatFrequency = (frequency) => {
   if (frequency.type === 'daily') {
+    const doses = frequency.doses;
+    if (doses) {
+      const parts = [];
+      if (doses.matin > 0) parts.push(`${doses.matin} matin`);
+      if (doses.midi > 0) parts.push(`${doses.midi} midi`);
+      if (doses.soir > 0) parts.push(`${doses.soir} soir`);
+      return parts.length > 0 ? parts.join(' · ') : '0 prise par jour';
+    }
     return `${frequency.dosesPerDay} fois par jour`;
   } else if (frequency.type === 'interval') {
     return `1 fois tous les ${frequency.intervalDays} jours`;
   }
   return '';
+};
+
+export const getDosesPerDay = (frequency) => {
+  if (frequency.type !== 'daily') return 1;
+  if (frequency.doses) {
+    return (frequency.doses.matin || 0) + (frequency.doses.midi || 0) + (frequency.doses.soir || 0);
+  }
+  return frequency.dosesPerDay || 0;
+};
+
+export const getDoses = (frequency) => {
+  if (frequency.type !== 'daily') return { matin: 0, midi: 0, soir: 0 };
+  if (frequency.doses) return frequency.doses;
+  return { matin: frequency.dosesPerDay || 0, midi: 0, soir: 0 };
+};
+
+export const TREATMENT_REMINDER_DEFAULTS = {
+  matin: '08:00',
+  midi: '12:00',
+  soir: '19:00',
+};
+
+export const getTreatmentReminderTimes = () => {
+  const json = storage.getString('treatmentReminderTimes');
+  if (json) {
+    try { return { ...TREATMENT_REMINDER_DEFAULTS, ...JSON.parse(json) }; } catch {}
+  }
+  return { ...TREATMENT_REMINDER_DEFAULTS };
+};
+
+export const saveTreatmentReminderTimes = (times) => {
+  storage.set('treatmentReminderTimes', JSON.stringify(times));
 };
 
 /**
