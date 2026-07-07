@@ -1,32 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { getPendingIntakesCount } from '../utils/treatmentUtils';
-
-/**
- * Hook pour calculer le nombre de prises de traitement en attente
- * Retourne le nombre de cases à cocher (max 9)
- *
- * Usage:
- * const pendingCount = usePendingTreatments();
- */
 
 export const usePendingTreatments = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
-  const updatePendingCount = () => {
-    const count = getPendingIntakesCount();
-    setPendingCount(count);
-  };
-
-  // Recalculer périodiquement (toutes les 10 secondes)
-  useEffect(() => {
-    updatePendingCount();
-
-    const interval = setInterval(() => {
-      updatePendingCount();
-    }, 10000); // 10 secondes
-
-    return () => clearInterval(interval);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setPendingCount(getPendingIntakesCount());
+    }, [])
+  );
 
   return pendingCount;
 };

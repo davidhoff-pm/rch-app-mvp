@@ -1,46 +1,75 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Portal, Modal, TextInput, RadioButton } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
 import designSystem from '../../theme/designSystem';
 import {
   saveMedication,
-  createSchema
+  createSchema,
+  getTreatmentReminderTimes,
 } from '../../utils/treatmentUtils';
 import { buttonPressFeedback } from '../../utils/haptics';
 
-/**
- * Modal pour créer un nouveau schéma thérapeutique
- */
+const { colors, spacing, borderRadius } = designSystem;
+
+function MiniStepper({ value, min, max, onChange }) {
+  return (
+    <View style={stepperStyles.row}>
+      <TouchableOpacity
+        style={[stepperStyles.btn, value <= min && stepperStyles.btnDisabled]}
+        onPress={() => { if (value > min) { buttonPressFeedback(); onChange(value - 1); } }}
+        activeOpacity={0.7}
+        disabled={value <= min}
+      >
+        <MaterialCommunityIcons name="minus" size={16} color={value <= min ? colors.text.disabled : colors.primary[500]} />
+      </TouchableOpacity>
+      <AppText style={stepperStyles.value}>{value}</AppText>
+      <TouchableOpacity
+        style={[stepperStyles.btn, value >= max && stepperStyles.btnDisabled]}
+        onPress={() => { if (value < max) { buttonPressFeedback(); onChange(value + 1); } }}
+        activeOpacity={0.7}
+        disabled={value >= max}
+      >
+        <MaterialCommunityIcons name="plus" size={16} color={value >= max ? colors.text.disabled : colors.primary[500]} />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
   const [medicationName, setMedicationName] = useState('');
   const [frequencyType, setFrequencyType] = useState('daily');
-  const [dosesPerDay, setDosesPerDay] = useState('1');
+  const [dosesMatin, setDosesMatin] = useState(1);
+  const [dosesMidi, setDosesMidi] = useState(0);
+  const [dosesSoir, setDosesSoir] = useState(0);
   const [intervalDays, setIntervalDays] = useState('7');
+
+  const reminderTimes = getTreatmentReminderTimes();
+  const totalDoses = dosesMatin + dosesMidi + dosesSoir;
 
   React.useEffect(() => {
     if (visible) {
       setMedicationName('');
       setFrequencyType('daily');
-      setDosesPerDay('1');
+      setDosesMatin(1);
+      setDosesMidi(0);
+      setDosesSoir(0);
       setIntervalDays('7');
     }
   }, [visible]);
 
   const handleSave = () => {
-    // Validation
     if (!medicationName.trim()) {
       alert('Veuillez entrer le nom du médicament');
       return;
     }
 
     if (frequencyType === 'daily') {
-      const doses = parseInt(dosesPerDay);
-      if (isNaN(doses) || doses < 1 || doses > 10) {
-        alert('Le nombre de prises par jour doit être entre 1 et 10');
+      if (totalDoses < 1) {
+        alert('Indiquez au moins 1 prise par jour');
         return;
       }
     } else {
@@ -51,12 +80,10 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
       }
     }
 
-    // Créer le médicament
     const medicationId = saveMedication(null, medicationName.trim());
 
-    // Créer le schéma
     const frequency = frequencyType === 'daily'
-      ? { type: 'daily', dosesPerDay: parseInt(dosesPerDay) }
+      ? { type: 'daily', doses: { matin: dosesMatin, midi: dosesMidi, soir: dosesSoir }, dosesPerDay: totalDoses }
       : { type: 'interval', intervalDays: parseInt(intervalDays) };
 
     createSchema(medicationId, frequency);
@@ -75,7 +102,6 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
               Nouveau traitement
             </AppText>
 
-            {/* Nom du médicament */}
             <View style={styles.section}>
               <AppText style={styles.fieldLabel}>Nom du médicament</AppText>
               <TextInput
@@ -84,11 +110,10 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
                 placeholder="Ex: Pentasa, Humira..."
                 mode="outlined"
                 style={styles.input}
-                outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                outlineStyle={{ borderRadius: borderRadius.md }}
               />
             </View>
 
-            {/* Type de fréquence */}
             <View style={styles.section}>
               <AppText style={styles.fieldLabel}>Fréquence</AppText>
 
@@ -100,12 +125,12 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
                   value="daily"
                   status={frequencyType === 'daily' ? 'checked' : 'unchecked'}
                   onPress={() => setFrequencyType('daily')}
-                  color={designSystem.colors.primary[500]}
+                  color={colors.primary[500]}
                 />
                 <View style={styles.radioContent}>
                   <AppText variant="bodyLarge" style={styles.radioLabel}>Tous les jours</AppText>
                   <AppText variant="bodySmall" style={styles.radioHint}>
-                    Plusieurs prises par jour
+                    Prises matin, midi et/ou soir
                   </AppText>
                 </View>
               </TouchableOpacity>
@@ -118,7 +143,7 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
                   value="interval"
                   status={frequencyType === 'interval' ? 'checked' : 'unchecked'}
                   onPress={() => setFrequencyType('interval')}
-                  color={designSystem.colors.primary[500]}
+                  color={colors.primary[500]}
                 />
                 <View style={styles.radioContent}>
                   <AppText variant="bodyLarge" style={styles.radioLabel}>Tous les X jours</AppText>
@@ -129,22 +154,52 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Nombre de prises (si daily) */}
             {frequencyType === 'daily' && (
               <View style={styles.section}>
-                <AppText style={styles.fieldLabel}>Nombre de prises par jour</AppText>
-                <TextInput
-                  value={dosesPerDay}
-                  onChangeText={setDosesPerDay}
-                  keyboardType="number-pad"
-                  mode="outlined"
-                  style={styles.input}
-                  outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
-                />
+                <AppText style={styles.fieldLabel}>Nombre de prises par moment</AppText>
+
+                <View style={styles.momentRow}>
+                  <View style={styles.momentLabel}>
+                    <MaterialCommunityIcons name="weather-sunny" size={18} color={colors.accent[500]} />
+                    <AppText variant="body" weight="semiBold">Matin</AppText>
+                  </View>
+                  <MiniStepper value={dosesMatin} min={0} max={10} onChange={setDosesMatin} />
+                </View>
+
+                <View style={styles.momentRow}>
+                  <View style={styles.momentLabel}>
+                    <MaterialCommunityIcons name="white-balance-sunny" size={18} color={colors.accent[500]} />
+                    <AppText variant="body" weight="semiBold">Midi</AppText>
+                  </View>
+                  <MiniStepper value={dosesMidi} min={0} max={10} onChange={setDosesMidi} />
+                </View>
+
+                <View style={styles.momentRow}>
+                  <View style={styles.momentLabel}>
+                    <MaterialCommunityIcons name="weather-night" size={18} color={colors.accent[500]} />
+                    <AppText variant="body" weight="semiBold">Soir</AppText>
+                  </View>
+                  <MiniStepper value={dosesSoir} min={0} max={10} onChange={setDosesSoir} />
+                </View>
+
+                <View style={styles.totalRow}>
+                  <AppText variant="bodySmall" color="secondary">
+                    Total : {totalDoses} prise{totalDoses > 1 ? 's' : ''} / jour
+                  </AppText>
+                </View>
+
+                <View style={styles.reminderInfo}>
+                  <MaterialCommunityIcons name="bell-outline" size={14} color={colors.text.tertiary} />
+                  <AppText variant="labelSmall" style={styles.reminderText}>
+                    Rappels : {reminderTimes.matin} · {reminderTimes.midi} · {reminderTimes.soir}
+                  </AppText>
+                </View>
+                <AppText variant="labelSmall" style={styles.reminderHint}>
+                  Modifiable dans les Paramètres
+                </AppText>
               </View>
             )}
 
-            {/* Intervalle (si interval) */}
             {frequencyType === 'interval' && (
               <View style={styles.section}>
                 <AppText style={styles.fieldLabel}>Intervalle en jours</AppText>
@@ -154,7 +209,7 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
                   keyboardType="number-pad"
                   mode="outlined"
                   style={styles.input}
-                  outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                  outlineStyle={{ borderRadius: borderRadius.md }}
                   placeholder="Ex: 7, 14, 28..."
                 />
                 <AppText variant="labelSmall" style={styles.hint}>
@@ -163,7 +218,6 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
               </View>
             )}
 
-            {/* Actions */}
             <View style={styles.modalActions}>
               <PrimaryButton
                 onPress={handleSave}
@@ -192,78 +246,144 @@ const CreateSchemaModal = ({ visible, onDismiss, onSuccess }) => {
 
 const styles = StyleSheet.create({
   modalContainer: {
-    margin: designSystem.spacing[4],
+    margin: spacing[4],
     maxHeight: '90%',
   },
   modalCard: {
-    backgroundColor: designSystem.colors.background.tertiary,
+    backgroundColor: colors.background.tertiary,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
+    borderColor: colors.border.light,
     ...designSystem.shadows.xl,
     overflow: 'hidden',
-    padding: designSystem.spacing[5],
+    padding: spacing[5],
   },
   modalTitle: {
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[5],
+    color: colors.text.primary,
+    marginBottom: spacing[5],
     textAlign: 'center',
     fontSize: 24,
     lineHeight: 32,
   },
   section: {
-    marginBottom: designSystem.spacing[5],
+    marginBottom: spacing[5],
   },
   fieldLabel: {
     fontSize: designSystem.typography.fontSize.sm,
     fontWeight: designSystem.typography.fontWeight.semiBold,
-    color: designSystem.colors.text.secondary,
-    marginBottom: designSystem.spacing[3],
+    color: colors.text.secondary,
+    marginBottom: spacing[3],
   },
   input: {
-    backgroundColor: designSystem.colors.background.secondary,
+    backgroundColor: colors.background.secondary,
   },
   hint: {
-    color: designSystem.colors.text.tertiary,
-    marginTop: designSystem.spacing[2],
+    color: colors.text.tertiary,
+    marginTop: spacing[2],
     fontStyle: 'italic',
     fontSize: 11,
   },
   radioOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: designSystem.spacing[3],
-    borderRadius: designSystem.borderRadius.md,
+    padding: spacing[3],
+    borderRadius: borderRadius.md,
     borderWidth: 2,
-    borderColor: designSystem.colors.border.light,
-    marginBottom: designSystem.spacing[3],
+    borderColor: colors.border.light,
+    marginBottom: spacing[3],
     backgroundColor: '#FFFFFF',
   },
   radioOptionSelected: {
-    borderColor: designSystem.colors.primary[500],
-    backgroundColor: designSystem.colors.primary[50],
+    borderColor: colors.primary[500],
+    backgroundColor: colors.primary[50],
   },
   radioContent: {
     flex: 1,
-    marginLeft: designSystem.spacing[2],
+    marginLeft: spacing[2],
   },
   radioLabel: {
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
     fontWeight: '600',
-    marginBottom: designSystem.spacing[1],
+    marginBottom: spacing[1],
   },
   radioHint: {
-    color: designSystem.colors.text.secondary,
+    color: colors.text.secondary,
+  },
+  momentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  momentLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  totalRow: {
+    alignItems: 'flex-end',
+    paddingTop: spacing[2],
+    marginBottom: spacing[3],
+  },
+  reminderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    backgroundColor: colors.background.secondary,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: borderRadius.sm,
+  },
+  reminderText: {
+    color: colors.text.tertiary,
+  },
+  reminderHint: {
+    color: colors.text.tertiary,
+    fontStyle: 'italic',
+    marginTop: spacing[1],
+    marginLeft: spacing[3],
+    fontSize: 11,
   },
   modalActions: {
     flexDirection: 'column',
-    gap: designSystem.spacing[3],
-    marginTop: designSystem.spacing[4],
+    gap: spacing[3],
+    marginTop: spacing[4],
   },
   saveButton: {
     width: '100%',
   },
   cancelButton: {
     width: '100%',
+  },
+});
+
+const stepperStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  btn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary[50],
+    borderWidth: 1.5,
+    borderColor: colors.primary[200],
+  },
+  btnDisabled: {
+    backgroundColor: colors.background.secondary,
+    borderColor: colors.border.light,
+  },
+  value: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text.primary,
+    textAlign: 'center',
+    minWidth: 28,
   },
 });
 

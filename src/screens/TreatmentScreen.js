@@ -409,8 +409,8 @@ const TreatmentScreen = () => {
       return (
         <EmptyState
           healthIcon="empty"
-          title="Aucun schéma archivé"
-          message="Les anciens schémas thérapeutiques apparaîtront ici"
+          title="Aucun traitement archivé"
+          message="Les anciens traitements apparaîtront ici"
         />
       );
     }
@@ -502,7 +502,7 @@ const TreatmentScreen = () => {
               icon="plus"
               style={styles.actionButton}
             >
-              Schéma thérapeutique
+              Traitement
             </PrimaryButton>
             <PrimaryButton
               onPress={() => setFreeIntakeModalVisible(true)}
@@ -552,7 +552,7 @@ const TreatmentScreen = () => {
           <AppText variant="h3" style={styles.historyTitle}>
             Historique
           </AppText>
-          {/* Switch entre Prises et Schémas */}
+          {/* Switch entre Prises et Traitements */}
           <View style={styles.historySwitchContainer}>
             <TouchableOpacity
               onPress={() => {
@@ -591,7 +591,7 @@ const TreatmentScreen = () => {
                   historyView === 'schemas' && styles.historySwitchTextActive
                 ]}
               >
-                Schémas
+                Traitements
               </AppText>
             </TouchableOpacity>
           </View>

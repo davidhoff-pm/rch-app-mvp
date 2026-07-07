@@ -17,6 +17,7 @@ import designSystem from '../theme/designSystem';
 import * as NotificationService from '../services/notificationService';
 import * as WebNotificationService from '../services/webNotificationService';
 import { useTrackingMode } from '../hooks/useTrackingMode';
+import { getTreatmentReminderTimes, saveTreatmentReminderTimes } from '../utils/treatmentUtils';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -26,10 +27,13 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
 
-  // États pour les notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminder1Time, setReminder1Time] = useState('09:00');
   const [reminder2Time, setReminder2Time] = useState('20:00');
+
+  const [treatmentMatin, setTreatmentMatin] = useState('08:00');
+  const [treatmentMidi, setTreatmentMidi] = useState('12:00');
+  const [treatmentSoir, setTreatmentSoir] = useState('19:00');
 
   // Charger les paramètres de notification au démarrage
   useEffect(() => {
@@ -37,21 +41,24 @@ export default function SettingsScreen() {
   }, []);
 
   const loadNotificationSettings = () => {
-    // Utiliser le service approprié selon la plateforme
     const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
     const settings = service.getNotificationSettings();
     setNotificationsEnabled(settings.enabled);
-    
-    // Formater l'heure au format HH:MM
+
     const formatHour = (hour, minute) => {
       const h = hour.toString().padStart(2, '0');
       const m = minute.toString().padStart(2, '0');
       return `${h}:${m}`;
     };
-    
+
     setReminder1Time(formatHour(settings.surveyReminder1.hour, settings.surveyReminder1.minute));
     const stool = settings.stoolReminder || { hour: 20, minute: 0 };
     setReminder2Time(formatHour(stool.hour, stool.minute));
+
+    const treatTimes = getTreatmentReminderTimes();
+    setTreatmentMatin(treatTimes.matin);
+    setTreatmentMidi(treatTimes.midi);
+    setTreatmentSoir(treatTimes.soir);
   };
 
   // Générer des données de test
@@ -232,6 +239,20 @@ export default function SettingsScreen() {
             await NotificationService.scheduleStoolReminder(hours, minutes);
           }
         }
+      }
+    }
+  };
+
+  const handleTreatmentTimeChange = (moment, timeStr) => {
+    const setter = { matin: setTreatmentMatin, midi: setTreatmentMidi, soir: setTreatmentSoir }[moment];
+    if (setter) setter(timeStr);
+
+    if (timeStr.length === 5 && timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+        const current = getTreatmentReminderTimes();
+        current[moment] = timeStr;
+        saveTreatmentReminderTimes(current);
       }
     }
   };
@@ -597,6 +618,36 @@ export default function SettingsScreen() {
                 value={reminder2Time}
                 onChange={handleReminder2Change}
                 label="Heure du rappel selles"
+              />
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* Rappels traitement matin/midi/soir */}
+            <View style={styles.reminderSection}>
+              <View style={styles.reminderHeader}>
+                <MaterialCommunityIcons name="pill" size={20} color="#C16046" />
+                <AppText variant="bodyLarge" style={styles.reminderTitle}>
+                  Rappels traitement
+                </AppText>
+              </View>
+              <AppText variant="bodySmall" style={styles.reminderDescription}>
+                Heures des rappels pour les prises matin, midi et soir. Actifs même en rémission.
+              </AppText>
+              <TimeInput
+                value={treatmentMatin}
+                onChange={(v) => handleTreatmentTimeChange('matin', v)}
+                label="Matin"
+              />
+              <TimeInput
+                value={treatmentMidi}
+                onChange={(v) => handleTreatmentTimeChange('midi', v)}
+                label="Midi"
+              />
+              <TimeInput
+                value={treatmentSoir}
+                onChange={(v) => handleTreatmentTimeChange('soir', v)}
+                label="Soir"
               />
             </View>
           </>
