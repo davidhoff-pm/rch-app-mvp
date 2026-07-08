@@ -70,7 +70,7 @@ function MainTabs() {
       <Tab.Screen name="Bilan" component={SurveyScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Statistiques" component={StatsScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Traitement" component={TreatmentScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Paramètres" component={SettingsScreen} />
+      <Tab.Screen name="Paramètres" component={SettingsScreen} options={{ headerShown: false }} />
       <Tab.Screen
         name="Export"
         component={ExportScreen}

@@ -9,8 +9,8 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import AppCard from '../components/ui/AppCard';
 import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
 import Divider from '../components/ui/Divider';
+import ScreenHeader from '../components/ui/ScreenHeader';
 import TimeInput from '../components/ui/TimeInput';
-import PWAInstallButton from '../components/ui/PWAInstallButton';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
   const [showManualImport, setShowManualImport] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [devModeEnabled, setDevModeEnabled] = useState(() => storage.getBoolean('devModeEnabled') || false);
+  const [devModeEnabled, setDevModeEnabled] = useState(() => storage.getString('devModeEnabled') === 'true');
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef(null);
   const theme = useTheme();
@@ -496,10 +496,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
-      {/* Bouton d'installation PWA (uniquement sur web) */}
-      <PWAInstallButton />
-
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScreenHeader title="Paramètres" />
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Mode de suivi */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
@@ -928,6 +927,7 @@ export default function SettingsScreen() {
         </AppText>
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 }
 
