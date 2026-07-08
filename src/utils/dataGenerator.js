@@ -15,72 +15,73 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
   const surveys = {};
   const ibdiskHistory = [];
   
-  // Paramètres selon le scénario
+  // Paramètres selon le scénario — score PRO-2 (0-6)
   let baseScore, trendDirection, volatility;
-  
+
   switch (scenario) {
     case 'improvement':
-      baseScore = 6;
-      trendDirection = -0.05; // Amélioration progressive
-      volatility = 1.5;
+      baseScore = 5;
+      trendDirection = -0.1; // Amélioration progressive
+      volatility = 0.8;
       break;
     case 'decline':
-      baseScore = 2;
-      trendDirection = 0.05; // Dégradation progressive
-      volatility = 1.5;
+      baseScore = 1;
+      trendDirection = 0.1; // Dégradation progressive
+      volatility = 0.8;
       break;
     case 'stable':
-      baseScore = 3;
+      baseScore = 2;
       trendDirection = 0;
-      volatility = 1;
+      volatility = 0.6;
       break;
     default: // 'realistic'
-      baseScore = 4;
-      trendDirection = -0.02; // Légère amélioration
-      volatility = 2;
+      baseScore = 2.5;
+      trendDirection = -0.03; // Légère amélioration
+      volatility = 1;
   }
-  
+
   let currentScore = baseScore;
-  
+
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     date.setHours(0, 0, 0, 0);
-    
+
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    
+
     // Calcul du score avec tendance et variabilité
     const trendEffect = trendDirection * (days - i);
     const randomEffect = (Math.random() - 0.5) * volatility;
-    const weekendEffect = (date.getDay() === 0 || date.getDay() === 6) ? -0.5 : 0; // Meilleur le weekend
-    
+    const weekendEffect = (date.getDay() === 0 || date.getDay() === 6) ? -0.2 : 0; // Meilleur le weekend
+
     currentScore = baseScore + trendEffect + randomEffect + weekendEffect;
-    currentScore = Math.max(0, Math.min(13, currentScore));
-    
+    currentScore = Math.max(0, Math.min(6, currentScore));
+
     const finalScore = Math.round(currentScore);
-    
-    // Générer le score du jour
+
+    // Générer le score du jour (PRO-2, 0-6)
     scores.push({
       date: dateStr,
-      score: finalScore
+      score: finalScore,
+      scoreType: 'pro2'
     });
-    
+
     // Générer les selles (2-8 par jour selon le score)
     const stoolsCount = Math.max(2, Math.min(10, Math.round(3 + finalScore / 2 + Math.random() * 2)));
-    
+
     for (let j = 0; j < stoolsCount; j++) {
       const hour = Math.floor(Math.random() * 24);
       const minute = Math.floor(Math.random() * 60);
       const stoolDate = new Date(date);
       stoolDate.setHours(hour, minute, 0, 0);
-      
+
       // Bristol scale : plus le score est élevé, plus la consistance est liquide
-      const bristolBase = finalScore > 6 ? 6 : finalScore > 3 ? 5 : 4;
+      const bristolBase = finalScore >= 5 ? 6 : finalScore >= 3 ? 5 : 4;
       const bristol = Math.max(1, Math.min(7, bristolBase + Math.floor(Math.random() * 2)));
-      
+
       // Sang plus probable si score élevé
-      const hasBlood = finalScore > 5 ? Math.random() > 0.6 : Math.random() > 0.85;
-      
+      const hasBlood = finalScore >= 4 ? Math.random() > 0.5 : Math.random() > 0.85;
+
       stools.push({
         id: `test-stool-${dateStr}-${j}`,
         timestamp: stoolDate.getTime(),
@@ -88,14 +89,6 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
         hasBlood: hasBlood
       });
     }
-    
-    // Générer le bilan quotidien
-    surveys[dateStr] = {
-      fecalIncontinence: finalScore > 6 ? 'oui' : 'non',
-      abdominalPain: finalScore > 7 ? 3 : finalScore > 5 ? 2 : finalScore > 3 ? 1 : 0,
-      generalState: finalScore > 8 ? 5 : finalScore > 6 ? 4 : finalScore > 4 ? 3 : finalScore > 2 ? 2 : 1,
-      antidiarrheal: finalScore > 5 ? 'oui' : 'non'
-    };
     
     // Générer un questionnaire IBDisk tous les 30 jours (simulation réaliste)
     if (i % 30 === 0) {
@@ -126,11 +119,11 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
 
 /**
  * Génère des réponses réalistes pour le questionnaire IBDisk
- * @param {number} lichtigerScore - Score de Litchtiger du jour pour cohérence
+ * @param {number} pro2Score - Score PRO-2 (0-6) du jour pour cohérence
  */
-const generateIBDiskAnswers = (lichtigerScore) => {
-  // Les réponses IBDisk sont cohérentes avec le score de Litchtiger
-  const baseLevel = Math.min(10, Math.max(0, Math.round(lichtigerScore * 0.8 + Math.random() * 2)));
+const generateIBDiskAnswers = (pro2Score) => {
+  // Les réponses IBDisk sont cohérentes avec le score PRO-2 (mise à l'échelle 0-6 → 0-10)
+  const baseLevel = Math.min(10, Math.max(0, Math.round(pro2Score * 1.6 + Math.random() * 2)));
   
   return {
     abdominal_pain: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),

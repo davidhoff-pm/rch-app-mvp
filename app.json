@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "description": "Application de suivi médical pour la Rectocolite Hémorragique avec calcul automatique du score de Lichtiger et questionnaire IBDisk",
+    "description": "Application de suivi médical pour la Rectocolite Hémorragique avec calcul automatique du score PRO-2, bilan hebdomadaire P-SCCAI et questionnaire IBDisk",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

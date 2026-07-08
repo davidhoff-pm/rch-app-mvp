@@ -242,7 +242,7 @@ export default function StatsScreen() {
                   value={chartData.average !== null ? chartData.average.toFixed(1) : 'N/A'}
                   subtitle={`Sur ${chartData.validDays} jours`}
                   icon="chart-bar"
-                  color={chartData.average !== null ? (chartData.average < 5 ? 'success' : chartData.average <= 10 ? 'warning' : 'error') : 'info'}
+                  color={chartData.average !== null ? (chartData.average <= 1 ? 'success' : chartData.average <= 3 ? 'warning' : 'error') : 'info'}
                 />
                 
                 <StatCard
