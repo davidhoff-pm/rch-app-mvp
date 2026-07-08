@@ -3,8 +3,7 @@ import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Text, Button, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
-import calculateLichtigerScore from '../utils/scoreCalculator';
-import { getSurveyDayKey } from '../utils/dayKey';
+import calculatePRO2Score from '../utils/scoreCalculator';
 import {
   getMedications,
   getTherapeuticSchemas,
@@ -654,7 +653,7 @@ export default function ExportScreen() {
           <div class="summary-grid">
             <div class="summary-card">
               <div class="summary-value" style="color: ${getScoreColor(averageScore)};">${averageScore}</div>
-              <div class="summary-label">Score de Lichtiger Moyen</div>
+              <div class="summary-label">Score PRO-2 Moyen</div>
             </div>
             <div class="summary-card">
               <div class="summary-value" style="color: #C0392B;">${daysWithBlood} jours (${bleedingPercentage}%)</div>
@@ -909,7 +908,7 @@ export default function ExportScreen() {
                     font-size="11" fill="#312620" text-anchor="middle" 
                     transform="rotate(-90 ${multiAxisPadding.left - 30} ${multiAxisPadding.top + multiAxisGraphHeight / 2})" 
                     font-weight="600">
-                Score Lichtiger
+                Score PRO-2
               </text>
               <text x="${multiAxisChartWidth - multiAxisPadding.right + 30}" y="${multiAxisPadding.top + multiAxisGraphHeight / 2}" 
                     font-size="11" fill="#C0392B" text-anchor="middle" 
@@ -921,7 +920,7 @@ export default function ExportScreen() {
               <!-- Légende -->
               <g transform="translate(${multiAxisPadding.left + 10}, ${multiAxisPadding.top - 20})">
                 <line x1="0" y1="0" x2="30" y2="0" stroke="#C16046" stroke-width="2" stroke-linecap="round"/>
-                <text x="35" y="4" font-size="10" fill="#312620" font-weight="500">Score Lichtiger</text>
+                <text x="35" y="4" font-size="10" fill="#312620" font-weight="500">Score PRO-2</text>
                 <line x1="0" y1="15" x2="30" y2="15" stroke="#C0392B" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
                 <text x="35" y="19" font-size="10" fill="#312620" font-weight="500">% Selles sanglantes</text>
               </g>
@@ -1006,7 +1005,7 @@ export default function ExportScreen() {
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Lichtiger</th>
+                  <th>PRO-2</th>
                   <th>Selles (J/N)</th>
                   <th>Sang</th>
                   <th>Incontinence</th>

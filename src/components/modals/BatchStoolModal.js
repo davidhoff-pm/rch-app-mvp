@@ -4,50 +4,17 @@ import { Portal, Modal } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
+import Stepper from '../ui/Stepper';
 import designSystem from '../../theme/designSystem';
-import { saveFeedback, buttonPressFeedback } from '../../utils/haptics';
+import { saveFeedback } from '../../utils/haptics';
 import storage from '../../utils/storage';
 
 const { colors, spacing, borderRadius } = designSystem;
 
-function Stepper({ value, min, max, onChange, size = 'large' }) {
-  const isLarge = size === 'large';
-  const btnSize = isLarge ? 44 : 36;
-  const iconSize = isLarge ? 22 : 18;
-  const fontSize = isLarge ? 32 : 22;
-
-  return (
-    <View style={stepperStyles.row}>
-      <TouchableOpacity
-        style={[stepperStyles.btn, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 },
-          value <= min && stepperStyles.btnDisabled]}
-        onPress={() => { if (value > min) { buttonPressFeedback(); onChange(value - 1); } }}
-        activeOpacity={0.7}
-        disabled={value <= min}
-      >
-        <MaterialCommunityIcons name="minus" size={iconSize} color={value <= min ? colors.text.disabled : colors.primary[500]} />
-      </TouchableOpacity>
-
-      <AppText style={[stepperStyles.value, { fontSize, minWidth: isLarge ? 56 : 36 }]}>
-        {value}
-      </AppText>
-
-      <TouchableOpacity
-        style={[stepperStyles.btn, { width: btnSize, height: btnSize, borderRadius: btnSize / 2 },
-          value >= max && stepperStyles.btnDisabled]}
-        onPress={() => { if (value < max) { buttonPressFeedback(); onChange(value + 1); } }}
-        activeOpacity={0.7}
-        disabled={value >= max}
-      >
-        <MaterialCommunityIcons name="plus" size={iconSize} color={value >= max ? colors.text.disabled : colors.primary[500]} />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolOption = false }) {
   const [total, setTotal] = useState(1);
   const [withBlood, setWithBlood] = useState(0);
+  const [bloodOnly, setBloodOnly] = useState(0);
   const [nocturnal, setNocturnal] = useState(0);
 
   const handleClose = () => {
@@ -58,13 +25,22 @@ export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolO
   const resetForm = () => {
     setTotal(1);
     setWithBlood(0);
+    setBloodOnly(0);
     setNocturnal(0);
   };
 
   const handleTotalChange = (n) => {
     setTotal(n);
-    if (withBlood > n) setWithBlood(n);
+    if (withBlood > n) {
+      setWithBlood(n);
+      if (bloodOnly > n) setBloodOnly(n);
+    }
     if (nocturnal > n) setNocturnal(n);
+  };
+
+  const handleWithBloodChange = (n) => {
+    setWithBlood(n);
+    if (bloodOnly > n) setBloodOnly(n);
   };
 
   const handleSave = () => {
@@ -77,11 +53,14 @@ export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolO
 
     const newStools = [];
     for (let i = 0; i < total; i++) {
+      const isBloodOnly = i < bloodOnly;
+      const hasBlood = i < withBlood;
       newStools.push({
         id: `batch-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
         timestamp: noonTimestamp,
-        bristolScale: 4,
-        hasBlood: i < withBlood,
+        bristolScale: isBloodOnly ? null : 4,
+        hasBlood: hasBlood,
+        bloodOnly: isBloodOnly,
         nocturnal: i < nocturnal,
         batch: true,
       });
@@ -143,7 +122,7 @@ export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolO
                 <MaterialCommunityIcons name="water" size={16} color={colors.health.danger.main} />
                 <AppText variant="bodySmall" weight="semiBold">Sanglantes</AppText>
               </View>
-              <Stepper value={withBlood} min={0} max={total} onChange={setWithBlood} size="small" />
+              <Stepper value={withBlood} min={0} max={total} onChange={handleWithBloodChange} size="small" />
             </View>
 
             <View style={styles.subDivider} />
@@ -155,6 +134,17 @@ export default function BatchStoolModal({ visible, onClose, onSave, showNoStoolO
               </View>
               <Stepper value={nocturnal} min={0} max={total} onChange={setNocturnal} size="small" />
             </View>
+          </View>
+        )}
+
+        {/* Sang uniquement — visible quand withBlood > 0 */}
+        {withBlood > 0 && (
+          <View style={styles.bloodOnlyRow}>
+            <View style={styles.bloodOnlyLabel}>
+              <MaterialCommunityIcons name="water-alert" size={16} color={colors.health.danger.main} />
+              <AppText variant="bodySmall" weight="semiBold">dont sang uniquement</AppText>
+            </View>
+            <Stepper value={bloodOnly} min={0} max={withBlood} onChange={setBloodOnly} size="small" />
           </View>
         )}
 
@@ -229,6 +219,21 @@ const styles = StyleSheet.create({
     gap: spacing[1],
     marginBottom: spacing[3],
   },
+  bloodOnlyRow: {
+    alignItems: 'center',
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.base,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    padding: spacing[4],
+    marginBottom: spacing[2],
+  },
+  bloodOnlyLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    marginBottom: spacing[3],
+  },
   actions: {
     marginTop: spacing[4],
     gap: spacing[3],
@@ -242,29 +247,5 @@ const styles = StyleSheet.create({
   },
   noStoolLabel: {
     fontWeight: '500',
-  },
-});
-
-const stepperStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-  },
-  btn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary[50],
-    borderWidth: 1.5,
-    borderColor: colors.primary[200],
-  },
-  btnDisabled: {
-    backgroundColor: colors.background.secondary,
-    borderColor: colors.border.light,
-  },
-  value: {
-    fontWeight: '700',
-    color: colors.text.primary,
-    textAlign: 'center',
   },
 });

@@ -195,7 +195,7 @@ export default function StatsScreen() {
           buttons={[
             {
               value: 'score',
-              label: 'Score Lichtiger',
+              label: 'Score PRO-2',
               icon: 'chart-line',
             },
             {
@@ -299,7 +299,7 @@ export default function StatsScreen() {
               </AppText>
             </View>
             <AppText variant="bodyMedium" style={styles.chartSubtitle}>
-              {dataType === 'score' ? 'Score Lichtiger et pourcentage de selles sanglantes' : 'Nombre de selles par jour sur la période'}
+              {dataType === 'score' ? 'Score PRO-2 et pourcentage de selles sanglantes' : 'Nombre de selles par jour sur la période'}
             </AppText>
 
             {Platform.OS === 'web' ? (

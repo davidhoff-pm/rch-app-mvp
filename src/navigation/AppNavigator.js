@@ -11,7 +11,6 @@ import StatsScreen from '../screens/StatsScreen';
 import TreatmentScreen from '../screens/TreatmentScreen';
 import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
 import CustomTabBar from '../components/navigation/CustomTabBar';
 import designSystem from '../theme/designSystem';
@@ -105,15 +104,7 @@ const AppNavigator = React.forwardRef((props, ref) => {
         }}
       >
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="DailySurvey" 
-          component={DailySurveyScreen} 
-          options={{ 
-            title: 'Bilan du jour',
-            presentation: 'modal', // Style modal pour un meilleur effet
-          }} 
-        />
-        <Stack.Screen 
+        <Stack.Screen
           name="IBDiskQuestionnaire" 
           component={IBDiskQuestionnaireScreen} 
           options={{ 

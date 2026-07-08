@@ -1,27 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
-import { getSurveyDayKey } from '../utils/dayKey';
 import designSystem from '../theme/designSystem';
-import EmptyState from '../components/ui/EmptyState';
 import ScreenHeader from '../components/ui/ScreenHeader';
 
 const { colors } = designSystem;
 
-function getTodayKey() {
-  return getSurveyDayKey(new Date(), 0);
-}
-
 export default function SurveyScreen() {
   const navigation = useNavigation();
-  const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
-  const [surveysHistory, setSurveysHistory] = useState([]);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
 
   const checkIBDiskAvailability = () => {
@@ -45,23 +37,6 @@ export default function SurveyScreen() {
     }
   };
 
-  const loadSurveysHistory = () => {
-    const json = storage.getString('dailySurvey');
-    if (json) {
-      const map = JSON.parse(json);
-      const surveys = Object.keys(map)
-        .map(key => ({
-          date: key,
-          data: map[key]
-        }))
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 10);
-      setSurveysHistory(surveys);
-    } else {
-      setSurveysHistory([]);
-    }
-  };
-
   const loadIbdiskHistory = () => {
     const ibdiskJson = storage.getString('ibdiskHistory');
     const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
@@ -70,17 +45,7 @@ export default function SurveyScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const key = getTodayKey();
-      const json = storage.getString('dailySurvey');
-      if (json) {
-        const map = JSON.parse(json);
-        setSurveyCompleted(Boolean(map[key]));
-      } else {
-        setSurveyCompleted(false);
-      }
-
       checkIBDiskAvailability();
-      loadSurveysHistory();
       loadIbdiskHistory();
     }, [])
   );
@@ -117,35 +82,6 @@ export default function SurveyScreen() {
             </AppText>
           </View>
 
-          {/* Bilan quotidien */}
-          {surveyCompleted ? (
-            <View style={styles.taskDisabled}>
-              <View style={styles.taskDisabledIcon}>
-                <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={colors.neutral[400]} />
-              </View>
-              <View style={styles.taskTextWrap}>
-                <AppText style={styles.taskDisabledTitle} numberOfLines={1}>Bilan quotidien</AppText>
-                <AppText style={styles.taskDisabledDesc} numberOfLines={1}>Disponible demain</AppText>
-              </View>
-              <MaterialCommunityIcons name="check-circle" size={22} color={colors.secondary[500]} />
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.taskOutlined}
-              onPress={() => navigation.navigate('DailySurvey')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.taskOutlinedIcon}>
-                <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={colors.primary[500]} />
-              </View>
-              <View style={styles.taskTextWrap}>
-                <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>Bilan quotidien</AppText>
-                <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>Comment allez-vous ?</AppText>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
-            </TouchableOpacity>
-          )}
-
           {/* IBDisk */}
           {ibdiskAvailable ? (
             <TouchableOpacity
@@ -180,71 +116,16 @@ export default function SurveyScreen() {
           )}
         </View>
 
-        {/* Section : Historique des bilans */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="history" size={24} color={colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Historique des bilans
-            </AppText>
-          </View>
-
-          {surveysHistory.length > 0 ? (
-            <AppCard style={styles.historyCard}>
-              <AppText variant="h4" style={styles.historySectionTitle}>
-                Bilans quotidiens
+        {/* Section : Historique des questionnaires */}
+        {ibdiskHistory.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="history" size={24} color={colors.primary[500]} />
+              <AppText variant="h3" style={styles.sectionTitle}>
+                Historique des questionnaires
               </AppText>
-              {surveysHistory.map((survey) => (
-                <TouchableOpacity
-                  key={survey.date}
-                  style={styles.historyItem}
-                  onPress={() => {
-                    navigation.navigate('DailySurvey', { date: survey.date });
-                  }}
-                >
-                  <View style={styles.historyItemContent}>
-                    <MaterialCommunityIcons
-                      name="clipboard-text"
-                      size={20}
-                      color={colors.primary[500]}
-                    />
-                    <View style={styles.historyItemText}>
-                      <AppText variant="bodyMedium" style={styles.historyItemDate}>
-                        {formatShortDate(survey.date)}
-                      </AppText>
-                      <AppText variant="bodySmall" style={styles.historyItemDetails}>
-                        {survey.data.abdominalPain === 'aucune' ? 'Aucune douleur' :
-                         survey.data.abdominalPain === 'legeres' ? 'Douleurs légères' :
-                         survey.data.abdominalPain === 'moyennes' ? 'Douleurs moyennes' : 'Douleurs intenses'}
-                        {' · '}
-                        {survey.data.generalState === 'parfait' ? 'Parfait' :
-                         survey.data.generalState === 'tres_bon' ? 'Très bon' :
-                         survey.data.generalState === 'bon' ? 'Bon' :
-                         survey.data.generalState === 'moyen' ? 'Moyen' :
-                         survey.data.generalState === 'mauvais' ? 'Mauvais' : 'Très mauvais'}
-                      </AppText>
-                    </View>
-                  </View>
-                  <MaterialCommunityIcons
-                    name="pencil"
-                    size={20}
-                    color={colors.primary[500]}
-                  />
-                </TouchableOpacity>
-              ))}
-            </AppCard>
-          ) : (
-            <AppCard style={styles.historyCard}>
-              <EmptyState
-                icon="clipboard-text-outline"
-                title="Aucun bilan enregistré"
-                message="Vos bilans quotidiens apparaîtront ici une fois complétés."
-                variant="default"
-              />
-            </AppCard>
-          )}
+            </View>
 
-          {ibdiskHistory.length > 0 ? (
             <AppCard style={styles.historyCard}>
               <AppText variant="h4" style={styles.historySectionTitle}>
                 Questionnaire qualité de vie
@@ -278,8 +159,8 @@ export default function SurveyScreen() {
                 </TouchableOpacity>
               ))}
             </AppCard>
-          ) : null}
-        </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

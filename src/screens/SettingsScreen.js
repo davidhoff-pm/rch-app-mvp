@@ -11,6 +11,7 @@ import SettingsSection, { SettingsItem } from '../components/settings/SettingsSe
 import Divider from '../components/ui/Divider';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import TimeInput from '../components/ui/TimeInput';
+import Stepper from '../components/ui/Stepper';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
@@ -29,6 +30,16 @@ export default function SettingsScreen() {
   const versionTapTimer = useRef(null);
   const theme = useTheme();
   const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
+
+  const [normalStoolCount, setNormalStoolCount] = useState(() => {
+    const saved = storage.getString('normalStoolCount');
+    return saved != null ? parseInt(saved, 10) : 1;
+  });
+
+  const handleNormalStoolCountChange = (value) => {
+    setNormalStoolCount(value);
+    storage.set('normalStoolCount', String(value));
+  };
 
   const handleVersionTap = () => {
     versionTapCount.current++;
@@ -499,6 +510,22 @@ export default function SettingsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScreenHeader title="Paramètres" />
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* Nombre normal de selles/jour */}
+      <AppCard style={styles.infoCard}>
+        <View style={styles.infoHeader}>
+          <MaterialCommunityIcons name="toilet" size={28} color="#C16046" style={{ marginRight: 16 }} />
+          <AppText variant="headlineLarge" style={styles.infoTitle}>
+            Selles normales / jour
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.infoDescription}>
+          Nombre habituel de selles par jour en dehors des poussées. Utilisé pour calculer votre score PRO-2.
+        </AppText>
+        <View style={{ alignItems: 'center', marginTop: designSystem.spacing[4] }}>
+          <Stepper value={normalStoolCount} min={0} max={5} onChange={handleNormalStoolCountChange} size="large" />
+        </View>
+      </AppCard>
+
       {/* Mode de suivi */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
@@ -526,19 +553,6 @@ export default function SettingsScreen() {
             <AppText style={[styles.modeBtnText, isRemission && styles.modeBtnTextActive]}>Rémission</AppText>
           </TouchableOpacity>
         </View>
-      </AppCard>
-
-      {/* Informations sur la période nocturne */}
-      <AppCard style={styles.infoCard}>
-        <View style={styles.infoHeader}>
-          <MaterialCommunityIcons name="weather-night" size={28} color="#C16046" style={{ marginRight: 16 }} />
-          <AppText variant="headlineLarge" style={styles.infoTitle}>
-            Période nocturne
-          </AppText>
-        </View>
-        <AppText variant="bodyMedium" style={styles.infoDescription}>
-          La période nocturne est définie de 23h à 6h du matin pour le calcul des scores de Lichtiger.
-        </AppText>
       </AppCard>
 
       {/* Mode Développeur — visible uniquement si activé */}
@@ -677,26 +691,6 @@ export default function SettingsScreen() {
                 </AppText>
               </View>
             )}
-
-            <View style={styles.divider} />
-
-            {/* Rappel bilan matin */}
-            <View style={[styles.reminderSection, isRemission && styles.reminderSectionDisabled]}>
-              <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="clipboard-text-outline" size={20} color={isRemission ? designSystem.colors.text.tertiary : '#C16046'} />
-                <AppText variant="bodyLarge" style={[styles.reminderTitle, isRemission && styles.reminderTitleDisabled]}>
-                  Rappel bilan (matin)
-                </AppText>
-              </View>
-              <AppText variant="bodySmall" style={styles.reminderDescription}>
-                Envoyé uniquement si le bilan du jour n'est pas encore complété.
-              </AppText>
-              <TimeInput
-                value={reminder1Time}
-                onChange={handleReminder1Change}
-                label="Heure du rappel bilan"
-              />
-            </View>
 
             <View style={styles.divider} />
 

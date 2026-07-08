@@ -106,12 +106,12 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
 
   return (
     <View style={styles.container}>
-      {/* GRAPHIQUE 1 : Score Lichtiger */}
+      {/* GRAPHIQUE 1 : Score PRO-2 */}
       <View style={styles.chartSection}>
         <View style={styles.chartHeader}>
           <View style={styles.legendDot} />
           <AppText variant="labelLarge" style={styles.chartLabel}>
-            Score Lichtiger (0-20)
+            Score PRO-2 (0-6)
           </AppText>
         </View>
 

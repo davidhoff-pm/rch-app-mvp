@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
 
 const STORAGE_KEY = 'trackingMode';
-const SCORE_THRESHOLD = 4;
+const SCORE_THRESHOLD = 1;
 const CONSECUTIVE_DAYS_THRESHOLD = 7;
 const INACTIVITY_DAYS_THRESHOLD = 7;
 
@@ -105,18 +105,6 @@ function checkSuggestActive() {
           message: 'Vous avez enregistré une selle aujourd\'hui. Repasser en mode actif ?',
         };
       }
-    }
-  }
-
-  const surveysJson = storage.getString('dailySurvey');
-  if (surveysJson) {
-    const surveys = JSON.parse(surveysJson);
-    const todayKey = getTodayKey();
-    if (surveys[todayKey]) {
-      return {
-        type: 'suggest_active',
-        message: 'Vous avez complété un bilan aujourd\'hui. Repasser en mode actif ?',
-      };
     }
   }
 

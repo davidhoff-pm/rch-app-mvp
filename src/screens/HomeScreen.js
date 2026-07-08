@@ -16,9 +16,8 @@ import DateTimePicker from '../components/ui/DateTimePicker';
 import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
-import calculateLichtigerScore from '../utils/scoreCalculator';
+import calculatePRO2Score from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { getSurveyDayKey } from '../utils/dayKey';
 import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
@@ -57,10 +56,10 @@ export default function HomeScreen({ route }) {
   const { registerHandlers } = useSpeedDial();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
+  const [bloodOnly, setBloodOnly] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
   const [stoolsDismissed, setStoolsDismissed] = useState(false);
   const [batchFromForm, setBatchFromForm] = useState(false);
-  const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
 
   const [dateInput, setDateInput] = useState('');
@@ -251,65 +250,17 @@ export default function HomeScreen({ route }) {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const parseTimeToMinutes = (timeStr) => {
-    if (!timeStr || typeof timeStr !== 'string') return null;
-    const m = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-    if (!m) return null;
-    const hh = Number(m[1]);
-    const mm = Number(m[2]);
-    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
-    return hh * 60 + mm;
-  };
-
-  const isNight = (timestamp) => {
-    // 23h -> 6h
-    const d = new Date(timestamp);
-    const minutes = d.getHours() * 60 + d.getMinutes();
-    return minutes >= 1380 || minutes < 360; // 23h = 1380 min, 6h = 360 min
-  };
-
-  const computeStoolSubscoresForDate = (dateStr) => {
-    const stoolsJson = storage.getString('dailySells');
-    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
-    // Créer la date en heure locale (pas UTC) pour éviter les décalages de fuseau horaire
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
-    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-    const dayStools = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
-    const stoolsCount = dayStools.length;
-    const nocturnalCount = dayStools.filter(s => isNight(s.timestamp)).length;
-    const bloodCount = dayStools.filter(s => s.hasBlood).length;
-
-    let stoolsScore = 0;
-    if (stoolsCount >= 10) stoolsScore = 4;
-    else if (stoolsCount >= 7) stoolsScore = 3;
-    else if (stoolsCount >= 5) stoolsScore = 2;
-    else if (stoolsCount >= 3) stoolsScore = 1;
-    else stoolsScore = 0;
-
-    const nocturnalScore = nocturnalCount > 0 ? 1 : 0;
-
-    let bloodScore = 0;
-    if (stoolsCount > 0) {
-      const ratio = bloodCount / stoolsCount;
-      if (ratio === 0) bloodScore = 0;
-      else if (ratio < 0.5) bloodScore = 1;
-      else if (ratio < 1) bloodScore = 2;
-      else bloodScore = 3;
+  const upsertScoreHistory = (dateStr, score) => {
+    const histJson = storage.getString('scoresHistory');
+    const history = histJson ? JSON.parse(histJson) : [];
+    const idx = history.findIndex((h) => h.date === dateStr);
+    if (idx >= 0) {
+      history[idx].score = score;
+    } else {
+      history.unshift({ date: dateStr, score });
     }
-
-    return stoolsScore + nocturnalScore + bloodScore;
+    storage.set('scoresHistory', JSON.stringify(history));
   };
-
-  // Ouvrir automatiquement le modal de bilan si demandé par une notification
-  useEffect(() => {
-    if (route?.params?.openSurveyModal && !surveyCompleted) {
-      console.log('🔔 Ouverture automatique du modal de bilan suite à une notification');
-      openModal();
-      // Réinitialiser le paramètre pour éviter une réouverture lors du prochain focus
-      navigation.setParams({ openSurveyModal: false });
-    }
-  }, [route?.params?.openSurveyModal, surveyCompleted]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -321,15 +272,6 @@ export default function HomeScreen({ route }) {
       const noStoolFlag = storage.getString('noStoolDay');
       setStoolsDismissed(count > 0 || noStoolFlag === dayKey);
 
-      const key = getSurveyDayKey(new Date(), 0);
-      const json = storage.getString('dailySurvey');
-      if (json) {
-        const map = JSON.parse(json);
-        setSurveyCompleted(Boolean(map[key]));
-      } else {
-        setSurveyCompleted(false);
-      }
-      
       // Vérifier la disponibilité d'IBDisk
       checkIBDiskAvailability();
       
@@ -342,27 +284,11 @@ export default function HomeScreen({ route }) {
       // Charger les données de l'historique
       loadHistoryData();
 
-      // Today provisional score
+      // Score PRO-2 du jour
       const tDateStr = formatDate(today);
-      const fullToday = calculateLichtigerScore(tDateStr, storage);
-      if (fullToday == null) {
-        setTodayProvisionalScore(computeStoolSubscoresForDate(tDateStr));
-      } else {
-        setTodayProvisionalScore(fullToday);
-        // Si on a un score complet pour aujourd'hui, le sauvegarder dans l'historique
-        const histJson = storage.getString('scoresHistory');
-        const history = histJson ? JSON.parse(histJson) : [];
-        const existingIndex = history.findIndex((h) => h.date === tDateStr);
-        if (existingIndex >= 0) {
-          // Mettre à jour le score existant
-          history[existingIndex].score = fullToday;
-          storage.set('scoresHistory', JSON.stringify(history));
-        } else {
-          // Ajouter un nouveau score
-          const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
-          storage.set('scoresHistory', JSON.stringify(newHistory));
-        }
-      }
+      const score = calculatePRO2Score(tDateStr, storage);
+      setTodayProvisionalScore(score);
+      if (score != null) upsertScoreHistory(tDateStr, score);
     }, [])
   );
 
@@ -468,17 +394,15 @@ export default function HomeScreen({ route }) {
       const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
       
       if (stools.length > 0) {
-        // Trier par timestamp décroissant pour avoir la plus récente
         const sortedStools = stools.sort((a, b) => b.timestamp - a.timestamp);
         const lastStool = sortedStools[0];
-        
-        // Utiliser les valeurs de la dernière selle
-        setBristol(lastStool.bristolScale);
+        setBristol(lastStool.bristolScale ?? 4);
         setHasBlood(lastStool.hasBlood);
+        setBloodOnly(lastStool.bloodOnly || false);
       } else {
-        // Valeurs par défaut si aucune selle
         setBristol(4);
         setHasBlood(false);
+        setBloodOnly(false);
       }
     }
   }, [isModalVisible]);
@@ -589,8 +513,9 @@ export default function HomeScreen({ route }) {
     const entry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       timestamp: selectedDateTime.getTime(),
-      bristolScale: Math.round(bristol),
-      hasBlood
+      bristolScale: bloodOnly ? null : Math.round(bristol),
+      hasBlood: bloodOnly || hasBlood,
+      bloodOnly,
     };
 
     const existingJson = storage.getString('dailySells');
@@ -600,27 +525,10 @@ export default function HomeScreen({ route }) {
     
     setDailyCount(computeTodayCount());
     setStoolsDismissed(true);
-    // refresh provisional score after add
     const tDateStr = formatDate(new Date());
-    const fullToday = calculateLichtigerScore(tDateStr, storage);
-    if (fullToday == null) {
-      setTodayProvisionalScore(computeStoolSubscoresForDate(tDateStr));
-    } else {
-      setTodayProvisionalScore(fullToday);
-      // Sauvegarder le score complet dans l'historique
-      const histJson = storage.getString('scoresHistory');
-      const history = histJson ? JSON.parse(histJson) : [];
-      const existingIndex = history.findIndex((h) => h.date === tDateStr);
-      if (existingIndex >= 0) {
-        // Mettre à jour le score existant
-        history[existingIndex].score = fullToday;
-        storage.set('scoresHistory', JSON.stringify(history));
-      } else {
-        // Ajouter un nouveau score
-        const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
-        storage.set('scoresHistory', JSON.stringify(newHistory));
-      }
-    }
+    const score = calculatePRO2Score(tDateStr, storage);
+    setTodayProvisionalScore(score);
+    if (score != null) upsertScoreHistory(tDateStr, score);
 
     // Recharger les données de l'historique pour HomeScreen
     loadHistoryData();
@@ -629,31 +537,7 @@ export default function HomeScreen({ route }) {
     hideModal();
   };
 
-  const navigateToSurvey = () => {
-    try {
-      navigation.navigate('DailySurvey');
-    } catch (e) {
-      try {
-        navigation.getParent()?.navigate('DailySurvey');
-      } catch (_) {
-        // ignore
-      }
-    }
-  };
-
-  // Construire la liste des tâches en attente (la 1re est mise en avant en terracotta)
-  // En rémission : seul le traitement est proposé (bilan/selles restent accessibles manuellement)
   const pendingTasks = [];
-  if (!isRemission && !surveyCompleted) {
-    pendingTasks.push({
-      key: 'bilan',
-      title: 'Bilan quotidien',
-      description: 'Comment allez-vous ?',
-      icon: 'clipboard-text-outline',
-      accent: 'primary',
-      onPress: navigateToSurvey,
-    });
-  }
   if (!isRemission && ibdiskAvailable) {
     pendingTasks.push({
       key: 'ibdisk',
@@ -693,9 +577,9 @@ export default function HomeScreen({ route }) {
 
   const scoreTone = todayProvisionalScore == null
     ? { label: '—', color: designSystem.colors.text.tertiary, bg: designSystem.colors.background.secondary }
-    : todayProvisionalScore < 5
+    : todayProvisionalScore <= 1
       ? { label: 'Faible', color: designSystem.colors.health.excellent.main, bg: designSystem.colors.health.excellent.light }
-      : todayProvisionalScore <= 10
+      : todayProvisionalScore <= 3
         ? { label: 'Modéré', color: designSystem.colors.health.moderate.main, bg: designSystem.colors.health.moderate.light }
         : { label: 'Élevé', color: designSystem.colors.health.danger.main, bg: designSystem.colors.health.danger.light };
 
@@ -876,16 +760,19 @@ export default function HomeScreen({ route }) {
           <Animated.View style={[styles.scoreTooltip, { opacity: tooltipOpacity, transform: [{ scale: tooltipScale }] }]}>
             <View style={styles.scoreTooltipHeader}>
               <MaterialCommunityIcons name="pulse" size={14} color={designSystem.colors.text.primary} />
-              <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score de Lichtiger</AppText>
+              <AppText variant="bodySmall" style={styles.scoreTooltipTitle}>Score PRO-2</AppText>
             </View>
             <AppText variant="caption" style={styles.scoreTooltipText}>
-              Indice d'activité de la maladie (0–17)
+              Indice d'activité symptomatique (0–6)
             </AppText>
             <View style={styles.scoreTooltipScale}>
-              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–4 : Rémission</AppText>
-              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>5–10 : Modéré</AppText>
-              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>11+ : Sévère</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreGood]}>0–1 : Faible</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreWarning]}>2–3 : Modéré</AppText>
+              <AppText style={[styles.scoreTooltipScaleItem, styles.scoreError]}>4–6 : Élevé</AppText>
             </View>
+            <AppText variant="caption" style={[styles.scoreTooltipText, { marginTop: 6 }]}>
+              Ce score reflète vos symptômes. Il ne mesure pas directement l'inflammation.
+            </AppText>
           </Animated.View>
         )}
 
@@ -964,7 +851,7 @@ export default function HomeScreen({ route }) {
             </View>
 
             <View style={styles.bristolSection}>
-              <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
+              <AppText style={[styles.fieldLabel, bloodOnly && { color: colors.text.disabled }]}>Consistance (Bristol)</AppText>
               <Slider
                 minimumValue={1}
                 maximumValue={7}
@@ -972,26 +859,45 @@ export default function HomeScreen({ route }) {
                 value={bristol}
                 onValueChange={setBristol}
                 style={styles.slider}
-                minimumTrackTintColor={theme.colors.primary}
+                minimumTrackTintColor={bloodOnly ? colors.text.disabled : theme.colors.primary}
                 maximumTrackTintColor={theme.colors.outline}
-                thumbStyle={{ backgroundColor: theme.colors.primary }}
+                thumbStyle={{ backgroundColor: bloodOnly ? colors.text.disabled : theme.colors.primary }}
+                disabled={bloodOnly}
               />
-              <AppText variant="labelMedium" style={styles.bristolHint}>
-                Sélection: {bristol} — {bristolDescriptions[bristol]}
+              <AppText variant="labelMedium" style={[styles.bristolHint, bloodOnly && { color: colors.text.disabled }]}>
+                {bloodOnly ? 'Non applicable (sang uniquement)' : `Sélection: ${bristol} — ${bristolDescriptions[bristol]}`}
               </AppText>
             </View>
 
             <View style={styles.bloodSection}>
-              <View style={styles.switchRow}>
-                <AppText variant="bodyLarge">Présence de sang</AppText>
-                <Switch 
-                  value={hasBlood} 
-                  onValueChange={(value) => {
-                    toggleFeedback();
-                    setHasBlood(value);
-                  }}
-                  color={theme.colors.error}
-                />
+              <AppText variant="bodyLarge" style={{ marginBottom: 10 }}>Sang</AppText>
+              <View style={styles.bloodSelector}>
+                {[
+                  { key: 'none', label: 'Pas de sang' },
+                  { key: 'with', label: 'Avec du sang' },
+                  { key: 'only', label: 'Sang uniquement' },
+                ].map(opt => {
+                  const active = opt.key === 'only' ? bloodOnly
+                    : opt.key === 'with' ? (hasBlood && !bloodOnly)
+                    : (!hasBlood && !bloodOnly);
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[styles.bloodOption, active && styles.bloodOptionActive]}
+                      onPress={() => {
+                        toggleFeedback();
+                        if (opt.key === 'none') { setHasBlood(false); setBloodOnly(false); }
+                        else if (opt.key === 'with') { setHasBlood(true); setBloodOnly(false); }
+                        else { setHasBlood(true); setBloodOnly(true); }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <AppText style={[styles.bloodOptionText, active && styles.bloodOptionTextActive]}>
+                        {opt.label}
+                      </AppText>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
@@ -1036,6 +942,10 @@ export default function HomeScreen({ route }) {
         onSave={() => {
           setDailyCount(computeTodayCount());
           setStoolsDismissed(true);
+          const tDateStr = formatDate(new Date());
+          const score = calculatePRO2Score(tDateStr, storage);
+          setTodayProvisionalScore(score);
+          if (score != null) upsertScoreHistory(tDateStr, score);
           loadHistoryData();
         }}
       />
@@ -1738,16 +1648,34 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   bloodSection: {
-    marginBottom: designSystem.spacing[5], // Réduit de [7] à [5]
+    marginBottom: designSystem.spacing[5],
   },
-  switchRow: {
+  bloodSelector: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: designSystem.spacing[3],
-    paddingHorizontal: designSystem.spacing[4],
+    gap: 8,
+  },
+  bloodOption: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: designSystem.borderRadius.sm,
+    borderWidth: 1.5,
+    borderColor: designSystem.colors.border.light,
     backgroundColor: designSystem.colors.background.secondary,
-    borderRadius: designSystem.borderRadius.md,
+    alignItems: 'center',
+  },
+  bloodOptionActive: {
+    borderColor: designSystem.colors.health.danger.main,
+    backgroundColor: designSystem.colors.health.danger.light,
+  },
+  bloodOptionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: designSystem.colors.text.secondary,
+    textAlign: 'center',
+  },
+  bloodOptionTextActive: {
+    color: designSystem.colors.health.danger.main,
   },
   modalActions: {
     flexDirection: 'column',

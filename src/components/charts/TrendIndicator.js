@@ -42,7 +42,7 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
         color: colors.health.excellent.dark,
         backgroundColor: colors.health.excellent.light,
         description: dataType === 'score'
-          ? 'Votre score de Lichtiger est en baisse, ce qui indique une amélioration de vos symptômes.'
+          ? 'Votre score PRO-2 est en baisse, ce qui indique une amélioration de vos symptômes.'
           : 'Votre fréquence de selles est en baisse.',
         detail: `Moyenne récente : ${formatAvg(recentAvg)}  ·  Moyenne précédente : ${formatAvg(olderAvg)}`,
       };
@@ -56,7 +56,7 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
         color: colors.health.danger.dark,
         backgroundColor: colors.health.danger.light,
         description: dataType === 'score'
-          ? 'Votre score de Lichtiger est en hausse, ce qui peut indiquer une aggravation. Consultez votre médecin si cela persiste.'
+          ? 'Votre score PRO-2 est en hausse, ce qui peut indiquer une aggravation. Consultez votre médecin si cela persiste.'
           : 'Votre fréquence de selles est en hausse. Consultez votre médecin si cela persiste.',
         detail: `Moyenne récente : ${formatAvg(recentAvg)}  ·  Moyenne précédente : ${formatAvg(olderAvg)}`,
       };
@@ -69,7 +69,7 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
       color: colors.health.moderate.dark,
       backgroundColor: colors.neutral[100],
       description: dataType === 'score'
-        ? 'Votre score de Lichtiger reste stable sur la période.'
+        ? 'Votre score PRO-2 reste stable sur la période.'
         : 'Votre fréquence de selles reste stable sur la période.',
       detail: `Moyenne : ${formatAvg(recentAvg)}`,
     };

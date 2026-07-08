@@ -1,23 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
-import { getSurveyDayKey } from '../utils/dayKey';
 
 export const usePendingQuestionnaires = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
   const calculatePending = () => {
     let count = 0;
-
-    const todayKey = getSurveyDayKey(new Date(), 0);
-    const dailySurveyJson = storage.getString('dailySurvey');
-
-    if (dailySurveyJson) {
-      const dailySurveyMap = JSON.parse(dailySurveyJson);
-      if (!dailySurveyMap[todayKey]) count += 1;
-    } else {
-      count += 1;
-    }
 
     const ibdiskLastUsedStr = storage.getString('ibdiskLastUsed');
     if (!ibdiskLastUsedStr) {
