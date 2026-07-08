@@ -108,8 +108,20 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
       });
     }
   }
-  
-  return { scores, stools, surveys, ibdiskHistory };
+
+  // Générer des questionnaires P-SCCAI tous les 7 jours
+  const psccaiHistory = [];
+  for (let i = days - 1; i >= 0; i -= 7) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const scoreEntry = scores.find(s => s.date === dateStr);
+    const dayScore = scoreEntry ? scoreEntry.score : 3;
+    psccaiHistory.push(generatePSCCAIEntry(dateStr, date.getTime(), dayScore));
+  }
+
+  return { scores, stools, surveys, ibdiskHistory, psccaiHistory };
 };
 
 /**
@@ -134,31 +146,89 @@ const generateIBDiskAnswers = (lichtigerScore) => {
   };
 };
 
+const generatePSCCAIEntry = (dateStr, timestamp, baseScore) => {
+  const severity = Math.min(baseScore / 6, 1);
+  const dayFreqRaw = Math.round((2 + severity * 8) * 10) / 10;
+  let dayFreqScore = 0;
+  if (dayFreqRaw > 9) dayFreqScore = 3;
+  else if (dayFreqRaw > 6) dayFreqScore = 2;
+  else if (dayFreqRaw > 3) dayFreqScore = 1;
+
+  const nightRaw = Math.round(severity * 3 * 10) / 10;
+  let nightScore = 0;
+  if (nightRaw >= 4) nightScore = 2;
+  else if (nightRaw >= 0.5) nightScore = 1;
+
+  const bloodPct = Math.round(severity * 60);
+  let bloodScore = 0;
+  if (bloodPct > 50) bloodScore = 3;
+  else if (bloodPct > 20) bloodScore = 2;
+  else if (bloodPct > 0) bloodScore = 1;
+
+  const urgencyScore = Math.min(3, Math.floor(severity * 3.5));
+  const wellbeingRating = Math.max(1, Math.min(10, Math.round(8 - severity * 6)));
+  let wellbeingScore = 0;
+  if (wellbeingRating <= 3) wellbeingScore = 4;
+  else if (wellbeingRating === 4) wellbeingScore = 3;
+  else if (wellbeingRating === 5) wellbeingScore = 2;
+  else if (wellbeingRating === 6) wellbeingScore = 1;
+
+  const hasJoint = severity > 0.5 && Math.random() > 0.6;
+  const extraScore = hasJoint ? 1 : 0;
+
+  const totalScore = dayFreqScore + nightScore + bloodScore + urgencyScore + wellbeingScore + extraScore;
+
+  return {
+    date: dateStr,
+    timestamp,
+    computed: {
+      dayFrequency: { raw: dayFreqRaw, score: dayFreqScore },
+      nightFrequency: { raw: nightRaw, score: nightScore, overridden: false },
+      bloodInStool: { raw: bloodPct, score: bloodScore },
+    },
+    answers: {
+      urgency: {
+        canHold15min: urgencyScore < 1,
+        adaptActivities: urgencyScore >= 2,
+        stoolInUnderwear: urgencyScore >= 3,
+        score: urgencyScore,
+      },
+      generalWellbeing: { rating: wellbeingRating, score: wellbeingScore },
+      extracolonic: {
+        jointPain: hasJoint,
+        jointsRedSwollen: null,
+        wokeFromJointPain: null,
+        skinOrEyeProblem: 'none',
+        erythemaNodosum: null,
+        pyodermaGangrenosum: null,
+        uveitis: null,
+        score: extraScore,
+      },
+    },
+    totalScore,
+  };
+};
+
 /**
  * Injecte les données de test dans le storage
  */
 export const injectTestData = (days = 30, scenario = 'realistic') => {
-  const { scores, stools, surveys, ibdiskHistory } = generateTestData(days, scenario);
-  
-  // Sauvegarder les scores
+  const { scores, stools, surveys, ibdiskHistory, psccaiHistory } = generateTestData(days, scenario);
+
   storage.set('scoresHistory', JSON.stringify(scores));
-  
-  // Sauvegarder les selles
   storage.set('dailySells', JSON.stringify(stools));
-  
-  // Sauvegarder les bilans quotidiens
   storage.set('dailySurvey', JSON.stringify(surveys));
-  
-  // Sauvegarder les questionnaires IBDisk
   storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
-  
+  storage.set('psccaiHistory', JSON.stringify(psccaiHistory));
+
   console.log('✅ Données de test générées et sauvegardées :');
   console.log(`  - ${scores.length} scores`);
   console.log(`  - ${stools.length} selles`);
   console.log(`  - ${Object.keys(surveys).length} bilans quotidiens`);
   console.log(`  - ${ibdiskHistory.length} questionnaires IBDisk`);
-  
-  return { scores, stools, surveys, ibdiskHistory };
+  console.log(`  - ${psccaiHistory.length} questionnaires P-SCCAI`);
+
+  return { scores, stools, surveys, ibdiskHistory, psccaiHistory };
 };
 
 /**
@@ -169,7 +239,9 @@ export const clearTestData = () => {
   storage.set('dailySells', '[]');
   storage.set('dailySurvey', '{}');
   storage.set('ibdiskHistory', '[]');
-  
+  storage.set('psccaiHistory', '[]');
+  storage.delete('psccaiLastUsed');
+
   console.log('🗑️ Toutes les données de test ont été effacées');
 };
 

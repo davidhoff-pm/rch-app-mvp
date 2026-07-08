@@ -7,6 +7,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
 import designSystem from '../theme/designSystem';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import { checkPSCCAICooldown, interpretScore } from '../utils/psccaiCalculator';
 
 const { colors } = designSystem;
 
@@ -15,6 +16,9 @@ export default function SurveyScreen() {
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
+  const [psccaiAvailable, setPsccaiAvailable] = useState(true);
+  const [psccaiDaysRemaining, setPsccaiDaysRemaining] = useState(0);
+  const [psccaiHistory, setPsccaiHistory] = useState([]);
 
   const checkIBDiskAvailability = () => {
     const lastUsedStr = storage.getString('ibdiskLastUsed');
@@ -43,10 +47,24 @@ export default function SurveyScreen() {
     setIbdiskHistory(ibdiskList);
   };
 
+  const checkPSCCAIAvailability = () => {
+    const { available, daysRemaining } = checkPSCCAICooldown();
+    setPsccaiAvailable(available);
+    setPsccaiDaysRemaining(daysRemaining);
+  };
+
+  const loadPsccaiHistory = () => {
+    const json = storage.getString('psccaiHistory');
+    const list = json ? JSON.parse(json) : [];
+    setPsccaiHistory(list);
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       checkIBDiskAvailability();
       loadIbdiskHistory();
+      checkPSCCAIAvailability();
+      loadPsccaiHistory();
     }, [])
   );
 
@@ -81,6 +99,39 @@ export default function SurveyScreen() {
               Questionnaires
             </AppText>
           </View>
+
+          {/* P-SCCAI hebdomadaire */}
+          {psccaiAvailable ? (
+            <TouchableOpacity
+              style={styles.taskOutlined}
+              onPress={() => navigation.navigate('PSCCAIQuestionnaire')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.taskOutlinedIcon}>
+                <MaterialCommunityIcons name="clipboard-pulse-outline" size={22} color={colors.primary[500]} />
+              </View>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>Bilan hebdomadaire</AppText>
+                <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>Questionnaire P-SCCAI</AppText>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.taskDisabled}>
+              <View style={styles.taskDisabledIcon}>
+                <MaterialCommunityIcons name="clipboard-pulse-outline" size={22} color={colors.neutral[400]} />
+              </View>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskDisabledTitle} numberOfLines={1}>Bilan hebdomadaire</AppText>
+                <AppText style={styles.taskDisabledDesc} numberOfLines={1}>
+                  {psccaiDaysRemaining === 1
+                    ? 'Disponible demain'
+                    : `Disponible dans ${psccaiDaysRemaining} jours`}
+                </AppText>
+              </View>
+              <MaterialCommunityIcons name="check-circle" size={22} color={colors.secondary[500]} />
+            </View>
+          )}
 
           {/* IBDisk */}
           {ibdiskAvailable ? (
@@ -117,7 +168,7 @@ export default function SurveyScreen() {
         </View>
 
         {/* Section : Historique des questionnaires */}
-        {ibdiskHistory.length > 0 && (
+        {(psccaiHistory.length > 0 || ibdiskHistory.length > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons name="history" size={24} color={colors.primary[500]} />
@@ -126,6 +177,55 @@ export default function SurveyScreen() {
               </AppText>
             </View>
 
+            {psccaiHistory.length > 0 && (
+              <AppCard style={styles.historyCard}>
+                <AppText variant="h4" style={styles.historySectionTitle}>
+                  Bilan hebdomadaire (P-SCCAI)
+                </AppText>
+                {psccaiHistory.map((entry, index) => {
+                  const interp = interpretScore(entry.totalScore);
+                  const healthColor =
+                    interp.color === 'excellent' ? colors.secondary[500] :
+                    interp.color === 'moderate' ? colors.accent[500] :
+                    colors.health.danger.main;
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.historyItem}
+                      onPress={() => navigation.navigate('PSCCAIQuestionnaire', { date: entry.date })}
+                    >
+                      <View style={styles.historyItemContent}>
+                        <MaterialCommunityIcons
+                          name="clipboard-pulse"
+                          size={20}
+                          color={healthColor}
+                        />
+                        <View style={styles.historyItemText}>
+                          <AppText variant="bodyMedium" style={styles.historyItemDate}>
+                            {formatShortDate(entry.date)}
+                          </AppText>
+                          <AppText variant="bodySmall" style={styles.historyItemDetails}>
+                            Score : {entry.totalScore}/19 — {interp.label}
+                          </AppText>
+                        </View>
+                      </View>
+                      <View style={styles.historyItemAction}>
+                        <AppText style={[styles.historyScore, { color: healthColor }]}>
+                          {entry.totalScore}
+                        </AppText>
+                        <MaterialCommunityIcons
+                          name="pencil"
+                          size={18}
+                          color={colors.primary[500]}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </AppCard>
+            )}
+
+            {ibdiskHistory.length > 0 && (
             <AppCard style={styles.historyCard}>
               <AppText variant="h4" style={styles.historySectionTitle}>
                 Questionnaire qualité de vie
@@ -159,6 +259,7 @@ export default function SurveyScreen() {
                 </TouchableOpacity>
               ))}
             </AppCard>
+            )}
           </View>
         )}
       </ScrollView>
@@ -294,5 +395,14 @@ const styles = StyleSheet.create({
   },
   historyItemDetails: {
     color: colors.text.secondary,
+  },
+  historyItemAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+  },
+  historyScore: {
+    fontSize: 17,
+    fontWeight: '700',
   },
 });

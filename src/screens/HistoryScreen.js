@@ -479,10 +479,14 @@ export default function HistoryScreen({ navigation }) {
                     styles.stoolMain,
                     item.hasBlood && styles.stoolMainWithBlood
                   ]}>
-                    <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                      <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                        {item.bristolScale}
-                      </AppText>
+                    <View style={[styles.bristolBadge, { backgroundColor: item.bloodOnly ? '#C0392B' : getBristolColor(item.bristolScale) }]}>
+                      {item.bloodOnly ? (
+                        <MaterialCommunityIcons name="water" size={20} color="#FFFFFF" />
+                      ) : (
+                        <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                          {item.bristolScale}
+                        </AppText>
+                      )}
                     </View>
                     <View style={styles.stoolInfo}>
                       <View style={styles.stoolDateContainer}>

@@ -390,6 +390,10 @@ export default function SettingsScreen() {
               
               storage.set('scoresHistory', '[]');
               console.log('scoresHistory effacé');
+
+              storage.set('psccaiHistory', '[]');
+              storage.delete('psccaiLastUsed');
+              console.log('psccaiHistory effacé');
               
               // Vérifier que les données ont bien été effacées
               const dailySells = storage.getString('dailySells');
@@ -444,8 +448,10 @@ export default function SettingsScreen() {
         treatments: storage.getString('treatments') || '[]',
         ibdiskHistory: storage.getString('ibdiskHistory') || '[]',
         ibdiskLastUsed: storage.getString('ibdiskLastUsed') || '',
+        psccaiHistory: storage.getString('psccaiHistory') || '[]',
+        psccaiLastUsed: storage.getString('psccaiLastUsed') || '',
         exportDate: new Date().toISOString(),
-        version: '1.2.0'
+        version: '1.3.0'
       };
 
       const dataStr = JSON.stringify(allData, null, 2);
@@ -491,6 +497,8 @@ export default function SettingsScreen() {
       storage.set('treatments', data.treatments);
       storage.set('ibdiskHistory', data.ibdiskHistory);
       storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
+      if (data.psccaiHistory) storage.set('psccaiHistory', data.psccaiHistory);
+      if (data.psccaiLastUsed) storage.set('psccaiLastUsed', data.psccaiLastUsed);
 
       Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
       setShowManualImport(false);

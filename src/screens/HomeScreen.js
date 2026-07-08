@@ -17,6 +17,7 @@ import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import calculatePRO2Score from '../utils/scoreCalculator';
+import { checkPSCCAICooldown } from '../utils/psccaiCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
@@ -80,6 +81,9 @@ export default function HomeScreen({ route }) {
   // États pour IBDisk
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
+
+  // États pour P-SCCAI
+  const [psccaiAvailable, setPsccaiAvailable] = useState(true);
 
   // États pour les actualités RSS
   const [rssArticles, setRssArticles] = useState([]);
@@ -274,7 +278,9 @@ export default function HomeScreen({ route }) {
 
       // Vérifier la disponibilité d'IBDisk
       checkIBDiskAvailability();
-      
+      const psccaiCooldown = checkPSCCAICooldown();
+      setPsccaiAvailable(psccaiCooldown.available);
+
       // Charger les traitements en attente
       refreshTreatments();
 
@@ -538,6 +544,17 @@ export default function HomeScreen({ route }) {
   };
 
   const pendingTasks = [];
+  if (psccaiAvailable) {
+    pendingTasks.push({
+      key: 'psccai',
+      title: 'Bilan hebdomadaire',
+      description: 'Questionnaire P-SCCAI',
+      duration: '~2 min',
+      icon: 'clipboard-pulse-outline',
+      accent: 'primary',
+      onPress: () => navigation.navigate('PSCCAIQuestionnaire'),
+    });
+  }
   if (!isRemission && ibdiskAvailable) {
     pendingTasks.push({
       key: 'ibdisk',
@@ -892,6 +909,11 @@ export default function HomeScreen({ route }) {
                       }}
                       activeOpacity={0.7}
                     >
+                      <MaterialCommunityIcons
+                        name={active ? 'radiobox-marked' : 'radiobox-blank'}
+                        size={20}
+                        color={active ? colors.health.danger.main : colors.text.tertiary}
+                      />
                       <AppText style={[styles.bloodOptionText, active && styles.bloodOptionTextActive]}>
                         {opt.label}
                       </AppText>
@@ -1651,28 +1673,28 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[5],
   },
   bloodSelector: {
-    flexDirection: 'row',
     gap: 8,
   },
   bloodOption: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: designSystem.borderRadius.sm,
     borderWidth: 1.5,
     borderColor: designSystem.colors.border.light,
     backgroundColor: designSystem.colors.background.secondary,
-    alignItems: 'center',
   },
   bloodOptionActive: {
     borderColor: designSystem.colors.health.danger.main,
     backgroundColor: designSystem.colors.health.danger.light,
   },
   bloodOptionText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: designSystem.colors.text.secondary,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   bloodOptionTextActive: {
     color: designSystem.colors.health.danger.main,
