@@ -3,73 +3,75 @@ import { View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
+import designSystem from '../../theme/designSystem';
+
+const { colors } = designSystem;
 
 const TrendIndicator = ({ data, period, dataType = 'score' }) => {
-  // Calculer la tendance
   const getTrendAnalysis = () => {
     const validScores = data.filter(score => score !== null);
     if (validScores.length < 2) {
       return {
         direction: 'neutral',
-        percentage: 0,
         text: 'Données insuffisantes',
         icon: 'minus',
-        color: '#312620', // Color 03 - Noir pour meilleure lisibilité
-        backgroundColor: '#FFF3EE', // Color 02
-        description: 'Enregistrez au moins 2 scores pour voir l\'analyse de tendance.'
+        color: colors.text.primary,
+        backgroundColor: colors.primary[50],
+        description: 'Enregistrez au moins 2 jours de données pour voir la tendance.',
+        detail: null,
       };
     }
 
-    // Comparer les 25% plus récents avec les 25% plus anciens
-    // Pour 2-3 scores, comparer le premier et le dernier
-    const quarterSize = validScores.length >= 4 ? Math.max(Math.floor(validScores.length / 4), 1) : 1;
-    const recent = validScores.slice(-quarterSize);
-    const older = validScores.slice(0, quarterSize);
+    const halfSize = Math.max(Math.floor(validScores.length / 2), 1);
+    const recentHalf = validScores.slice(-halfSize);
+    const olderHalf = validScores.slice(0, halfSize);
 
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+    const recentAvg = recentHalf.reduce((a, b) => a + b, 0) / recentHalf.length;
+    const olderAvg = olderHalf.reduce((a, b) => a + b, 0) / olderHalf.length;
 
     const diff = recentAvg - olderAvg;
-    const percentChange = olderAvg !== 0 ? ((diff / olderAvg) * 100) : 0;
+    const label = dataType === 'score' ? 'score' : 'nombre de selles';
+
+    const formatAvg = (v) => v % 1 === 0 ? String(v) : v.toFixed(1);
 
     if (diff < -0.5) {
       return {
         direction: 'improving',
-        percentage: Math.abs(percentChange).toFixed(1),
-        text: 'Amélioration',
-        icon: 'trending-up',
-        color: '#397852', // Vert pastel foncé
-        backgroundColor: '#D7F4E0', // Vert pastel clair
-        description: dataType === 'score' 
-          ? `Votre score moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
-          : `Votre nombre de selles moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
+        text: 'En amélioration',
+        icon: 'arrow-down',
+        color: colors.health.excellent.dark,
+        backgroundColor: colors.health.excellent.light,
+        description: dataType === 'score'
+          ? 'Votre score de Lichtiger est en baisse, ce qui indique une amélioration de vos symptômes.'
+          : 'Votre fréquence de selles est en baisse.',
+        detail: `Moyenne récente : ${formatAvg(recentAvg)}  ·  Moyenne précédente : ${formatAvg(olderAvg)}`,
       };
     }
 
     if (diff > 0.5) {
       return {
         direction: 'declining',
-        percentage: Math.abs(percentChange).toFixed(1),
-        text: 'Dégradation',
-        icon: 'trending-down',
-        color: '#C0392B', // Rouge pastel foncé
-        backgroundColor: '#FBE3DF', // Rouge pastel clair
+        text: 'En hausse',
+        icon: 'arrow-up',
+        color: colors.health.danger.dark,
+        backgroundColor: colors.health.danger.light,
         description: dataType === 'score'
-          ? `Votre score moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
-          : `Votre nombre de selles moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
+          ? 'Votre score de Lichtiger est en hausse, ce qui peut indiquer une aggravation. Consultez votre médecin si cela persiste.'
+          : 'Votre fréquence de selles est en hausse. Consultez votre médecin si cela persiste.',
+        detail: `Moyenne récente : ${formatAvg(recentAvg)}  ·  Moyenne précédente : ${formatAvg(olderAvg)}`,
       };
     }
 
     return {
       direction: 'stable',
-      percentage: Math.abs(percentChange).toFixed(1),
       text: 'Stable',
       icon: 'minus',
-      color: '#C16046', // Color 01
-      backgroundColor: '#E6E0DA', // Color 04 - Lavande clair
+      color: colors.health.moderate.dark,
+      backgroundColor: colors.neutral[100],
       description: dataType === 'score'
-        ? `Votre score reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
-        : `Votre nombre de selles reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
+        ? 'Votre score de Lichtiger reste stable sur la période.'
+        : 'Votre fréquence de selles reste stable sur la période.',
+      detail: `Moyenne : ${formatAvg(recentAvg)}`,
     };
   };
 
@@ -79,34 +81,35 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
     <AppCard style={[styles.container, { backgroundColor: trend.backgroundColor }]}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: trend.color + '20' }]}>
-          <MaterialCommunityIcons name={trend.icon} size={32} color={trend.color} />
+          <MaterialCommunityIcons name={trend.icon} size={28} color={trend.color} />
         </View>
         <View style={styles.textContainer}>
           <AppText variant="labelSmall" style={styles.label}>
-            Analyse de tendance
+            Tendance
           </AppText>
-          <AppText variant="headlineLarge" style={[styles.title, { color: trend.color }]}>
+          <AppText variant="headlineSmall" style={[styles.title, { color: trend.color }]}>
             {trend.text}
           </AppText>
         </View>
-        {trend.percentage > 0 && (
-          <View style={[styles.badge, { backgroundColor: trend.color }]}>
-            <AppText variant="labelSmall" style={styles.badgeText}>
-              {trend.percentage}%
-            </AppText>
-          </View>
-        )}
       </View>
 
-      {trend.description && (
-        <AppText variant="bodyMedium" style={styles.description}>
-          {trend.description}
-        </AppText>
+      <AppText variant="bodyMedium" style={styles.description}>
+        {trend.description}
+      </AppText>
+
+      {trend.detail && (
+        <View style={styles.detailRow}>
+          <MaterialCommunityIcons name="calculator-variant-outline" size={16} color={colors.text.secondary} />
+          <AppText variant="bodySmall" style={styles.detailText}>
+            {trend.detail}
+          </AppText>
+        </View>
       )}
 
-      <View style={styles.periodInfo}>
-        <AppText variant="labelSmall" style={styles.periodText}>
-          Basé sur les {period} derniers jours
+      <View style={styles.methodInfo}>
+        <MaterialCommunityIcons name="information-outline" size={14} color={colors.text.tertiary} />
+        <AppText variant="labelSmall" style={styles.methodText}>
+          Comparaison de la 1re et 2e moitié de la période ({period} jours de données)
         </AppText>
       </View>
     </AppCard>
@@ -118,62 +121,67 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
-    borderRadius: 8,
+    borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: colors.border.light,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-  },
-  icon: {
-    fontSize: 28,
+    marginRight: 14,
   },
   textContainer: {
     flex: 1,
   },
   label: {
-    color: '#312620', // Color 03
-    marginBottom: 4,
+    color: colors.text.secondary,
+    marginBottom: 2,
     textTransform: 'uppercase',
     fontWeight: '600',
   },
   title: {
     fontWeight: '700',
   },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
   description: {
-    color: '#312620', // Color 03
+    color: colors.text.primary,
     lineHeight: 22,
+    marginBottom: 10,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.background.tertiary,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: designSystem.borderRadius.sm,
     marginBottom: 12,
   },
-  periodInfo: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E6E0DA', // Color 04
+  detailText: {
+    color: colors.text.secondary,
+    flex: 1,
   },
-  periodText: {
-    color: '#D4D4D8', // Color 05
-    textAlign: 'center',
+  methodInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  methodText: {
+    color: colors.text.tertiary,
+    flex: 1,
+    lineHeight: 16,
   },
 });
 
 export default TrendIndicator;
-

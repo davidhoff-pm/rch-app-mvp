@@ -1,10 +1,9 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, RadioButton, Switch } from 'react-native-paper';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Text } from 'react-native-paper';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AppCard from '../components/ui/AppCard';
-import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import { useNavigation } from '@react-navigation/native';
@@ -15,11 +14,29 @@ function getTodayKey() {
   return getSurveyDayKey(new Date(), 0);
 }
 
+function OptionCard({ label, selected, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.optionCard, selected && styles.optionCardSelected]}
+    >
+      <AppText
+        style={[styles.optionLabel, selected && styles.optionLabelSelected]}
+      >
+        {label}
+      </AppText>
+      <View style={[styles.radioCircle, selected && styles.radioCircleSelected]}>
+        {selected && <View style={styles.radioInner} />}
+      </View>
+    </Pressable>
+  );
+}
+
 export default function DailySurveyScreen() {
   const navigation = useNavigation();
   const [fecalIncontinence, setFecalIncontinence] = useState('non');
-  const [abdominalPain, setAbdominalPain] = useState(0); // 0..3 via slider
-  const [generalState, setGeneralState] = useState(2); // 0..5 via slider (2=bon)
+  const [abdominalPain, setAbdominalPain] = useState(0);
+  const [generalState, setGeneralState] = useState(2);
   const [antidiarrheal, setAntidiarrheal] = useState('non');
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -35,14 +52,12 @@ export default function DailySurveyScreen() {
         setAlreadySubmitted(true);
         const s = map[todayKey];
         setFecalIncontinence(s.fecalIncontinence);
-        // map pain and general to sliders
         const painMap = { aucune: 0, legeres: 1, moyennes: 2, intenses: 3 };
         const generalMap = { parfait: 0, tres_bon: 1, bon: 2, moyen: 3, mauvais: 4, tres_mauvais: 5 };
         if (typeof s.abdominalPain === 'string') setAbdominalPain(painMap[s.abdominalPain] ?? 0);
         if (typeof s.generalState === 'string') setGeneralState(generalMap[s.generalState] ?? 2);
         setAntidiarrheal(s.antidiarrheal);
-        
-        // Sauvegarder les valeurs initiales pour détecter les changements
+
         setInitialValues({
           fecalIncontinence: s.fecalIncontinence,
           abdominalPain: painMap[s.abdominalPain] ?? 0,
@@ -50,7 +65,6 @@ export default function DailySurveyScreen() {
           antidiarrheal: s.antidiarrheal
         });
       } else {
-        // Première fois - pas de données existantes
         setAlreadySubmitted(false);
         setInitialValues(null);
         setDirty(false);
@@ -58,11 +72,10 @@ export default function DailySurveyScreen() {
     }
   }, [todayKey]);
 
-  // Fonction pour détecter si des changements ont été faits
   const hasChanges = () => {
-    if (!alreadySubmitted) return true; // Première fois, toujours activé
-    if (!initialValues) return true; // Pas de valeurs initiales, activé
-    
+    if (!alreadySubmitted) return true;
+    if (!initialValues) return true;
+
     return (
       fecalIncontinence !== initialValues.fecalIncontinence ||
       abdominalPain !== initialValues.abdominalPain ||
@@ -74,7 +87,6 @@ export default function DailySurveyScreen() {
   const handleSave = () => {
     const json = storage.getString('dailySurvey');
     const map = json ? JSON.parse(json) : {};
-    // allow edit: overwrite existing entry
     const painStr = ['aucune', 'legeres', 'moyennes', 'intenses'][abdominalPain] || 'aucune';
     const generalStr = ['parfait','tres_bon','bon','moyen','mauvais','tres_mauvais'][generalState] || 'bon';
     map[todayKey] = {
@@ -85,8 +97,7 @@ export default function DailySurveyScreen() {
       antidiarrheal
     };
     storage.set('dailySurvey', JSON.stringify(map));
-    
-    // Recalculer et sauvegarder le score d'aujourd'hui
+
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const fullToday = calculateLichtigerScore(todayStr, storage);
@@ -95,100 +106,98 @@ export default function DailySurveyScreen() {
       const history = histJson ? JSON.parse(histJson) : [];
       const existingIndex = history.findIndex((h) => h.date === todayStr);
       if (existingIndex >= 0) {
-        // Mettre à jour le score existant
         history[existingIndex].score = fullToday;
         storage.set('scoresHistory', JSON.stringify(history));
       } else {
-        // Ajouter un nouveau score
         const newHistory = [{ date: todayStr, score: fullToday }, ...history];
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }
     }
-    
+
     navigation.goBack();
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <AppCard style={styles.block}>
-          <AppText style={styles.question}>Incontinence fécale</AppText>
-          <RadioButton.Group onValueChange={setFecalIncontinence} value={fecalIncontinence}>
-            <View style={styles.row}><RadioButton value="oui" /><AppText>Oui</AppText></View>
-            <View style={styles.row}><RadioButton value="non" /><AppText>Non</AppText></View>
-          </RadioButton.Group>
-        </AppCard>
-
-        <AppCard style={styles.block}>
-          <AppText style={styles.question}>Douleurs abdominales</AppText>
-          <View style={styles.horizontalButtons}>
-            {[
-              { value: 0, label: 'Aucune' },
-              { value: 1, label: 'Légères' },
-              { value: 2, label: 'Moyennes' },
-              { value: 3, label: 'Intenses' }
-            ].map((option) => (
-              <View key={option.value} style={styles.buttonContainer}>
-                <AppText 
-                  style={[
-                    styles.buttonText, 
-                    abdominalPain === option.value && styles.selectedButtonText
-                  ]}
-                  onPress={() => setAbdominalPain(option.value)}
-                >
-                  {option.label}
-                </AppText>
-                {abdominalPain === option.value && <View style={styles.selectedIndicator} />}
-              </View>
-            ))}
-          </View>
-        </AppCard>
-
+        {/* 1. État général */}
         <AppCard style={styles.block}>
           <AppText style={styles.question}>État général</AppText>
-          <View style={styles.horizontalButtons}>
-            {[
-              { value: 0, label: 'Parfait' },
-              { value: 1, label: 'Très bon' },
-              { value: 2, label: 'Bon' },
-              { value: 3, label: 'Moyen' },
-              { value: 4, label: 'Mauvais' },
-              { value: 5, label: 'Très mauvais' }
-            ].map((option) => (
-              <View key={option.value} style={styles.buttonContainer}>
-                <AppText 
-                  style={[
-                    styles.buttonText, 
-                    generalState === option.value && styles.selectedButtonText
-                  ]}
-                  onPress={() => setGeneralState(option.value)}
-                >
-                  {option.label}
-                </AppText>
-                {generalState === option.value && <View style={styles.selectedIndicator} />}
-              </View>
-            ))}
-          </View>
+          {[
+            { value: 0, label: 'Parfait' },
+            { value: 1, label: 'Très bon' },
+            { value: 2, label: 'Bon' },
+            { value: 3, label: 'Moyen' },
+            { value: 4, label: 'Mauvais' },
+            { value: 5, label: 'Très mauvais' },
+          ].map((option) => (
+            <OptionCard
+              key={option.value}
+              label={option.label}
+              selected={generalState === option.value}
+              onPress={() => setGeneralState(option.value)}
+            />
+          ))}
         </AppCard>
 
+        {/* 2. Douleurs abdominales */}
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>Douleurs abdominales</AppText>
+          {[
+            { value: 0, label: 'Aucune' },
+            { value: 1, label: 'Légères' },
+            { value: 2, label: 'Moyennes' },
+            { value: 3, label: 'Intenses' },
+          ].map((option) => (
+            <OptionCard
+              key={option.value}
+              label={option.label}
+              selected={abdominalPain === option.value}
+              onPress={() => setAbdominalPain(option.value)}
+            />
+          ))}
+        </AppCard>
+
+        {/* 3. Incontinence fécale */}
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>Incontinence fécale</AppText>
+          <OptionCard
+            label="Oui"
+            selected={fecalIncontinence === 'oui'}
+            onPress={() => setFecalIncontinence('oui')}
+          />
+          <OptionCard
+            label="Non"
+            selected={fecalIncontinence === 'non'}
+            onPress={() => setFecalIncontinence('non')}
+          />
+        </AppCard>
+
+        {/* 4. Antidiarrhéique */}
         <AppCard style={styles.block}>
           <AppText style={styles.question}>Prise d'un antidiarrhéique</AppText>
-          <View style={styles.row}>
-            <AppText>Oui</AppText>
-            <Switch value={antidiarrheal === 'oui'} onValueChange={(v)=>setAntidiarrheal(v ? 'oui' : 'non')} />
-          </View>
+          <OptionCard
+            label="Oui"
+            selected={antidiarrheal === 'oui'}
+            onPress={() => setAntidiarrheal('oui')}
+          />
+          <OptionCard
+            label="Non"
+            selected={antidiarrheal === 'non'}
+            onPress={() => setAntidiarrheal('non')}
+          />
         </AppCard>
 
-        <PrimaryButton 
-          mode="contained" 
-          onPress={handleSave} 
-          disabled={!hasChanges()} 
+        <PrimaryButton
+          mode="contained"
+          onPress={handleSave}
+          disabled={!hasChanges()}
           style={styles.save}
-          buttonColor="#C16046"
+          buttonColor={designSystem.colors.primary[500]}
         >
           Enregistrer mon bilan
         </PrimaryButton>
@@ -206,76 +215,75 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingTop: 8, // Réduit pour économiser l'espace
-    paddingBottom: 24, // Espace en bas pour que le bouton soit visible
+    padding: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[2],
+    paddingBottom: designSystem.spacing[6],
   },
   question: {
-    marginTop: 0, // Supprimé pour réduire l'espace
-    marginBottom: 8
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  radioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  horizontalButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8
-  },
-  buttonContainer: {
-    position: 'relative',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: '#FFF3EE',
-    borderWidth: 1,
-    borderColor: '#E6E0DA',
-    minWidth: 60,
-    alignItems: 'center'
-  },
-  buttonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#312620',
-    textAlign: 'center'
-  },
-  selectedButtonText: {
-    color: '#C16046',
-    fontWeight: '600'
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    bottom: -2,
-    left: '50%',
-    marginLeft: -4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#C16046'
-  },
-  save: {
-    marginTop: 16, // Réduit de 32 à 16 pour économiser l'espace
-    marginBottom: 8, // Réduit de 16 à 8
-    alignSelf: 'stretch',
-    paddingVertical: 14, // Légèrement réduit de 16 à 14
-    borderRadius: 16,
-    elevation: 4,
-    minHeight: 56, // Hauteur minimale pour faciliter le clic
-  },
-  info: {
-    marginTop: 8
+    marginTop: 0,
+    marginBottom: designSystem.spacing[2],
+    fontWeight: designSystem.typography.fontWeight.semiBold,
   },
   block: {
-    marginBottom: 12, // Réduit de 16 à 12 pour économiser l'espace
-    paddingTop: 12, // Réduit le padding vertical supérieur (par défaut 16)
-    paddingBottom: 12, // Réduit le padding vertical inférieur (par défaut 16)
-  }
+    marginBottom: designSystem.spacing[3],
+    paddingTop: designSystem.spacing[3],
+    paddingBottom: designSystem.spacing[1],
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: designSystem.spacing[4],
+    borderRadius: designSystem.borderRadius.base,
+    borderWidth: 1.5,
+    borderColor: designSystem.colors.border.light,
+    backgroundColor: designSystem.colors.background.tertiary,
+    marginBottom: designSystem.spacing[2],
+    minHeight: 50,
+  },
+  optionCardSelected: {
+    borderColor: designSystem.colors.primary[500],
+    backgroundColor: designSystem.colors.primary[50],
+  },
+  optionLabel: {
+    fontSize: designSystem.typography.body.fontSize,
+    fontWeight: designSystem.typography.fontWeight.medium,
+    color: designSystem.colors.text.primary,
+  },
+  optionLabelSelected: {
+    color: designSystem.colors.primary[600],
+    fontWeight: designSystem.typography.fontWeight.semiBold,
+  },
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: designSystem.colors.border.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioCircleSelected: {
+    borderColor: designSystem.colors.primary[500],
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: designSystem.colors.primary[500],
+  },
+  save: {
+    marginTop: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[2],
+    alignSelf: 'stretch',
+    paddingVertical: 14,
+    borderRadius: designSystem.borderRadius.md,
+    elevation: 4,
+    minHeight: 56,
+  },
+  info: {
+    marginTop: designSystem.spacing[2],
+    color: designSystem.colors.text.secondary,
+  },
 });

@@ -3,13 +3,14 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
-import PrimaryButton from '../components/ui/PrimaryButton';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import designSystem from '../theme/designSystem';
 import EmptyState from '../components/ui/EmptyState';
 import ScreenHeader from '../components/ui/ScreenHeader';
+
+const { colors } = designSystem;
 
 function getTodayKey() {
   return getSurveyDayKey(new Date(), 0);
@@ -23,7 +24,6 @@ export default function SurveyScreen() {
   const [surveysHistory, setSurveysHistory] = useState([]);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
 
-  // Vérifier la disponibilité d'IBDisk
   const checkIBDiskAvailability = () => {
     const lastUsedStr = storage.getString('ibdiskLastUsed');
     if (!lastUsedStr) {
@@ -35,7 +35,7 @@ export default function SurveyScreen() {
     const lastUsed = parseInt(lastUsedStr);
     const now = new Date().getTime();
     const daysSinceLastUsed = Math.floor((now - lastUsed) / (1000 * 60 * 60 * 24));
-    
+
     if (daysSinceLastUsed >= 30) {
       setIbdiskAvailable(true);
       setIbdiskDaysRemaining(0);
@@ -45,7 +45,6 @@ export default function SurveyScreen() {
     }
   };
 
-  // Charger l'historique des bilans
   const loadSurveysHistory = () => {
     const json = storage.getString('dailySurvey');
     if (json) {
@@ -56,14 +55,13 @@ export default function SurveyScreen() {
           data: map[key]
         }))
         .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 10); // Les 10 derniers
+        .slice(0, 10);
       setSurveysHistory(surveys);
     } else {
       setSurveysHistory([]);
     }
   };
 
-  // Charger l'historique IBDisk
   const loadIbdiskHistory = () => {
     const ibdiskJson = storage.getString('ibdiskHistory');
     const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
@@ -80,24 +78,12 @@ export default function SurveyScreen() {
       } else {
         setSurveyCompleted(false);
       }
-      
+
       checkIBDiskAvailability();
       loadSurveysHistory();
       loadIbdiskHistory();
     }, [])
   );
-
-  const formatDate = (dateKey) => {
-    // dateKey est au format "YYYY-MM-DD"
-    const [year, month, day] = dateKey.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const formatShortDate = (dateKey) => {
     const [year, month, day] = dateKey.split('-');
@@ -122,209 +108,115 @@ export default function SurveyScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section : Questionnaires à remplir */}
+        {/* Section : Questionnaires */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="clipboard-text" size={24} color={designSystem.colors.primary[500]} />
+            <MaterialCommunityIcons name="clipboard-text" size={24} color={colors.primary[500]} />
             <AppText variant="h3" style={styles.sectionTitle}>
-              Questionnaires à remplir
+              Questionnaires
             </AppText>
           </View>
 
-          {/* Carte formulaire quotidien - Seulement si non complété */}
-          {!surveyCompleted && (
-            <AppCard
-              style={styles.surveyCard}
+          {/* Bilan quotidien */}
+          {surveyCompleted ? (
+            <View style={styles.taskDisabled}>
+              <View style={styles.taskDisabledIcon}>
+                <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={colors.neutral[400]} />
+              </View>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskDisabledTitle} numberOfLines={1}>Bilan quotidien</AppText>
+                <AppText style={styles.taskDisabledDesc} numberOfLines={1}>Disponible demain</AppText>
+              </View>
+              <MaterialCommunityIcons name="check-circle" size={22} color={colors.secondary[500]} />
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.taskOutlined}
               onPress={() => navigation.navigate('DailySurvey')}
-              pressable
+              activeOpacity={0.85}
             >
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <MaterialCommunityIcons
-                    name="clipboard-text-outline"
-                    size={32}
-                    color={designSystem.colors.primary[500]}
-                  />
-                  <View style={styles.cardHeaderText}>
-                    <AppText variant="h4" style={styles.cardTitle}>
-                      Bilan quotidien
-                    </AppText>
-                    <AppText variant="bodySmall" style={styles.cardSubtitle}>
-                      À compléter aujourd'hui
-                    </AppText>
-                  </View>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={designSystem.colors.text.tertiary}
-                />
+              <View style={styles.taskOutlinedIcon}>
+                <MaterialCommunityIcons name="clipboard-text-outline" size={22} color={colors.primary[500]} />
               </View>
-            </AppCard>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>Bilan quotidien</AppText>
+                <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>Comment allez-vous ?</AppText>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
+            </TouchableOpacity>
           )}
 
-          {/* Carte IBDisk - Seulement si disponible */}
-          {ibdiskAvailable && (
-            <AppCard
-              style={styles.surveyCard}
+          {/* IBDisk */}
+          {ibdiskAvailable ? (
+            <TouchableOpacity
+              style={styles.taskOutlined}
               onPress={() => navigation.navigate('IBDiskQuestionnaire')}
-              pressable
+              activeOpacity={0.85}
             >
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <MaterialCommunityIcons
-                    name="chart-box-outline"
-                    size={32}
-                    color={designSystem.colors.primary[500]}
-                  />
-                  <View style={styles.cardHeaderText}>
-                    <AppText variant="h4" style={styles.cardTitle}>
-                      Questionnaire IBDisk
-                    </AppText>
-                    <AppText variant="bodySmall" style={styles.cardSubtitle}>
-                      Disponible maintenant
-                    </AppText>
-                  </View>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={designSystem.colors.text.tertiary}
-                />
+              <View style={styles.taskOutlinedIcon}>
+                <MaterialCommunityIcons name="chart-box-outline" size={22} color={colors.primary[500]} />
               </View>
-            </AppCard>
-          )}
-
-          {/* Empty state si aucun questionnaire à remplir */}
-          {surveyCompleted && !ibdiskAvailable && (
-            <AppCard style={styles.infoCard}>
-              <EmptyState
-                icon="check-circle-outline"
-                title="Aucun bilan à compléter"
-                message="Vous avez complété tous les questionnaires disponibles aujourd'hui."
-                variant="default"
-              />
-            </AppCard>
-          )}
-        </View>
-
-        {/* Section : Bilan à venir */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="calendar-clock" size={24} color={designSystem.colors.primary[500]} />
-            <AppText variant="h3" style={styles.sectionTitle}>
-              Bilan à venir
-            </AppText>
-          </View>
-
-          {/* Bilan quotidien complété - Disponible demain */}
-          {surveyCompleted && (
-            <AppCard style={[styles.surveyCard, styles.disabledCard]} disabled>
-              <View style={styles.surveyCardHeader}>
-                <MaterialCommunityIcons
-                  name="check-circle"
-                  size={32}
-                  color="#A99B93"
-                />
-                <View style={styles.surveyCardContent}>
-                  <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
-                    Bilan quotidien
-                  </AppText>
-                  <AppText variant="bodySmall" style={[styles.surveyCardDescription, styles.disabledText]}>
-                    Disponible demain
-                  </AppText>
-                </View>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>Questionnaire mensuel</AppText>
+                <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>Évaluez votre qualité de vie</AppText>
               </View>
-              <View style={styles.surveyCardFooter}>
-                <MaterialCommunityIcons name="clock-outline" size={16} color="#A99B93" />
-                <AppText variant="bodySmall" style={styles.disabledText}>
-                  Ce questionnaire est disponible une fois par jour
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.taskDisabled}>
+              <View style={styles.taskDisabledIcon}>
+                <MaterialCommunityIcons name="chart-box-outline" size={22} color={colors.neutral[400]} />
+              </View>
+              <View style={styles.taskTextWrap}>
+                <AppText style={styles.taskDisabledTitle} numberOfLines={1}>Questionnaire mensuel</AppText>
+                <AppText style={styles.taskDisabledDesc} numberOfLines={1}>
+                  {ibdiskDaysRemaining === 1
+                    ? 'Disponible demain'
+                    : `Disponible dans ${ibdiskDaysRemaining} jours`}
                 </AppText>
               </View>
-            </AppCard>
-          )}
-
-          {/* IBDisk complété - En cooldown */}
-          {!ibdiskAvailable && (
-            <AppCard style={[styles.surveyCard, styles.disabledCard]} disabled>
-              <View style={styles.surveyCardHeader}>
-                <MaterialCommunityIcons
-                  name="check-circle"
-                  size={32}
-                  color="#A99B93"
-                />
-                <View style={styles.surveyCardContent}>
-                  <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
-                    Questionnaire IBDisk
-                  </AppText>
-                  <AppText variant="bodySmall" style={[styles.surveyCardDescription, styles.disabledText]}>
-                    {ibdiskDaysRemaining === 1
-                      ? 'Disponible demain'
-                      : `Disponible dans ${ibdiskDaysRemaining} jours`}
-                  </AppText>
-                </View>
-              </View>
-              <View style={styles.surveyCardFooter}>
-                <MaterialCommunityIcons name="clock-outline" size={16} color="#A99B93" />
-                <AppText variant="bodySmall" style={styles.disabledText}>
-                  Ce questionnaire est disponible une fois par mois
-                </AppText>
-              </View>
-            </AppCard>
-          )}
-
-          {/* Empty state si aucun bilan à venir */}
-          {!surveyCompleted && ibdiskAvailable && (
-            <AppCard style={styles.infoCard}>
-              <EmptyState
-                icon="calendar-outline"
-                title="Aucun bilan à venir"
-                message="Les questionnaires complétés apparaîtront ici avec leur date de prochaine disponibilité."
-                variant="default"
-              />
-            </AppCard>
+              <MaterialCommunityIcons name="check-circle" size={22} color={colors.secondary[500]} />
+            </View>
           )}
         </View>
 
         {/* Section : Historique des bilans */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="history" size={24} color={designSystem.colors.primary[500]} />
+            <MaterialCommunityIcons name="history" size={24} color={colors.primary[500]} />
             <AppText variant="h3" style={styles.sectionTitle}>
               Historique des bilans
             </AppText>
           </View>
 
-          {/* Historique des bilans quotidiens */}
           {surveysHistory.length > 0 ? (
             <AppCard style={styles.historyCard}>
               <AppText variant="h4" style={styles.historySectionTitle}>
                 Bilans quotidiens
               </AppText>
-              {surveysHistory.map((survey, index) => (
+              {surveysHistory.map((survey) => (
                 <TouchableOpacity
                   key={survey.date}
                   style={styles.historyItem}
                   onPress={() => {
-                    // Naviguer vers le formulaire avec la date pré-remplie
                     navigation.navigate('DailySurvey', { date: survey.date });
                   }}
                 >
                   <View style={styles.historyItemContent}>
-                    <MaterialCommunityIcons 
-                      name="clipboard-text" 
-                      size={20} 
-                      color={designSystem.colors.primary[500]} 
+                    <MaterialCommunityIcons
+                      name="clipboard-text"
+                      size={20}
+                      color={colors.primary[500]}
                     />
                     <View style={styles.historyItemText}>
                       <AppText variant="bodyMedium" style={styles.historyItemDate}>
                         {formatShortDate(survey.date)}
                       </AppText>
                       <AppText variant="bodySmall" style={styles.historyItemDetails}>
-                        {survey.data.abdominalPain === 'aucune' ? 'Aucune douleur' : 
+                        {survey.data.abdominalPain === 'aucune' ? 'Aucune douleur' :
                          survey.data.abdominalPain === 'legeres' ? 'Douleurs légères' :
                          survey.data.abdominalPain === 'moyennes' ? 'Douleurs moyennes' : 'Douleurs intenses'}
-                        {' • '}
+                        {' · '}
                         {survey.data.generalState === 'parfait' ? 'Parfait' :
                          survey.data.generalState === 'tres_bon' ? 'Très bon' :
                          survey.data.generalState === 'bon' ? 'Bon' :
@@ -333,10 +225,10 @@ export default function SurveyScreen() {
                       </AppText>
                     </View>
                   </View>
-                  <MaterialCommunityIcons 
-                    name="pencil" 
-                    size={20} 
-                    color={designSystem.colors.primary[500]} 
+                  <MaterialCommunityIcons
+                    name="pencil"
+                    size={20}
+                    color={colors.primary[500]}
                   />
                 </TouchableOpacity>
               ))}
@@ -352,19 +244,22 @@ export default function SurveyScreen() {
             </AppCard>
           )}
 
-          {/* Historique IBDisk */}
           {ibdiskHistory.length > 0 ? (
             <AppCard style={styles.historyCard}>
               <AppText variant="h4" style={styles.historySectionTitle}>
-                Questionnaires IBDisk
+                Questionnaire qualité de vie
               </AppText>
               {ibdiskHistory.map((ibdisk, index) => (
-                <View key={index} style={styles.historyItem}>
+                <TouchableOpacity
+                  key={index}
+                  style={styles.historyItem}
+                  onPress={() => navigation.navigate('IBDiskQuestionnaire', { date: ibdisk.date })}
+                >
                   <View style={styles.historyItemContent}>
-                    <MaterialCommunityIcons 
-                      name="chart-box" 
-                      size={20} 
-                      color={designSystem.colors.primary[500]} 
+                    <MaterialCommunityIcons
+                      name="chart-box"
+                      size={20}
+                      color={colors.primary[500]}
                     />
                     <View style={styles.historyItemText}>
                       <AppText variant="bodyMedium" style={styles.historyItemDate}>
@@ -375,7 +270,12 @@ export default function SurveyScreen() {
                       </AppText>
                     </View>
                   </View>
-                </View>
+                  <MaterialCommunityIcons
+                    name="pencil"
+                    size={20}
+                    color={colors.primary[500]}
+                  />
+                </TouchableOpacity>
               ))}
             </AppCard>
           ) : null}
@@ -388,7 +288,7 @@ export default function SurveyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: designSystem.colors.background.primary,
+    backgroundColor: colors.background.primary,
   },
   scrollView: {
     flex: 1,
@@ -407,46 +307,85 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginLeft: designSystem.spacing[3],
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
   },
-  surveyCard: {
+  taskTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  taskOutlined: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.background.tertiary,
+    borderRadius: 18,
+    padding: 16,
+    borderTopWidth: 3,
+    borderTopColor: colors.primary[400],
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: '#C16046',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
     marginBottom: designSystem.spacing[3],
   },
-  cardDisabled: {
-    opacity: 0.6,
+  taskOutlinedIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardContent: {
+  taskOutlinedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.text.primary,
+  },
+  taskOutlinedDesc: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  taskDisabled: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 14,
+    backgroundColor: colors.neutral[100],
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    marginBottom: designSystem.spacing[3],
+    opacity: 0.7,
   },
-  cardHeader: {
-    flexDirection: 'row',
+  taskDisabledIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.neutral[200],
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
   },
-  cardHeaderText: {
-    marginLeft: designSystem.spacing[3],
-    flex: 1,
+  taskDisabledTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: colors.neutral[400],
   },
-  cardTitle: {
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[1],
-  },
-  cardTitleDisabled: {
-    color: designSystem.colors.text.tertiary,
-  },
-  cardSubtitle: {
-    color: designSystem.colors.text.secondary,
-  },
-  infoCard: {
-    padding: designSystem.spacing[4],
+  taskDisabledDesc: {
+    fontSize: 12,
+    color: colors.neutral[400],
+    marginTop: 2,
   },
   historyCard: {
     marginBottom: designSystem.spacing[4],
   },
   historySectionTitle: {
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
     marginBottom: designSystem.spacing[3],
     fontWeight: '600',
   },
@@ -456,7 +395,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: designSystem.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: designSystem.colors.border.light,
+    borderBottomColor: colors.border.light,
   },
   historyItemContent: {
     flexDirection: 'row',
@@ -468,44 +407,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyItemDate: {
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
     fontWeight: '500',
     marginBottom: designSystem.spacing[1],
   },
   historyItemDetails: {
-    color: designSystem.colors.text.secondary,
-  },
-  surveyCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: designSystem.spacing[3],
-  },
-  surveyCardContent: {
-    marginLeft: designSystem.spacing[3],
-    flex: 1,
-  },
-  surveyCardTitle: {
-    color: designSystem.colors.text.primary,
-    fontWeight: '600',
-    marginBottom: designSystem.spacing[1],
-  },
-  surveyCardDescription: {
-    color: designSystem.colors.text.secondary,
-  },
-  surveyCardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: designSystem.spacing[2],
-    paddingTop: designSystem.spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: designSystem.colors.border.light,
-  },
-  disabledCard: {
-    opacity: 0.6,
-    backgroundColor: '#F5EFE8',
-  },
-  disabledText: {
-    color: '#A99B93',
+    color: colors.text.secondary,
   },
 });
-

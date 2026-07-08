@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -11,6 +12,8 @@ import designSystem from '../theme/designSystem';
 
 const IBDiskQuestionnaireScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const editDate = route.params?.date;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -18,82 +21,88 @@ const IBDiskQuestionnaireScreen = () => {
   const questions = [
     {
       id: 'abdominal_pain',
-      icon: '🫀',
+      icon: 'stomach',
       title: 'Douleur abdominale',
       question: 'J\'ai eu des douleurs au ventre ou à l\'estomac'
     },
     {
       id: 'bowel_regulation',
-      icon: '🚽',
+      icon: 'toilet',
       title: 'Régulation de la défécation',
       question: 'J\'ai eu des selles urgentes que j\'ai eu du mal à gérer ; trouver des toilettes à temps a été un problème et j\'ai parfois eu des difficultés d\'essuyage/nettoyage'
     },
     {
       id: 'social_life',
-      icon: '🤝',
+      icon: 'account-group',
       title: 'Vie sociale',
       question: 'J\'ai eu des difficultés dans ma relation aux autres et/ou des difficultés d\'intégration'
     },
     {
       id: 'professional_activities',
-      icon: '🏢',
+      icon: 'briefcase-outline',
       title: 'Activités professionnelles et scolaires',
       question: 'J\'ai eu des difficultés dans mes activités professionnelles ou dans mes études ou dans la réalisation des tâches quotidiennes'
     },
     {
       id: 'sleep',
-      icon: '⏰',
+      icon: 'weather-night',
       title: 'Sommeil',
       question: 'J\'ai eu des difficultés de sommeil, par exemple des problèmes d\'endormissement, des réveils nocturnes fréquents ou des réveils très matinaux sans possibilité de rendormissement'
     },
     {
       id: 'energy',
-      icon: '😴',
+      icon: 'battery-low',
       title: 'Énergie',
       question: 'Je ne me suis jamais senti(e) véritablement reposé(e), j\'ai manqué d\'énergie, je me suis senti(e) fatigué(e)'
     },
     {
       id: 'stress_anxiety',
-      icon: '😔',
+      icon: 'head-dots-horizontal',
       title: 'Niveau de stress, anxiété',
       question: 'Je me suis senti(e) triste, mon moral a été bas, ou je me suis senti(e) déprimé(e) et/ou inquiet(ète) et/ou anxieux(euse)'
     },
     {
       id: 'self_image',
-      icon: '👤',
+      icon: 'account-outline',
       title: 'Image de soi',
       question: 'Je n\'aime pas mon corps ou certaines parties de mon corps'
     },
     {
       id: 'intimate_life',
-      icon: '💕',
+      icon: 'heart-outline',
       title: 'Vie intime',
       question: 'J\'ai eu des difficultés d\'ordre psychologique et/ou physique dans ma sexualité'
     },
     {
       id: 'joint_pain',
-      icon: '🦵',
+      icon: 'bone',
       title: 'Douleur articulaire',
       question: 'Mes articulations me font souffrir'
     }
   ];
 
-  // Charger les réponses existantes
   useEffect(() => {
+    if (editDate) {
+      const historyJson = storage.getString('ibdiskHistory');
+      const history = historyJson ? JSON.parse(historyJson) : [];
+      const entry = history.find(h => h.date === editDate);
+      if (entry?.answers) {
+        setAnswers(entry.answers);
+        setCurrentQuestion(0);
+        return;
+      }
+    }
+
     const savedProgress = storage.getString('ibdiskCurrentAnswers');
     if (savedProgress) {
       try {
         const progressData = JSON.parse(savedProgress);
 
-        // Vérifier si c'est l'ancien format (juste les réponses) ou le nouveau format
         if (progressData.answers && typeof progressData.currentQuestion === 'number') {
-          // Nouveau format avec position
           setAnswers(progressData.answers);
           setCurrentQuestion(progressData.currentQuestion);
         } else {
-          // Ancien format (juste les réponses) - compatibilité
           setAnswers(progressData);
-          // Trouver la première question non répondue
           const firstUnanswered = questions.findIndex(q => !progressData[q.id]);
           if (firstUnanswered !== -1) {
             setCurrentQuestion(firstUnanswered);
@@ -105,28 +114,25 @@ const IBDiskQuestionnaireScreen = () => {
     }
   }, []);
 
-  // Initialiser la réponse à 5 si elle n'existe pas pour la question actuelle
   useEffect(() => {
-    const currentQ = questions[currentQuestion];
-    if (currentQ && answers[currentQ.id] === undefined) {
-      // Initialiser la réponse à 5 (valeur par défaut du slider)
-      const newAnswers = { ...answers, [currentQ.id]: 5 };
-      setAnswers(newAnswers);
-
-      // Sauvegarder automatiquement
-      const progressData = {
-        answers: newAnswers,
-        currentQuestion: currentQuestion
-      };
-      storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
-    }
+    setAnswers(prev => {
+      const currentQ = questions[currentQuestion];
+      if (currentQ && prev[currentQ.id] === undefined) {
+        const updated = { ...prev, [currentQ.id]: 5 };
+        storage.set('ibdiskCurrentAnswers', JSON.stringify({
+          answers: updated,
+          currentQuestion: currentQuestion
+        }));
+        return updated;
+      }
+      return prev;
+    });
   }, [currentQuestion]);
 
   const handleAnswerChange = (value) => {
     const newAnswers = { ...answers, [questions[currentQuestion].id]: value };
     setAnswers(newAnswers);
-    
-    // Sauvegarder automatiquement les réponses et la position
+
     const progressData = {
       answers: newAnswers,
       currentQuestion: currentQuestion
@@ -135,18 +141,26 @@ const IBDiskQuestionnaireScreen = () => {
   };
 
   const handleNext = () => {
+    const ensured = { ...answers };
+    if (ensured[questions[currentQuestion].id] === undefined) {
+      ensured[questions[currentQuestion].id] = 5;
+    }
+
     if (currentQuestion < questions.length - 1) {
       const nextQuestion = currentQuestion + 1;
+      if (ensured[questions[nextQuestion].id] === undefined) {
+        ensured[questions[nextQuestion].id] = 5;
+      }
+      setAnswers(ensured);
       setCurrentQuestion(nextQuestion);
-      
-      // Sauvegarder la nouvelle position
-      const progressData = {
-        answers: answers,
+
+      storage.set('ibdiskCurrentAnswers', JSON.stringify({
+        answers: ensured,
         currentQuestion: nextQuestion
-      };
-      storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
+      }));
     } else {
-      handleSubmit();
+      setAnswers(ensured);
+      handleSubmitWith(ensured);
     }
   };
 
@@ -154,8 +168,7 @@ const IBDiskQuestionnaireScreen = () => {
     if (currentQuestion > 0) {
       const prevQuestion = currentQuestion - 1;
       setCurrentQuestion(prevQuestion);
-      
-      // Sauvegarder la nouvelle position
+
       const progressData = {
         answers: answers,
         currentQuestion: prevQuestion
@@ -164,68 +177,58 @@ const IBDiskQuestionnaireScreen = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitWith = async (finalAnswers) => {
     setIsLoading(true);
-    
-    try {
-      // Vérifier que toutes les questions sont répondues
-      const unansweredQuestions = questions.filter(q => answers[q.id] === undefined);
-      if (unansweredQuestions.length > 0) {
-        Alert.alert(
-          'Questionnaire incomplet',
-          'Veuillez répondre à toutes les questions avant de valider.',
-          [{ text: 'OK' }]
-        );
-        setIsLoading(false);
-        return;
-      }
 
-      // Sauvegarder le questionnaire complet
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
+    try {
+      const filled = { ...finalAnswers };
+      questions.forEach(q => {
+        if (filled[q.id] === undefined) filled[q.id] = 5;
+      });
+
+      const saveDate = editDate || (() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      })();
+
       const questionnaireData = {
-        date: todayStr,
-        timestamp: today.getTime(),
-        answers: answers,
+        date: saveDate,
+        timestamp: new Date().getTime(),
+        answers: filled,
         completed: true
       };
 
-      // Sauvegarder dans l'historique
       const historyJson = storage.getString('ibdiskHistory');
       const history = historyJson ? JSON.parse(historyJson) : [];
-      
-      // Vérifier si un questionnaire existe déjà pour aujourd'hui
-      const existingIndex = history.findIndex(h => h.date === todayStr);
+
+      const existingIndex = history.findIndex(h => h.date === saveDate);
       if (existingIndex >= 0) {
         history[existingIndex] = questionnaireData;
       } else {
         history.push(questionnaireData);
       }
-      
-      // Trier par date (plus récent en premier)
+
       history.sort((a, b) => new Date(b.date) - new Date(a.date));
-      
+
       storage.set('ibdiskHistory', JSON.stringify(history));
-      
-      // Supprimer les réponses temporaires
       storage.delete('ibdiskCurrentAnswers');
-      
-      // Marquer comme utilisé aujourd'hui
-      storage.set('ibdiskLastUsed', today.getTime().toString());
-      
-      // Naviguer vers l'accueil immédiatement
+
+      if (!editDate) {
+        storage.set('ibdiskLastUsed', new Date().getTime().toString());
+      }
+
       navigation.goBack();
-      
-      // Afficher un message de confirmation après navigation
+
       setTimeout(() => {
         Alert.alert(
-          'Questionnaire terminé',
-          'Merci d\'avoir rempli le questionnaire IBDisk. Vos réponses ont été enregistrées.',
+          editDate ? 'Questionnaire modifié' : 'Questionnaire terminé',
+          editDate
+            ? 'Vos modifications ont été enregistrées.'
+            : 'Merci d\'avoir rempli le questionnaire IBDisk. Vos réponses ont été enregistrées.',
           [{ text: 'OK' }]
         );
       }, 100);
-      
+
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       Alert.alert(
@@ -250,15 +253,14 @@ const IBDiskQuestionnaireScreen = () => {
         <AppText variant="bodyMedium" style={styles.subtitle}>
           Pour chaque item, sélectionnez le chiffre qui correspond au ressenti pendant la semaine qui vient de s'écouler
         </AppText>
-        
-        {/* Barre de progression */}
+
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View 
+            <View
               style={[
-                styles.progressFill, 
+                styles.progressFill,
                 { width: `${((currentQuestion + 1) / questions.length) * 100}%` }
-              ]} 
+              ]}
             />
           </View>
           <AppText variant="labelSmall" style={styles.progressText}>
@@ -269,17 +271,22 @@ const IBDiskQuestionnaireScreen = () => {
 
       <AppCard style={styles.questionCard}>
         <View style={styles.questionHeader}>
-          <AppText style={styles.questionIcon}>{currentQ?.icon}</AppText>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons
+              name={currentQ?.icon}
+              size={28}
+              color={designSystem.colors.primary[500]}
+            />
+          </View>
           <AppText variant="headlineSmall" style={styles.questionTitle}>
             {currentQ?.title}
           </AppText>
         </View>
-        
+
         <AppText variant="bodyLarge" style={styles.questionText}>
           {currentQ?.question}
         </AppText>
 
-        {/* Échelle de notation */}
         <View style={styles.scaleContainer}>
           <View style={styles.scaleHeader}>
             <AppText variant="bodyMedium" style={styles.scaleTitle}>
@@ -294,7 +301,7 @@ const IBDiskQuestionnaireScreen = () => {
               </AppText>
             </View>
           </View>
-          
+
           <Slider
             style={styles.slider}
             minimumValue={0}
@@ -302,12 +309,11 @@ const IBDiskQuestionnaireScreen = () => {
             step={1}
             value={currentAnswer !== undefined ? currentAnswer : 5}
             onValueChange={(value) => handleAnswerChange(Math.round(value))}
-            minimumTrackTintColor="#059669"
-            maximumTrackTintColor="#E2E8F0"
-            thumbTintColor="#059669"
+            minimumTrackTintColor={designSystem.colors.secondary[500]}
+            maximumTrackTintColor={designSystem.colors.neutral[200]}
+            thumbTintColor={designSystem.colors.secondary[500]}
           />
-          
-          {/* Marqueurs de l'échelle */}
+
           <View style={styles.scaleMarkers}>
             {Array.from({ length: 11 }, (_, i) => (
               <AppText key={i} variant="labelSmall" style={styles.markerText}>
@@ -315,8 +321,7 @@ const IBDiskQuestionnaireScreen = () => {
               </AppText>
             ))}
           </View>
-          
-          {/* Labels explicatifs */}
+
           <View style={styles.scaleLabels}>
             <AppText variant="labelSmall" style={styles.scaleLabelLeft}>
               Pas du tout d'accord
@@ -328,7 +333,6 @@ const IBDiskQuestionnaireScreen = () => {
         </View>
       </AppCard>
 
-      {/* Boutons de navigation */}
       <View style={styles.navigationContainer}>
         <SecondaryButton
           onPress={handlePrevious}
@@ -337,11 +341,10 @@ const IBDiskQuestionnaireScreen = () => {
         >
           Précédent
         </SecondaryButton>
-        
+
         <PrimaryButton
           onPress={handleNext}
           loading={isLoading}
-          disabled={currentAnswer === undefined}
           style={styles.navButton}
         >
           {currentQuestion === questions.length - 1 ? 'Terminer' : 'Suivant'}
@@ -354,118 +357,123 @@ const IBDiskQuestionnaireScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5EFE8',
+    backgroundColor: designSystem.colors.background.secondary,
   },
   headerCard: {
-    margin: 20,
-    marginBottom: 16,
-    padding: 20,
+    margin: designSystem.spacing[5],
+    marginBottom: designSystem.spacing[4],
+    padding: designSystem.spacing[5],
   },
   title: {
-    color: '#2D3748',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: designSystem.spacing[2],
   },
   subtitle: {
-    color: '#312620', // Noir pour meilleure lisibilité
-    marginBottom: 20,
+    color: designSystem.colors.text.primary,
+    marginBottom: designSystem.spacing[5],
     lineHeight: 22,
   },
   progressContainer: {
-    marginTop: 16,
+    marginTop: designSystem.spacing[4],
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: designSystem.colors.neutral[200],
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: designSystem.spacing[2],
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#059669',
+    backgroundColor: designSystem.colors.secondary[500],
     borderRadius: 4,
   },
   progressText: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary,
     textAlign: 'center',
     fontWeight: '600',
   },
   questionCard: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 20,
+    marginHorizontal: designSystem.spacing[5],
+    marginBottom: designSystem.spacing[5],
+    padding: designSystem.spacing[5],
   },
   questionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: designSystem.spacing[4],
   },
-  questionIcon: {
-    fontSize: 32,
-    marginRight: 12,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: designSystem.colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: designSystem.spacing[3],
   },
   questionTitle: {
-    color: '#2D3748',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
     flex: 1,
   },
   questionText: {
-    color: '#475569',
-    marginBottom: 24,
+    color: designSystem.colors.text.secondary,
+    marginBottom: designSystem.spacing[6],
     lineHeight: 24,
   },
   scaleContainer: {
-    marginTop: 8,
-    backgroundColor: '#F5EFE8',
-    padding: 16,
-    borderRadius: 12,
+    marginTop: designSystem.spacing[2],
+    backgroundColor: designSystem.colors.background.secondary,
+    padding: designSystem.spacing[4],
+    borderRadius: designSystem.borderRadius.base,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: designSystem.colors.neutral[200],
   },
   scaleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: designSystem.spacing[4],
   },
   scaleTitle: {
-    color: '#374151',
+    color: designSystem.colors.text.primary,
     fontWeight: '600',
   },
   scoreDisplay: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: designSystem.colors.background.tertiary,
+    paddingHorizontal: designSystem.spacing[4],
+    paddingVertical: designSystem.spacing[2],
+    borderRadius: designSystem.borderRadius.sm,
     borderWidth: 2,
-    borderColor: '#059669',
+    borderColor: designSystem.colors.secondary[500],
   },
   scoreValue: {
-    color: '#059669',
+    color: designSystem.colors.secondary[500],
     fontWeight: '700',
     fontSize: 32,
   },
   scoreLabel: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary,
     fontWeight: '600',
     marginLeft: 4,
   },
   slider: {
     width: '100%',
     height: 40,
-    marginVertical: 8,
+    marginVertical: designSystem.spacing[2],
   },
   scaleMarkers: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
-    marginBottom: 16,
+    marginBottom: designSystem.spacing[4],
   },
   markerText: {
-    color: '#A99B93',
+    color: designSystem.colors.neutral[400],
     fontWeight: '600',
     fontSize: 10,
     textAlign: 'center',
@@ -474,20 +482,20 @@ const styles = StyleSheet.create({
   scaleLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingHorizontal: designSystem.spacing[2],
+    paddingTop: designSystem.spacing[2],
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: designSystem.colors.neutral[200],
   },
   scaleLabelLeft: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
     textAlign: 'left',
   },
   scaleLabelRight: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
@@ -496,9 +504,9 @@ const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 20,
+    marginHorizontal: designSystem.spacing[5],
     marginBottom: 40,
-    gap: 12,
+    gap: designSystem.spacing[3],
   },
   navButton: {
     flex: 1,

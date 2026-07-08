@@ -215,20 +215,115 @@ export const getTodayIntakesCount = (schema) => {
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
 
-  console.log('[getTodayIntakesCount] schema.id:', schema.id, 'medicationId:', schema.medicationId);
-  console.log('[getTodayIntakesCount] All intakes:', intakes.map(i => ({ id: i.id, medicationId: i.medicationId, schemaId: i.schemaId, doses: i.doses, timestamp: i.timestamp })));
-
   const todayIntakes = intakes.filter(intake =>
     intake.schemaId === schema.id &&
     intake.timestamp >= startOfDay &&
     intake.timestamp < endOfDay
   );
 
-  console.log('[getTodayIntakesCount] Filtered todayIntakes:', todayIntakes);
   const count = todayIntakes.reduce((sum, intake) => sum + intake.doses, 0);
-  console.log('[getTodayIntakesCount] Returning count:', count);
-
   return count;
+};
+
+/**
+ * Récupère les moments validés aujourd'hui pour un schéma daily.
+ * @returns {{ matin: boolean, midi: boolean, soir: boolean }}
+ */
+export const getTodayMoments = (schema) => {
+  const intakes = getIntakes();
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const endOfDay = startOfDay + 86400000;
+
+  const todayIntake = intakes.find(intake =>
+    intake.schemaId === schema.id &&
+    intake.timestamp >= startOfDay &&
+    intake.timestamp < endOfDay
+  );
+
+  if (!todayIntake || !todayIntake.moments) {
+    // Rétrocompat : ancien format compteur → on remplit les moments de gauche à droite
+    const doses = getDoses(schema.frequency);
+    const count = todayIntake ? todayIntake.doses : 0;
+    let remaining = count;
+    const result = { matin: false, midi: false, soir: false };
+    for (const m of ['matin', 'midi', 'soir']) {
+      if ((doses[m] || 0) > 0 && remaining > 0) {
+        result[m] = true;
+        remaining -= (doses[m] || 0);
+      }
+    }
+    return result;
+  }
+
+  return { matin: false, midi: false, soir: false, ...todayIntake.moments };
+};
+
+/**
+ * Toggle un moment spécifique (matin/midi/soir) pour aujourd'hui.
+ * @param {string} medicationId
+ * @param {string} schemaId
+ * @param {string} moment - 'matin' | 'midi' | 'soir'
+ * @param {object} frequency - la fréquence du schéma pour calculer les doses
+ */
+export const toggleMomentIntake = (medicationId, schemaId, moment, frequency) => {
+  const intakes = getIntakes();
+  const schemas = getTherapeuticSchemas();
+  const today = new Date();
+  const dateStr = formatLocalDate(today);
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const endOfDay = startOfDay + 86400000;
+
+  let intake = intakes.find(i =>
+    i.schemaId === schemaId &&
+    i.timestamp >= startOfDay &&
+    i.timestamp < endOfDay
+  );
+
+  const doses = getDoses(frequency);
+
+  if (!intake) {
+    intake = {
+      id: `intake-${medicationId}-${dateStr}`,
+      medicationId,
+      schemaId,
+      timestamp: today.getTime(),
+      doses: 0,
+      moments: { matin: false, midi: false, soir: false },
+      dateTaken: dateStr,
+    };
+    intakes.push(intake);
+  }
+
+  // Migrer depuis ancien format si nécessaire
+  if (!intake.moments) {
+    intake.moments = { matin: false, midi: false, soir: false };
+  }
+
+  // Toggle le moment
+  intake.moments[moment] = !intake.moments[moment];
+
+  // Recalculer doses à partir des moments
+  intake.doses = 0;
+  for (const m of ['matin', 'midi', 'soir']) {
+    if (intake.moments[m]) intake.doses += (doses[m] || 0);
+  }
+
+  intake.timestamp = today.getTime();
+
+  // Supprimer si tout est décoché
+  if (intake.doses <= 0) {
+    const idx = intakes.findIndex(i => i.id === intake.id);
+    if (idx >= 0) intakes.splice(idx, 1);
+  }
+
+  saveIntakes(intakes);
+
+  const activeSchema = schemas.find(s => s.id === schemaId);
+  if (activeSchema) {
+    activeSchema.adherence = calculateAdherence(activeSchema);
+    saveTherapeuticSchemas(schemas);
+  }
 };
 
 /**
@@ -272,11 +367,12 @@ export const getPendingIntakesCount = () => {
 
   activeSchemas.forEach(schema => {
     if (schema.frequency.type === 'daily') {
-      const todayCount = getTodayIntakesCount(schema);
-      const remaining = getDosesPerDay(schema.frequency) - todayCount;
-      count += Math.max(0, remaining);
+      const moments = getTodayMoments(schema);
+      const doses = getDoses(schema.frequency);
+      for (const m of ['matin', 'midi', 'soir']) {
+        if ((doses[m] || 0) > 0 && !moments[m]) count++;
+      }
     } else if (schema.frequency.type === 'interval') {
-      // Si prise non faite et date atteinte ou dépassée
       if (!isIntervalIntakeDone(schema)) {
         const { nextDate } = getNextIntake(schema);
         const today = new Date();
@@ -289,7 +385,7 @@ export const getPendingIntakesCount = () => {
     }
   });
 
-  return Math.min(count, 9); // Max 9 pour affichage "9+"
+  return Math.min(count, 9);
 };
 
 // ========================================
@@ -791,4 +887,73 @@ export const getActiveTherapeuticSchemas = () => {
 export const getHistoricalTherapeuticSchemas = () => {
   const schemas = getTherapeuticSchemas();
   return schemas.filter(schema => schema.endDate);
+};
+
+/**
+ * Calcule l'observance jour par jour pour un schéma sur une période donnée.
+ * Retourne un tableau [{ date, expected, actual, ratio }] trié par date.
+ */
+export const getDailyAdherenceData = (schema, periodDays = 30) => {
+  const intakes = getIntakes();
+  const today = normalizeDateToMidnight(new Date());
+  const schemaStart = normalizeDateToMidnight(new Date(schema.startDate));
+  const schemaEnd = schema.endDate
+    ? normalizeDateToMidnight(new Date(schema.endDate))
+    : today;
+
+  const periodStart = new Date(today.getTime() - (periodDays - 1) * 86400000);
+  const rangeStart = periodStart > schemaStart ? periodStart : schemaStart;
+  const rangeEnd = schemaEnd < today ? schemaEnd : today;
+
+  if (rangeStart > rangeEnd) return [];
+
+  const dailyDoses = schema.frequency.type === 'daily'
+    ? getDosesPerDay(schema.frequency)
+    : 1;
+
+  const result = [];
+  let cursor = new Date(rangeStart);
+
+  while (cursor <= rangeEnd) {
+    const dateStr = formatLocalDate(cursor);
+    const dayStart = cursor.getTime();
+    const dayEnd = dayStart + 86400000;
+
+    let expected = 0;
+    if (schema.frequency.type === 'daily') {
+      expected = dailyDoses;
+    } else {
+      const daysSinceStart = Math.floor((cursor - schemaStart) / 86400000);
+      if (daysSinceStart % schema.frequency.intervalDays === 0) {
+        expected = 1;
+      }
+    }
+
+    const actual = intakes
+      .filter(i => i.schemaId === schema.id && i.timestamp >= dayStart && i.timestamp < dayEnd)
+      .reduce((sum, i) => sum + i.doses, 0);
+
+    result.push({
+      date: dateStr,
+      expected,
+      actual: Math.min(actual, expected || 1),
+      ratio: expected > 0 ? Math.min(actual / expected, 1) : null,
+    });
+
+    cursor = new Date(cursor.getTime() + 86400000);
+  }
+
+  return result;
+};
+
+/**
+ * Récupère les schémas récents (actifs + clôturés < 3 mois) groupés par médicament.
+ */
+export const getRecentSchemas = () => {
+  const schemas = getTherapeuticSchemas();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const cutoff = formatLocalDate(threeMonthsAgo);
+
+  return schemas.filter(s => !s.endDate || s.endDate >= cutoff);
 };

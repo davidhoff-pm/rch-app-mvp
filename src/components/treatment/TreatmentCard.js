@@ -5,82 +5,156 @@ import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import designSystem from '../../theme/designSystem';
 import {
-  getTodayIntakesCount,
+  getTodayMoments,
   isIntervalIntakeDone,
   getNextIntake,
   formatFrequency,
-  checkOverdose,
-  getDosesPerDay,
   getDoses,
+  getDosesPerDay,
 } from '../../utils/treatmentUtils';
 
-/**
- * Card pour afficher un traitement dans le schéma actif
- */
+const { colors, spacing, borderRadius } = designSystem;
+
+const MOMENT_ICONS = {
+  matin: 'weather-sunny',
+  midi: 'white-balance-sunny',
+  soir: 'weather-night',
+};
+
+const MOMENT_LABELS = {
+  matin: 'Matin',
+  midi: 'Midi',
+  soir: 'Soir',
+};
 
 const TreatmentCard = ({
   schema,
   medication,
-  onCheckDaily,
-  onUncheckDaily,
+  onToggleMoment,
   onCheckInterval,
   onUncheckInterval,
   onEdit,
-  onStop
+  onStop,
+  compact = false,
 }) => {
   const [menuVisible, setMenuVisible] = useState(false);
 
   const { type } = schema.frequency;
   const isDaily = type === 'daily';
 
-  const todayCount = isDaily ? getTodayIntakesCount(schema) : 0;
-  const totalDoses = isDaily ? getDosesPerDay(schema.frequency) : 1;
+  const doses = isDaily ? getDoses(schema.frequency) : {};
+  const moments = isDaily ? getTodayMoments(schema) : {};
+  const activeMoments = isDaily
+    ? ['matin', 'midi', 'soir'].filter(m => (doses[m] || 0) > 0)
+    : [];
+  const allDone = isDaily
+    ? activeMoments.length > 0 && activeMoments.every(m => moments[m])
+    : isIntervalIntakeDone(schema);
 
-  // Pour les interval: vérifier si déjà pris et calculer retard
   const isDone = !isDaily && isIntervalIntakeDone(schema);
   const { nextDate, isLate, daysLate } = !isDaily ? getNextIntake(schema) : {};
 
-  // Observance et surdosage
-  const adherence = schema.adherence || 0;
-  const { hasOverdose, excess } = checkOverdose(schema);
+  const renderMomentToggle = (moment, isCompact) => {
+    const doseCount = doses[moment] || 0;
+    if (doseCount === 0) return null;
 
-  // Rendu des checkboxes pour daily
-  const renderDailyCheckboxes = () => {
-    const boxes = [];
-    for (let i = 0; i < totalDoses; i++) {
-      const isChecked = i < todayCount;
-      boxes.push(
-        <TouchableOpacity
-          key={i}
-          onPress={() => {
-            if (isChecked) {
-              // Si cochée, on décoche (décrémente)
-              onUncheckDaily(schema, medication);
-            } else {
-              // Si décochée, on coche (incrémente)
-              onCheckDaily(schema, medication);
-            }
-          }}
-          style={[
-            styles.checkbox,
-            isChecked && styles.checkboxChecked
-          ]}
-        >
-          {isChecked && (
-            <MaterialCommunityIcons name="check" size={16} color="#FFFFFF" />
-          )}
-        </TouchableOpacity>
-      );
-    }
-    return boxes;
+    const checked = moments[moment];
+
+    return (
+      <TouchableOpacity
+        key={moment}
+        onPress={() => onToggleMoment(schema, medication, moment)}
+        style={[
+          styles.momentToggle,
+          isCompact && styles.momentToggleCompact,
+          checked && styles.momentToggleChecked,
+        ]}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons
+          name={MOMENT_ICONS[moment]}
+          size={isCompact ? 14 : 18}
+          color={checked ? colors.background.tertiary : colors.text.disabled}
+        />
+      </TouchableOpacity>
+    );
   };
 
+  const renderMomentRow = (moment) => {
+    const doseCount = doses[moment] || 0;
+    if (doseCount === 0) return null;
+
+    const checked = moments[moment];
+
+    return (
+      <TouchableOpacity
+        key={moment}
+        onPress={() => onToggleMoment(schema, medication, moment)}
+        style={[styles.momentRow, checked && styles.momentRowChecked]}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons
+          name={MOMENT_ICONS[moment]}
+          size={16}
+          color={checked ? colors.primary[500] : colors.text.disabled}
+        />
+        <AppText variant="bodySmall" style={[styles.momentRowLabel, checked && styles.momentRowLabelChecked]}>
+          {MOMENT_LABELS[moment]}
+          {doseCount > 1 ? ` · ${doseCount}cp` : ''}
+        </AppText>
+        <MaterialCommunityIcons
+          name={checked ? 'check-circle' : 'circle-outline'}
+          size={20}
+          color={checked ? colors.primary[500] : colors.neutral[300]}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  // --- COMPACT MODE ---
+  if (compact) {
+    return (
+      <View style={styles.compactCard}>
+        <View style={styles.compactHeader}>
+          <MaterialCommunityIcons name="pill" size={18} color={colors.primary[500]} />
+          <AppText variant="bodySmall" style={styles.compactName} numberOfLines={1}>
+            {medication.name}
+          </AppText>
+          {isLate && !isDaily && (
+            <View style={styles.compactLateBadge}>
+              <AppText variant="labelSmall" style={styles.compactLateText}>
+                {daysLate}j retard
+              </AppText>
+            </View>
+          )}
+        </View>
+        {allDone ? (
+          <View style={styles.compactDone}>
+            <MaterialCommunityIcons name="check-circle" size={18} color={colors.secondary[500]} />
+            <AppText variant="labelSmall" style={styles.compactDoneText}>Pris</AppText>
+          </View>
+        ) : isDaily ? (
+          <View style={styles.compactToggles}>
+            {activeMoments.map(m => renderMomentToggle(m, true))}
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => onCheckInterval(schema, medication)}
+            style={[styles.momentToggle, styles.momentToggleCompact]}
+          >
+            <MaterialCommunityIcons name="check" size={14} color="transparent" />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
+
+  // --- FULL MODE ---
   return (
     <AppCard style={[styles.card, isLate && styles.cardLate]}>
-      {/* Header avec nom et menu */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <MaterialCommunityIcons name="pill" size={24} color={designSystem.colors.primary[500]} />
+          <MaterialCommunityIcons name="pill" size={24} color={colors.primary[500]} />
           <View style={styles.headerText}>
             <AppText variant="h4" style={styles.medicationName}>
               {medication.name}
@@ -91,88 +165,63 @@ const TreatmentCard = ({
           </View>
         </View>
 
-        {/* Menu 3 points */}
         <TouchableOpacity
           onPress={() => setMenuVisible(!menuVisible)}
           style={styles.menuButton}
         >
-          <MaterialCommunityIcons name="dots-vertical" size={24} color={designSystem.colors.text.primary} />
+          <MaterialCommunityIcons name="dots-vertical" size={24} color={colors.text.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Menu contextuel */}
       {menuVisible && (
         <View style={styles.menu}>
           <TouchableOpacity
-            onPress={() => {
-              setMenuVisible(false);
-              onEdit(schema, medication);
-            }}
+            onPress={() => { setMenuVisible(false); onEdit(schema, medication); }}
             style={styles.menuItem}
           >
-            <MaterialCommunityIcons name="pencil" size={20} color={designSystem.colors.primary[500]} />
+            <MaterialCommunityIcons name="pencil" size={20} color={colors.primary[500]} />
             <AppText variant="body" style={styles.menuItemText}>Modifier</AppText>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => {
-              setMenuVisible(false);
-              onStop(schema, medication);
-            }}
+            onPress={() => { setMenuVisible(false); onStop(schema, medication); }}
             style={styles.menuItem}
           >
-            <MaterialCommunityIcons name="stop-circle" size={20} color={designSystem.colors.health.danger.main} />
+            <MaterialCommunityIcons name="stop-circle" size={20} color={colors.health.danger.main} />
             <AppText variant="body" style={styles.menuItemText}>Arrêter</AppText>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Alerte retard pour interval */}
       {isLate && !isDaily && (
         <View style={styles.lateAlert}>
-          <MaterialCommunityIcons name="alert" size={20} color="#C0392B" />
+          <MaterialCommunityIcons name="alert" size={20} color={colors.health.danger.main} />
           <AppText variant="bodySmall" style={styles.lateText}>
             RETARD {daysLate} jour{daysLate > 1 ? 's' : ''}
           </AppText>
         </View>
       )}
 
-      {/* Section principale - Checkboxes ou prochaine prise */}
       <View style={styles.mainSection}>
         {isDaily ? (
-          <>
-            <AppText variant="labelMedium" style={styles.label}>
-              Aujourd'hui : {todayCount}/{totalDoses}
-              {todayCount > totalDoses && (
-                <AppText variant="labelMedium" style={styles.excessText}>
-                  {' '}(+{todayCount - totalDoses} en excès)
-                </AppText>
-              )}
-            </AppText>
-            <View style={styles.checkboxContainer}>
-              {renderDailyCheckboxes()}
-            </View>
-          </>
+          <View style={styles.momentsList}>
+            {activeMoments.map(m => renderMomentRow(m))}
+          </View>
         ) : (
           <>
             {isDone ? (
-              // Dose déjà prise - Afficher seulement la prochaine date
               <View style={styles.nextDoseInfo}>
                 <AppText variant="labelMedium" style={styles.label}>
                   Prochaine prise : {nextDate?.toLocaleDateString('fr-FR')}
                 </AppText>
               </View>
             ) : (
-              // Dose à prendre - Afficher la checkbox
               <View style={styles.intervalSection}>
                 <AppText variant="labelMedium" style={styles.label}>
                   À prendre aujourd'hui
                 </AppText>
                 <TouchableOpacity
                   onPress={() => onCheckInterval(schema, medication)}
-                  style={[
-                    styles.checkbox,
-                    styles.checkboxLarge
-                  ]}
+                  style={styles.momentToggle}
                 >
                   <MaterialCommunityIcons name="check" size={20} color="transparent" />
                 </TouchableOpacity>
@@ -181,63 +230,45 @@ const TreatmentCard = ({
           </>
         )}
       </View>
-
-      {/* Observance */}
-      <View style={styles.observanceSection}>
-        <AppText variant="labelMedium" style={styles.observanceLabel}>
-          Observance :
-        </AppText>
-        <AppText
-          variant="labelMedium"
-          style={[
-            styles.observanceValue,
-            adherence >= 90 && styles.observanceGood,
-            adherence < 90 && adherence >= 70 && styles.observanceMedium,
-            adherence < 70 && styles.observanceBad
-          ]}
-        >
-          {adherence}%{hasOverdose && ` (+${excess} dose${excess > 1 ? 's' : ''} en excès)`}
-        </AppText>
-      </View>
     </AppCard>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: designSystem.spacing[4],
+    marginBottom: spacing[4],
   },
   cardLate: {
-    borderColor: '#C0392B',
+    borderColor: colors.health.danger.main,
     borderWidth: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: designSystem.spacing[4],
+    marginBottom: spacing[4],
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: designSystem.spacing[3],
+    gap: spacing[3],
   },
   headerText: {
     flex: 1,
   },
   medicationName: {
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
     fontWeight: '700',
-    marginBottom: designSystem.spacing[1],
+    marginBottom: spacing[1],
   },
   frequency: {
-    color: designSystem.colors.text.secondary,
+    color: colors.text.secondary,
   },
   menuButton: {
     width: 44,
     height: 44,
-    borderRadius: designSystem.borderRadius.md,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -245,69 +276,87 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: designSystem.borderRadius.md,
-    padding: designSystem.spacing[2],
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.md,
+    padding: spacing[2],
     ...designSystem.shadows.lg,
     zIndex: 10,
     borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
+    borderColor: colors.border.light,
     minWidth: 160,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: designSystem.spacing[3],
-    gap: designSystem.spacing[3],
+    padding: spacing[3],
+    gap: spacing[3],
   },
   menuItemText: {
-    color: designSystem.colors.text.primary,
+    color: colors.text.primary,
   },
   lateAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FBE3DF',
-    padding: designSystem.spacing[3],
-    borderRadius: designSystem.borderRadius.md,
-    marginBottom: designSystem.spacing[4],
-    gap: designSystem.spacing[2],
+    backgroundColor: colors.health.danger.light,
+    padding: spacing[3],
+    borderRadius: borderRadius.md,
+    marginBottom: spacing[4],
+    gap: spacing[2],
   },
   lateText: {
-    color: '#C0392B',
+    color: colors.health.danger.main,
     fontWeight: '700',
   },
-  mainSection: {
-    marginBottom: designSystem.spacing[4],
-  },
+  mainSection: {},
   label: {
-    color: designSystem.colors.text.secondary,
-    marginBottom: designSystem.spacing[3],
+    color: colors.text.secondary,
+    marginBottom: spacing[3],
   },
-  excessText: {
-    color: '#AD7130',
+  // Moment rows (full mode)
+  momentsList: {
+    gap: spacing[2],
+  },
+  momentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    backgroundColor: colors.background.secondary,
+  },
+  momentRowChecked: {
+    borderColor: colors.primary[300],
+    backgroundColor: colors.primary[50],
+  },
+  momentRowLabel: {
+    flex: 1,
+    color: colors.text.secondary,
+    fontSize: 14,
+  },
+  momentRowLabelChecked: {
+    color: colors.text.primary,
     fontWeight: '600',
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[3],
-    flexWrap: 'wrap',
-  },
-  checkbox: {
-    width: 36,
-    height: 36,
-    borderRadius: designSystem.borderRadius.md,
-    borderWidth: 2,
-    borderColor: designSystem.colors.primary[500],
+  momentToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background.tertiary,
   },
-  checkboxChecked: {
-    backgroundColor: designSystem.colors.primary[500],
+  momentToggleCompact: {
+    width: 30,
+    height: 30,
   },
-  checkboxLarge: {
-    width: 44,
-    height: 44,
+  momentToggleChecked: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
   },
   intervalSection: {
     flexDirection: 'row',
@@ -315,30 +364,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextDoseInfo: {
-    paddingVertical: designSystem.spacing[2],
+    paddingVertical: spacing[2],
   },
-  observanceSection: {
+  // Compact mode
+  compactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: designSystem.spacing[4],
-    borderTopWidth: 1,
-    borderTopColor: designSystem.colors.border.light,
-    gap: designSystem.spacing[2],
+    justifyContent: 'space-between',
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.md,
+    padding: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    marginBottom: spacing[2],
   },
-  observanceLabel: {
-    color: designSystem.colors.text.secondary,
+  compactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    flex: 1,
+    minWidth: 0,
   },
-  observanceValue: {
+  compactName: {
+    color: colors.text.primary,
+    fontWeight: '600',
+    flex: 1,
+  },
+  compactLateBadge: {
+    backgroundColor: colors.health.danger.light,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  compactLateText: {
+    color: colors.health.danger.main,
     fontWeight: '700',
+    fontSize: 10,
   },
-  observanceGood: {
-    color: '#397852',
+  compactToggles: {
+    flexDirection: 'row',
+    gap: spacing[2],
   },
-  observanceMedium: {
-    color: '#AD7130',
+  compactDone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
   },
-  observanceBad: {
-    color: '#C0392B',
+  compactDoneText: {
+    color: colors.secondary[500],
+    fontWeight: '600',
   },
 });
 
