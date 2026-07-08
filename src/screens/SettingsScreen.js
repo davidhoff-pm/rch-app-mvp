@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Platform, TextInput, Switch, TouchableOpacity } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -9,8 +9,8 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import AppCard from '../components/ui/AppCard';
 import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
 import Divider from '../components/ui/Divider';
+import ScreenHeader from '../components/ui/ScreenHeader';
 import TimeInput from '../components/ui/TimeInput';
-import PWAInstallButton from '../components/ui/PWAInstallButton';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
@@ -24,8 +24,28 @@ export default function SettingsScreen() {
   const [showManualImport, setShowManualImport] = useState(false);
   const [importJsonText, setImportJsonText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [devModeEnabled, setDevModeEnabled] = useState(() => storage.getString('devModeEnabled') === 'true');
+  const versionTapCount = useRef(0);
+  const versionTapTimer = useRef(null);
   const theme = useTheme();
   const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
+
+  const handleVersionTap = () => {
+    versionTapCount.current++;
+    if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
+    if (versionTapCount.current >= 5) {
+      versionTapCount.current = 0;
+      const next = !devModeEnabled;
+      setDevModeEnabled(next);
+      storage.set('devModeEnabled', next);
+      Alert.alert(
+        next ? 'Mode développeur activé' : 'Mode développeur désactivé',
+        next ? 'Les outils de test sont maintenant disponibles.' : 'Les outils de test sont masqués.',
+      );
+    } else {
+      versionTapTimer.current = setTimeout(() => { versionTapCount.current = 0; }, 1500);
+    }
+  };
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminder1Time, setReminder1Time] = useState('09:00');
@@ -476,10 +496,9 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
-      {/* Bouton d'installation PWA (uniquement sur web) */}
-      <PWAInstallButton />
-
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScreenHeader title="Paramètres" />
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Mode de suivi */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
@@ -522,8 +541,8 @@ export default function SettingsScreen() {
         </AppText>
       </AppCard>
 
-      {/* Mode Développeur */}
-      <AppCard style={styles.devCard}>
+      {/* Mode Développeur — visible uniquement si activé */}
+      {devModeEnabled && <AppCard style={styles.devCard}>
         <View style={styles.devHeader}>
           <MaterialCommunityIcons name="dice-multiple" size={24} color="#C16046" style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.devTitle}>
@@ -618,7 +637,7 @@ export default function SettingsScreen() {
             Test Notif Selles (5s)
           </PrimaryButton>
         </View>
-      </AppCard>
+      </AppCard>}
 
       {/* Notifications */}
       <AppCard style={styles.notificationCard}>
@@ -888,18 +907,27 @@ export default function SettingsScreen() {
           {isWiping ? 'Suppression...' : 'Effacer toutes les données'}
         </PrimaryButton>
         
-        {/* Bouton de debug temporaire */}
-        <PrimaryButton 
-          onPress={handleManualClear}
-          variant="info"
-          outlined
-          style={styles.debugButton}
-          icon="broom"
-        >
-          Effacer localStorage (Debug)
-        </PrimaryButton>
+        {devModeEnabled && (
+          <PrimaryButton
+            onPress={handleManualClear}
+            variant="info"
+            outlined
+            style={styles.debugButton}
+            icon="broom"
+          >
+            Effacer localStorage (Debug)
+          </PrimaryButton>
+        )}
       </AppCard>
+
+      {/* Version — 5 taps pour activer/désactiver le mode développeur */}
+      <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionFooter}>
+        <AppText variant="labelSmall" style={styles.versionText}>
+          RCH Suivi · v1.2.0
+        </AppText>
+      </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 }
 
@@ -1238,5 +1266,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     width: 80,
+  },
+  versionFooter: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingBottom: 40,
+  },
+  versionText: {
+    color: designSystem.colors.text.disabled,
+    fontSize: 12,
   },
 });

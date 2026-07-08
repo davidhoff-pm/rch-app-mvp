@@ -359,7 +359,7 @@ export default function StatsScreen() {
         <EmptyState
           icon="chart-line-variant"
           title="Aucune donnée disponible"
-          description="Enregistrez des selles et complétez vos bilans pour voir l'évolution de votre santé. Conseil : Utilisez le Mode Développeur dans les Paramètres pour générer des données de test."
+          description="Enregistrez des selles et complétez vos bilans pour voir l'évolution de votre santé."
           variant="default"
         />
       )}
