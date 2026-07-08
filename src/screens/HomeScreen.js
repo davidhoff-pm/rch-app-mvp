@@ -26,6 +26,19 @@ import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 import { useStoolModal } from '../contexts/StoolModalContext';
 import ActionCard from '../components/home/ActionCard';
 import usePendingTreatments from '../hooks/usePendingTreatments';
+import TreatmentCard from '../components/treatment/TreatmentCard';
+import {
+  getActiveTherapeuticSchemas,
+  getMedications,
+  recordIntake,
+  toggleMomentIntake,
+  getPendingIntakesCount,
+  getTodayMoments,
+  getDoses,
+  getDosesPerDay,
+  isIntervalIntakeDone,
+} from '../utils/treatmentUtils';
+import { buttonPressFeedback } from '../utils/haptics';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
 import BatchStoolModal from '../components/modals/BatchStoolModal';
@@ -82,8 +95,25 @@ export default function HomeScreen({ route }) {
   // Chargement des données (utilisé pour rafraîchir après ajout via le bouton +)
   const { loadHistoryData } = useHistoryData();
 
-  // Nombre de prises de traitement en attente (pour la section "À faire")
+  // Traitements en attente (pour la section "À faire")
   const pendingTreatmentsCount = usePendingTreatments();
+  const [pendingSchemas, setPendingSchemas] = useState([]);
+  const [allMedications, setAllMedications] = useState({});
+
+  const refreshTreatments = () => {
+    const schemas = getActiveTherapeuticSchemas();
+    const meds = getMedications();
+    const pending = schemas.filter(s => {
+      if (s.frequency.type === 'daily') {
+        const moments = getTodayMoments(s);
+        const d = getDoses(s.frequency);
+        return ['matin', 'midi', 'soir'].some(m => (d[m] || 0) > 0 && !moments[m]);
+      }
+      return !isIntervalIntakeDone(s);
+    });
+    setPendingSchemas(pending);
+    setAllMedications(meds);
+  };
 
   // Mode de suivi (actif / rémission)
   const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
@@ -303,6 +333,9 @@ export default function HomeScreen({ route }) {
       // Vérifier la disponibilité d'IBDisk
       checkIBDiskAvailability();
       
+      // Charger les traitements en attente
+      refreshTreatments();
+
       // Charger les articles RSS
       loadRSSArticles();
 
@@ -641,16 +674,17 @@ export default function HomeScreen({ route }) {
       onPress: () => openBatchModal(),
     });
   }
-  if (pendingTreatmentsCount > 0) {
-    pendingTasks.push({
-      key: 'treatment',
-      title: 'Traitement à prendre',
-      description: `${pendingTreatmentsCount} prise${pendingTreatmentsCount > 1 ? 's' : ''} en attente aujourd'hui`,
-      icon: 'pill',
-      accent: 'primary',
-      onPress: () => navigation.navigate('Traitement'),
-    });
-  }
+  const handleHomeToggleMoment = (schema, medication, moment) => {
+    toggleMomentIntake(schema.medicationId, schema.id, moment, schema.frequency);
+    buttonPressFeedback();
+    refreshTreatments();
+  };
+
+  const handleHomeIntervalCheck = (schema, medication) => {
+    recordIntake(schema.medicationId, 1, new Date());
+    buttonPressFeedback();
+    refreshTreatments();
+  };
 
   // Pastille de statut : reflète le mode de suivi choisi par l'utilisateur
   const status = isRemission
@@ -777,8 +811,35 @@ export default function HomeScreen({ route }) {
               );
             })}
           </View>
-        ) : (
+        ) : pendingSchemas.length === 0 ? (
           <AppText style={styles.noActionText}>Rien à faire aujourd'hui, tout est à jour.</AppText>
+        ) : null}
+
+        {/* Traitements en attente — cases cochables directement */}
+        {pendingSchemas.length > 0 && (
+          <View style={{ marginTop: pendingTasks.length > 0 ? 12 : 0 }}>
+            <View style={styles.treatmentSectionHeader}>
+              <MaterialCommunityIcons name="pill" size={18} color={colors.primary[500]} />
+              <AppText style={styles.treatmentSectionTitle}>Traitement</AppText>
+            </View>
+            {pendingSchemas.map(schema => {
+              const med = allMedications[schema.medicationId];
+              if (!med) return null;
+              return (
+                <TreatmentCard
+                  key={schema.id}
+                  schema={schema}
+                  medication={med}
+                  onToggleMoment={handleHomeToggleMoment}
+                  onCheckInterval={handleHomeIntervalCheck}
+                  onUncheckInterval={() => {}}
+                  onEdit={() => navigation.navigate('Traitement')}
+                  onStop={() => navigation.navigate('Traitement')}
+                  compact
+                />
+              );
+            })}
+          </View>
         )}
 
         <View style={[styles.statGrid, { marginTop: 16 }]}>
@@ -1269,6 +1330,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: colors.text.tertiary,
     paddingVertical: 4,
+  },
+  treatmentSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  treatmentSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.secondary,
   },
   // Tasks
   todoList: {

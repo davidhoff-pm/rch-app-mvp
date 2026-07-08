@@ -23,6 +23,7 @@ import {
   findMedicationById,
   recordIntake,
   decrementIntake,
+  toggleMomentIntake,
   updateIntake,
   deleteIntake,
   stopSchema,
@@ -122,20 +123,9 @@ const TreatmentScreen = () => {
     return grouped;
   };
 
-  // Handle daily intake checkbox
-  const handleCheckDaily = (schema, medication) => {
-    recordIntake(schema.medicationId, 1, new Date());
-    buttonPressFeedback();
-    refresh();
-  };
-
-  // Handle daily intake uncheck
-  const handleUncheckDaily = (schema, medication) => {
-    const today = new Date();
-    const todayStr = today.getFullYear() + '-' +
-                     String(today.getMonth() + 1).padStart(2, '0') + '-' +
-                     String(today.getDate()).padStart(2, '0');
-    decrementIntake(schema.medicationId, todayStr);
+  // Handle daily intake moment toggle
+  const handleToggleMoment = (schema, medication, moment) => {
+    toggleMomentIntake(schema.medicationId, schema.id, moment, schema.frequency);
     buttonPressFeedback();
     refresh();
   };
@@ -309,8 +299,7 @@ const TreatmentScreen = () => {
             key={schema.id}
             schema={schema}
             medication={medication}
-            onCheckDaily={handleCheckDaily}
-            onUncheckDaily={handleUncheckDaily}
+            onToggleMoment={handleToggleMoment}
             onCheckInterval={handleCheckInterval}
             onUncheckInterval={handleUncheckInterval}
             onEdit={handleEdit}

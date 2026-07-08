@@ -16,6 +16,7 @@ import HourlyHeatmap from '../components/charts/HourlyHeatmap';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
 import HistoryOverview from '../components/history/HistoryOverview';
+import ObservanceSection from '../components/charts/ObservanceSection';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -362,6 +363,9 @@ export default function StatsScreen() {
           variant="default"
         />
       )}
+
+      {/* Observance traitement */}
+      <ObservanceSection />
 
       {/* Historique, calendrier et IBDisk (déplacés depuis l'accueil) */}
       <HistoryOverview />
