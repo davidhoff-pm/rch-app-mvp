@@ -1,776 +1,215 @@
-import { calculateLichtigerScore } from '../scoreCalculator';
+import { calculatePRO2Score, calculateLichtigerScore } from '../scoreCalculator';
 
-describe('calculateLichtigerScore', () => {
-  let mockStorage;
+function makeStorage(stools, normalStoolCount = '1') {
+  const data = {};
+  if (stools) data.dailySells = JSON.stringify(stools);
+  if (normalStoolCount != null) data.normalStoolCount = normalStoolCount;
+  return {
+    getString: (key) => data[key] ?? null,
+  };
+}
 
-  beforeEach(() => {
-    // Créer un mock storage propre pour chaque test
-    mockStorage = {
-      data: {},
-      getString: jest.fn((key) => mockStorage.data[key]),
-      set: jest.fn((key, value) => {
-        mockStorage.data[key] = value;
-      }),
-    };
-  });
+function makeStool(hour, opts = {}) {
+  const d = new Date(2025, 5, 15, hour, 0, 0, 0);
+  return {
+    id: `s-${hour}-${Math.random()}`,
+    timestamp: d.getTime(),
+    bristolScale: opts.bloodOnly ? null : (opts.bristol || 4),
+    hasBlood: opts.hasBlood || opts.bloodOnly || false,
+    bloodOnly: opts.bloodOnly || false,
+  };
+}
 
-  describe('Score de Lichtiger - Cas de base', () => {
-    it('devrait retourner null si aucune date n\'est fournie', () => {
-      const score = calculateLichtigerScore(null, mockStorage);
-      expect(score).toBeNull();
+const DATE = '2025-06-15';
+
+describe('calculatePRO2Score', () => {
+  describe('Cas limites', () => {
+    it('retourne null si dateStr est null', () => {
+      expect(calculatePRO2Score(null, makeStorage([]))).toBeNull();
     });
 
-    it('devrait retourner null si aucun bilan quotidien n\'existe', () => {
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({});
-
-      const score = calculateLichtigerScore('2025-11-07', mockStorage);
-      expect(score).toBeNull();
+    it('retourne null si aucune selle stockée', () => {
+      expect(calculatePRO2Score(DATE, makeStorage(null))).toBeNull();
     });
 
-    it('devrait calculer un score de 0 pour une rémission parfaite', () => {
-      const date = '2025-11-07';
+    it('retourne null si aucune selle ce jour', () => {
+      const otherDay = [{ ...makeStool(10), timestamp: new Date(2025, 5, 14, 10).getTime() }];
+      expect(calculatePRO2Score(DATE, makeStorage(otherDay))).toBeNull();
+    });
 
-      // 1-2 selles, pas de sang, pas nocturnes
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T16:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      // Bilan parfait
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
+    it('retourne null si la liste de selles est vide', () => {
+      expect(calculatePRO2Score(DATE, makeStorage([]))).toBeNull();
     });
   });
 
-  describe('Calcul du score - Nombre de selles', () => {
-    const createStoolsForDate = (count, date, hasBlood = false) => {
-      const stools = [];
-      for (let i = 0; i < count; i++) {
-        stools.push({
-          id: `${i}`,
-          timestamp: new Date(`${date}T${10 + i}:00:00`).getTime(),
-          bristolScale: 4,
-          hasBlood,
-        });
-      }
-      return stools;
-    };
-
-    const createBasicSurvey = (date) => ({
-      [date]: {
-        date,
-        fecalIncontinence: 'non',
-        abdominalPain: 'aucune',
-        generalState: 'parfait',
-        antidiarrheal: 'non',
-      },
+  describe('SF — Stool Frequency', () => {
+    it('excédent ≤ 0 → SF = 0 (1 selle, normal = 1)', () => {
+      const stools = [makeStool(10)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(0);
     });
 
-    it('devrait donner 0 point pour 0-2 selles', () => {
-      const date = '2025-11-07';
-      mockStorage.data.dailySells = JSON.stringify(createStoolsForDate(2, date));
-      mockStorage.data.dailySurvey = JSON.stringify(createBasicSurvey(date));
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
+    it('excédent ≤ 0 → SF = 0 (2 selles, normal = 3)', () => {
+      const stools = [makeStool(8), makeStool(12)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '3'))).toBe(0);
     });
 
-    it('devrait donner 1 point pour 3-4 selles', () => {
-      const date = '2025-11-07';
-      mockStorage.data.dailySells = JSON.stringify(createStoolsForDate(4, date));
-      mockStorage.data.dailySurvey = JSON.stringify(createBasicSurvey(date));
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(1);
+    it('excédent 1 → SF = 1', () => {
+      const stools = [makeStool(8), makeStool(12)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(1);
     });
 
-    it('devrait donner 2 points pour 5-6 selles', () => {
-      const date = '2025-11-07';
-      mockStorage.data.dailySells = JSON.stringify(createStoolsForDate(5, date));
-      mockStorage.data.dailySurvey = JSON.stringify(createBasicSurvey(date));
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(2);
+    it('excédent 2 → SF = 1', () => {
+      const stools = [makeStool(8), makeStool(10), makeStool(12)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(1);
     });
 
-    it('devrait donner 3 points pour 7-9 selles', () => {
-      const date = '2025-11-07';
-      mockStorage.data.dailySells = JSON.stringify(createStoolsForDate(8, date));
-      mockStorage.data.dailySurvey = JSON.stringify(createBasicSurvey(date));
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(3);
+    it('excédent 3 → SF = 2', () => {
+      const stools = [makeStool(8), makeStool(10), makeStool(12), makeStool(14)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(2);
     });
 
-    it('devrait donner 4 points pour 10+ selles', () => {
-      const date = '2025-11-07';
-      mockStorage.data.dailySells = JSON.stringify(createStoolsForDate(12, date));
-      mockStorage.data.dailySurvey = JSON.stringify(createBasicSurvey(date));
+    it('excédent 4 → SF = 2', () => {
+      const stools = [makeStool(7), makeStool(9), makeStool(11), makeStool(13), makeStool(15)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(2);
+    });
 
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(4);
+    it('excédent 5 → SF = 3', () => {
+      const stools = Array.from({ length: 6 }, (_, i) => makeStool(8 + i));
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
+    });
+
+    it('excédent 8 → SF = 3 (plafonné)', () => {
+      const stools = Array.from({ length: 9 }, (_, i) => makeStool(6 + i));
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
+    });
+
+    it('normalStoolCount = 0 : 1 selle → excédent 1 → SF = 1', () => {
+      const stools = [makeStool(10)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '0'))).toBe(1);
+    });
+
+    it('normalStoolCount absent → défaut 1', () => {
+      const stools = [makeStool(8), makeStool(12)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, null))).toBe(1);
     });
   });
 
-  describe('Calcul du score - Selles nocturnes', () => {
-    it('devrait détecter les selles nocturnes entre 23h et 6h', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T23:30:00').getTime(), // Nocturne
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T02:00:00').getTime(), // Nocturne
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '3',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(), // Diurne
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score attendu: 1 (3-4 selles) + 1 (nocturne) = 2
-      expect(score).toBe(2);
+  describe('RB — Rectal Bleeding', () => {
+    it('0% sang → RB = 0', () => {
+      const stools = [makeStool(10), makeStool(14)];
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '2'))).toBe(0);
     });
 
-    it('ne devrait pas compter les selles diurnes comme nocturnes', () => {
-      const date = '2025-11-07';
+    it('<50% sang → RB = 1 (1/3 avec sang)', () => {
+      const stools = [
+        makeStool(8, { hasBlood: true }),
+        makeStool(10),
+        makeStool(14),
+      ];
+      // SF: 3-1=2 → SF=1, RB: 1/3=33% → RB=1
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(2);
+    });
 
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T08:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
+    it('≥50% sang → RB = 2 (2/3 avec sang)', () => {
+      const stools = [
+        makeStool(8, { hasBlood: true }),
+        makeStool(10, { hasBlood: true }),
+        makeStool(14),
+      ];
+      // SF: 3-1=2 → SF=1, RB: 2/3=67% → RB=2
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
+    });
 
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
+    it('100% sang → RB = 2 (pas de bloodOnly)', () => {
+      const stools = [
+        makeStool(8, { hasBlood: true }),
+        makeStool(12, { hasBlood: true }),
+      ];
+      // SF: 2-1=1 → SF=1, RB: 2/2=100% → RB=2
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
+    });
 
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score attendu: 0 (0-2 selles) + 0 (pas nocturne) = 0
-      expect(score).toBe(0);
+    it('bloodOnly → RB = 3 (priorité sur le ratio)', () => {
+      const stools = [
+        makeStool(8),
+        makeStool(10, { bloodOnly: true }),
+        makeStool(14),
+      ];
+      // SF: 3-1=2 → SF=1, RB: bloodOnly → RB=3
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(4);
+    });
+
+    it('bloodOnly seul → SF compte aussi cette entrée', () => {
+      const stools = [makeStool(10, { bloodOnly: true })];
+      // SF: 1-1=0 → SF=0, RB: bloodOnly → RB=3
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
+    });
+
+    it('bloodOnly + autres sans sang → RB = 3 quand même', () => {
+      const stools = [
+        makeStool(8),
+        makeStool(10),
+        makeStool(12),
+        makeStool(14, { bloodOnly: true }),
+      ];
+      // SF: 4-1=3 → SF=2, RB: bloodOnly → RB=3
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(5);
     });
   });
 
-  describe('Calcul du score - Saignement rectal', () => {
-    it('devrait donner 0 point si aucun saignement', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
+  describe('Combinaisons SF + RB', () => {
+    it('score minimum = 0 (1 selle, normal=1, pas de sang)', () => {
+      expect(calculatePRO2Score(DATE, makeStorage([makeStool(10)], '1'))).toBe(0);
     });
 
-    it('devrait donner 1 point si < 50% de selles avec sang', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true, // 1 sur 4 = 25%
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T12:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '3',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '4',
-          timestamp: new Date('2025-11-07T16:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score: 1 (3-4 selles) + 1 (< 50% sang) = 2
-      expect(score).toBe(2);
+    it('score maximum = 6 (SF=3 + RB=3)', () => {
+      const stools = Array.from({ length: 7 }, (_, i) =>
+        i === 0 ? makeStool(6 + i, { bloodOnly: true }) : makeStool(6 + i)
+      );
+      // SF: 7-1=6 → SF=3, RB: bloodOnly → RB=3
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(6);
     });
 
-    it('devrait donner 2 points si >= 50% et < 100% de selles avec sang', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T12:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true, // 2 sur 4 = 50%
-        },
-        {
-          id: '3',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-        {
-          id: '4',
-          timestamp: new Date('2025-11-07T16:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score: 1 (3-4 selles) + 2 (50% sang) = 3
-      expect(score).toBe(3);
+    it('SF=2 + RB=1 = 3', () => {
+      const stools = [
+        makeStool(8, { hasBlood: true }),
+        makeStool(10),
+        makeStool(12),
+        makeStool(14),
+      ];
+      // SF: 4-1=3 → SF=2, RB: 1/4=25% → RB=1
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
     });
 
-    it('devrait donner 3 points si 100% de selles avec sang', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T12:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true,
-        },
-        {
-          id: '3',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: true,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score: 1 (3 selles) + 3 (100% sang) = 4
-      expect(score).toBe(4);
-    });
-  });
-
-  describe('Calcul du score - Incontinence fécale', () => {
-    it('devrait donner 0 point si pas d\'incontinence', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
-    });
-
-    it('devrait donner 1 point si incontinence présente', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'oui',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(1);
-    });
-  });
-
-  describe('Calcul du score - Douleurs abdominales', () => {
-    it('devrait donner 0 point pour aucune douleur', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
-    });
-
-    it('devrait donner 1 point pour douleurs légères', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'legeres',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(1);
-    });
-
-    it('devrait donner 2 points pour douleurs moyennes', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'moyennes',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(2);
-    });
-
-    it('devrait donner 3 points pour douleurs intenses', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'intenses',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(3);
-    });
-  });
-
-  describe('Calcul du score - État général', () => {
-    it('devrait donner 0 point pour état parfait', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
-    });
-
-    it('devrait donner 1 point pour état très bon', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'tres_bon',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(1);
-    });
-
-    it('devrait donner 5 points pour état très mauvais', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'tres_mauvais',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(5);
-    });
-  });
-
-  describe('Calcul du score - Antidiarrhéiques', () => {
-    it('devrait donner 0 point si pas d\'antidiarrhéiques', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(0);
-    });
-
-    it('devrait donner 1 point si prise d\'antidiarrhéiques', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'oui',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBe(1);
-    });
-  });
-
-  describe('Calcul du score - Cas complexes', () => {
-    it('devrait calculer correctement un score de poussée modérée (score ~12)', () => {
-      const date = '2025-11-07';
-
-      // 8 selles dont 2 nocturnes et 6 avec sang (75%)
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T23:00:00').getTime(), // Nocturne
-          bristolScale: 6,
-          hasBlood: true,
-        },
-        {
-          id: '2',
-          timestamp: new Date('2025-11-07T02:00:00').getTime(), // Nocturne
-          bristolScale: 7,
-          hasBlood: true,
-        },
-        {
-          id: '3',
-          timestamp: new Date('2025-11-07T08:00:00').getTime(),
-          bristolScale: 6,
-          hasBlood: true,
-        },
-        {
-          id: '4',
-          timestamp: new Date('2025-11-07T10:00:00').getTime(),
-          bristolScale: 6,
-          hasBlood: true,
-        },
-        {
-          id: '5',
-          timestamp: new Date('2025-11-07T12:00:00').getTime(),
-          bristolScale: 7,
-          hasBlood: true,
-        },
-        {
-          id: '6',
-          timestamp: new Date('2025-11-07T14:00:00').getTime(),
-          bristolScale: 6,
-          hasBlood: false,
-        },
-        {
-          id: '7',
-          timestamp: new Date('2025-11-07T16:00:00').getTime(),
-          bristolScale: 7,
-          hasBlood: true,
-        },
-        {
-          id: '8',
-          timestamp: new Date('2025-11-07T18:00:00').getTime(),
-          bristolScale: 6,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'oui', // +1
-          abdominalPain: 'moyennes', // +2
-          generalState: 'mauvais', // +4
-          antidiarrheal: 'oui', // +1
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score attendu: 3 (7-9 selles) + 1 (nocturne) + 2 (>=50% sang) + 1 (incontinence) + 2 (douleur moyenne) + 4 (mauvais état) + 1 (antidiarrhéiques) = 14
-      expect(score).toBe(14);
-    });
-
-    it('devrait calculer un score maximum de 17', () => {
-      const date = '2025-11-07';
-
-      // 12 selles, toutes nocturnes, toutes avec sang
-      const stools = [];
-      for (let i = 0; i < 12; i++) {
-        stools.push({
-          id: `${i}`,
-          timestamp: new Date('2025-11-07T23:30:00').getTime(),
-          bristolScale: 7,
-          hasBlood: true,
-        });
-      }
-      mockStorage.data.dailySells = JSON.stringify(stools);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'oui', // +1
-          abdominalPain: 'intenses', // +3
-          generalState: 'tres_mauvais', // +5
-          antidiarrheal: 'oui', // +1
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score attendu: 4 (10+ selles) + 1 (nocturne) + 3 (100% sang) + 1 (incontinence) + 3 (douleur intense) + 5 (très mauvais état) + 1 (antidiarrhéiques) = 18
-      // Mais maximum théorique = 17 selon l'échelle de Lichtiger
-      // Vérifions que le calcul est correct
-      expect(score).toBeGreaterThanOrEqual(15);
-      expect(score).toBeLessThanOrEqual(18);
-    });
-  });
-
-  describe('Calcul du score - Flag nocturnal (batch)', () => {
-    it('devrait compter comme nocturne une selle batch avec nocturnal:true même à midi', () => {
-      const date = '2025-11-07';
-      const noonTimestamp = new Date('2025-11-07T12:00:00').getTime();
-
-      mockStorage.data.dailySells = JSON.stringify([
-        { id: '1', timestamp: noonTimestamp, bristolScale: 4, hasBlood: false, nocturnal: true, batch: true },
-        { id: '2', timestamp: noonTimestamp, bristolScale: 4, hasBlood: false, nocturnal: false, batch: true },
-      ]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // 2 selles (score 0) + 1 nocturne via flag (score 1) = 1
-      expect(score).toBe(1);
-    });
-
-    it('ne devrait pas compter comme nocturne une selle batch avec nocturnal:false même à 23h30', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T23:30:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-          nocturnal: false,
-          batch: true,
-        },
-      ]);
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // 1 selle (score 0) + 0 nocturne (flag false prime) = 0
-      expect(score).toBe(0);
+    it('SF=1 + RB=2 = 3', () => {
+      const stools = [
+        makeStool(8, { hasBlood: true }),
+        makeStool(12, { hasBlood: true }),
+      ];
+      // SF: 2-1=1 → SF=1, RB: 2/2=100% → RB=2
+      expect(calculatePRO2Score(DATE, makeStorage(stools, '1'))).toBe(3);
     });
   });
 
   describe('Gestion des erreurs', () => {
-    it('devrait retourner null en cas d\'erreur dans les données', () => {
-      const date = '2025-11-07';
-
-      mockStorage.data.dailySells = 'invalid json';
-      mockStorage.data.dailySurvey = JSON.stringify({});
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      expect(score).toBeNull();
+    it('retourne null si storage lance une erreur', () => {
+      const badStorage = {
+        getString: () => { throw new Error('boom'); },
+      };
+      expect(calculatePRO2Score(DATE, badStorage)).toBeNull();
     });
 
-    it('devrait gérer les dates avec fuseaux horaires correctement', () => {
-      const date = '2025-11-07';
+    it('retourne null si dailySells contient du JSON invalide', () => {
+      const badStorage = {
+        getString: (key) => key === 'dailySells' ? 'not-json' : null,
+      };
+      expect(calculatePRO2Score(DATE, badStorage)).toBeNull();
+    });
+  });
 
-      // Selle à minuit pile (00:00 est considéré comme nocturne car < 06:00)
-      mockStorage.data.dailySells = JSON.stringify([
-        {
-          id: '1',
-          timestamp: new Date('2025-11-07T00:00:00').getTime(),
-          bristolScale: 4,
-          hasBlood: false,
-        },
-      ]);
-
-      mockStorage.data.dailySurvey = JSON.stringify({
-        '2025-11-07': {
-          date: '2025-11-07',
-          fecalIncontinence: 'non',
-          abdominalPain: 'aucune',
-          generalState: 'parfait',
-          antidiarrheal: 'non',
-        },
-      });
-
-      const score = calculateLichtigerScore(date, mockStorage);
-      // Score: 0 (0-2 selles) + 1 (nocturne car 00:00 < 06:00) = 1
-      expect(score).toBe(1);
+  describe('Alias backward-compat', () => {
+    it('calculateLichtigerScore est un alias de calculatePRO2Score', () => {
+      expect(calculateLichtigerScore).toBe(calculatePRO2Score);
     });
   });
 });

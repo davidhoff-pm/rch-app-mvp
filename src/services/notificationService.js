@@ -1,7 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import storage from '../utils/storage';
-import { getSurveyDayKey } from '../utils/dayKey';
 import {
   getActiveTherapeuticSchemas,
   getMedications,
@@ -20,7 +19,6 @@ Notifications.setNotificationHandler({
 });
 
 const NOTIFICATION_IDS = {
-  SURVEY_REMINDER_1: 'survey-reminder-1',
   STOOL_REMINDER: 'stool-reminder-evening',
 };
 
@@ -51,21 +49,6 @@ export async function requestNotificationPermissions() {
 }
 
 /**
- * Vérifier si le bilan du jour est complété
- */
-function isSurveyCompletedToday() {
-  const todayKey = getSurveyDayKey(new Date(), 0);
-  const json = storage.getString('dailySurvey');
-  if (!json) return false;
-  try {
-    const surveys = JSON.parse(json);
-    return surveys && surveys[todayKey] !== undefined;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Vérifier si au moins une selle a été saisie aujourd'hui
  */
 function isStoolLoggedToday() {
@@ -87,32 +70,6 @@ function isStoolLoggedToday() {
  */
 function isRemissionMode() {
   return storage.getString('trackingMode') === 'remission';
-}
-
-/**
- * Planifier le rappel bilan du matin
- */
-export async function scheduleSurveyReminder(hour, minute) {
-  try {
-    await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.SURVEY_REMINDER_1);
-    const settings = getNotificationSettings();
-    if (!settings.enabled || !settings.surveyReminder1.enabled) return null;
-
-    const notificationId = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '📋 Bilan du jour',
-        body: 'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
-        data: { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' },
-        sound: true,
-      },
-      trigger: { hour, minute, repeats: true },
-      identifier: NOTIFICATION_IDS.SURVEY_REMINDER_1,
-    });
-    return notificationId;
-  } catch (error) {
-    console.error('❌ Erreur planification rappel bilan:', error);
-    return null;
-  }
 }
 
 /**
@@ -142,17 +99,6 @@ export async function scheduleStoolReminder(hour, minute) {
 }
 
 /**
- * Annuler le rappel bilan
- */
-export async function cancelSurveyReminder() {
-  try {
-    await Notifications.cancelScheduledNotificationAsync(NOTIFICATION_IDS.SURVEY_REMINDER_1);
-  } catch (error) {
-    console.error("Erreur annulation rappel bilan:", error);
-  }
-}
-
-/**
  * Annuler le rappel selles
  */
 export async function cancelStoolReminder() {
@@ -172,12 +118,6 @@ export async function refreshDailyNotifications() {
   if (!settings.enabled) return;
 
   const remission = isRemissionMode();
-
-  if (remission || isSurveyCompletedToday()) {
-    await cancelSurveyReminder();
-  } else if (settings.surveyReminder1.enabled) {
-    await scheduleSurveyReminder(settings.surveyReminder1.hour, settings.surveyReminder1.minute);
-  }
 
   if (remission || isStoolLoggedToday()) {
     await cancelStoolReminder();
@@ -407,33 +347,12 @@ export async function scheduleAllReminders() {
 
   const remission = isRemissionMode();
 
-  if (!remission && settings.surveyReminder1.enabled) {
-    await scheduleSurveyReminder(settings.surveyReminder1.hour, settings.surveyReminder1.minute);
-  }
   if (!remission && settings.stoolReminder?.enabled) {
     await scheduleStoolReminder(settings.stoolReminder.hour, settings.stoolReminder.minute);
   }
 
   // Rappels traitement — actifs même en rémission
   await scheduleTreatmentReminders();
-}
-
-/**
- * Envoyer une notification de test bilan (dans 5s, pour dev)
- */
-export async function sendTestBilanNotification() {
-  const hasPermission = await requestNotificationPermissions();
-  if (!hasPermission) throw new Error('Permission refusée.');
-
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '📋 Bilan du jour [TEST]',
-      body: 'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
-      data: { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' },
-      sound: true,
-    },
-    trigger: { seconds: 5 },
-  });
 }
 
 /**

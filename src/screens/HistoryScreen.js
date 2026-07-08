@@ -4,7 +4,7 @@ import { IconButton, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppModal from '../components/ui/AppModal';
 import storage from '../utils/storage';
-import calculateLichtigerScore from '../utils/scoreCalculator';
+import calculatePRO2Score from '../utils/scoreCalculator';
 import { useFocusEffect } from '@react-navigation/native';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
@@ -117,7 +117,7 @@ export default function HistoryScreen({ navigation }) {
         const date = new Date(deletedStool.timestamp);
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         
-        const newScore = calculateLichtigerScore(dateStr, storage);
+        const newScore = calculatePRO2Score(dateStr, storage);
         
         const histJson = storage.getString('scoresHistory');
         const history = histJson ? JSON.parse(histJson) : [];
@@ -402,7 +402,7 @@ export default function HistoryScreen({ navigation }) {
             let hasData = false;
 
             if (calendarMode === 'score') {
-              const score = calculateLichtigerScore(dateStr, storage);
+              const score = calculatePRO2Score(dateStr, storage);
               if (score !== null) {
                 hasData = true;
                 let scoreColor = '#C16046'; // Color 01
@@ -479,10 +479,14 @@ export default function HistoryScreen({ navigation }) {
                     styles.stoolMain,
                     item.hasBlood && styles.stoolMainWithBlood
                   ]}>
-                    <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                      <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                        {item.bristolScale}
-                      </AppText>
+                    <View style={[styles.bristolBadge, { backgroundColor: item.bloodOnly ? '#C0392B' : getBristolColor(item.bristolScale) }]}>
+                      {item.bloodOnly ? (
+                        <MaterialCommunityIcons name="water" size={20} color="#FFFFFF" />
+                      ) : (
+                        <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                          {item.bristolScale}
+                        </AppText>
+                      )}
                     </View>
                     <View style={styles.stoolInfo}>
                       <View style={styles.stoolDateContainer}>

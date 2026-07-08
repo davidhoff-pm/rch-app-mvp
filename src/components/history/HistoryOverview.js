@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Portal, Modal, Switch } from 'react-native-paper';
+import { Portal, Modal } from 'react-native-paper';
 import { useTheme } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -186,10 +186,14 @@ export default function HistoryOverview() {
                   {item.entryType === 'stool' && (
                     <View style={styles.stoolItem}>
                       <View style={[styles.stoolMain, item.hasBlood && styles.stoolMainWithBlood]}>
-                        <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                          <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                            {item.bristolScale}
-                          </AppText>
+                        <View style={[styles.bristolBadge, { backgroundColor: item.bloodOnly ? '#C0392B' : getBristolColor(item.bristolScale) }]}>
+                          {item.bloodOnly ? (
+                            <MaterialCommunityIcons name="water" size={20} color="#FFFFFF" />
+                          ) : (
+                            <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                              {item.bristolScale}
+                            </AppText>
+                          )}
                         </View>
                         <View style={styles.stoolInfo}>
                           <View style={styles.stoolDateContainer}>
@@ -429,7 +433,7 @@ export default function HistoryOverview() {
               </View>
 
               <View style={styles.bristolSection}>
-                <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
+                <AppText style={[styles.fieldLabel, stoolManagement.editBloodOnly && { color: designSystem.colors.text.disabled }]}>Consistance (Bristol)</AppText>
                 <Slider
                   minimumValue={1}
                   maximumValue={7}
@@ -440,23 +444,47 @@ export default function HistoryOverview() {
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.outline}
                   thumbStyle={{ backgroundColor: theme.colors.primary }}
+                  disabled={stoolManagement.editBloodOnly}
                 />
-                <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[stoolManagement.editBristol]}
+                <AppText variant="labelMedium" style={[styles.bristolHint, stoolManagement.editBloodOnly && { color: designSystem.colors.text.disabled }]}>
+                  {stoolManagement.editBloodOnly ? 'Non applicable (sang uniquement)' : `Sélection: ${stoolManagement.editBristol} — ${bristolDescriptions[stoolManagement.editBristol]}`}
                 </AppText>
               </View>
 
               <View style={styles.bloodSection}>
-                <View style={styles.switchRow}>
-                  <AppText variant="bodyLarge">Présence de sang</AppText>
-                  <Switch
-                    value={stoolManagement.editHasBlood}
-                    onValueChange={(value) => {
-                      toggleFeedback();
-                      stoolManagement.setEditHasBlood(value);
-                    }}
-                    color={theme.colors.error}
-                  />
+                <AppText variant="bodyLarge" style={{ marginBottom: 10 }}>Sang</AppText>
+                <View style={styles.bloodSelector}>
+                  {[
+                    { key: 'none', label: 'Pas de sang' },
+                    { key: 'with', label: 'Avec du sang' },
+                    { key: 'only', label: 'Sang uniquement' },
+                  ].map(opt => {
+                    const active = opt.key === 'only' ? stoolManagement.editBloodOnly
+                      : opt.key === 'with' ? (stoolManagement.editHasBlood && !stoolManagement.editBloodOnly)
+                      : (!stoolManagement.editHasBlood && !stoolManagement.editBloodOnly);
+                    return (
+                      <TouchableOpacity
+                        key={opt.key}
+                        style={[styles.bloodOption, active && styles.bloodOptionActive]}
+                        onPress={() => {
+                          toggleFeedback();
+                          if (opt.key === 'none') { stoolManagement.setEditHasBlood(false); stoolManagement.setEditBloodOnly(false); }
+                          else if (opt.key === 'with') { stoolManagement.setEditHasBlood(true); stoolManagement.setEditBloodOnly(false); }
+                          else { stoolManagement.setEditHasBlood(true); stoolManagement.setEditBloodOnly(true); }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons
+                          name={active ? 'radiobox-marked' : 'radiobox-blank'}
+                          size={20}
+                          color={active ? designSystem.colors.health.danger.main : designSystem.colors.text.tertiary}
+                        />
+                        <AppText style={[styles.bloodOptionText, active && styles.bloodOptionTextActive]}>
+                          {opt.label}
+                        </AppText>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
 
@@ -865,14 +893,32 @@ const styles = StyleSheet.create({
   bloodSection: {
     marginBottom: designSystem.spacing[5],
   },
-  switchRow: {
+  bloodSelector: {
+    gap: 8,
+  },
+  bloodOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: designSystem.spacing[3],
-    paddingHorizontal: designSystem.spacing[4],
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: designSystem.borderRadius.base,
+    borderWidth: 1.5,
+    borderColor: designSystem.colors.border.light,
     backgroundColor: designSystem.colors.background.secondary,
-    borderRadius: designSystem.borderRadius.md,
+  },
+  bloodOptionActive: {
+    borderColor: designSystem.colors.health.danger.main,
+    backgroundColor: designSystem.colors.health.danger.light,
+  },
+  bloodOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: designSystem.colors.text.secondary,
+    textAlign: 'left',
+  },
+  bloodOptionTextActive: {
+    color: designSystem.colors.health.danger.main,
   },
   modalActions: {
     flexDirection: 'column',

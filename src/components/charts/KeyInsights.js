@@ -78,10 +78,10 @@ const KeyInsights = ({ data }) => {
       });
     }
 
-    // 3. Série actuelle de bons scores (< 5)
+    // 3. Série actuelle de bons scores (≤ 1)
     let currentGoodStreak = 0;
     for (let i = validScores.length - 1; i >= 0; i--) {
-      if (validScores[i] < 5) {
+      if (validScores[i] <= 1) {
         currentGoodStreak++;
       } else {
         break;
@@ -92,8 +92,8 @@ const KeyInsights = ({ data }) => {
       results.push({
         type: 'good-streak',
         icon: 'fire',
-        title: `${currentGoodStreak} jours de rémission`,
-        description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours consécutifs. Continuez !`,
+        title: `${currentGoodStreak} jours d'activité faible`,
+        description: `Vous maintenez un score PRO-2 ≤ 1 depuis ${currentGoodStreak} jours consécutifs. Continuez !`,
         color: '#C16046', // Color 01
         backgroundColor: '#FFF3EE' // Color 02
       });
@@ -102,16 +102,16 @@ const KeyInsights = ({ data }) => {
         type: 'good-streak',
         icon: 'check-circle',
         title: `${currentGoodStreak} jours en amélioration`,
-        description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours. Bon début !`,
+        description: `Vous maintenez un score PRO-2 ≤ 1 depuis ${currentGoodStreak} jours. Bon début !`,
         color: '#C16046', // Color 01
         backgroundColor: '#FFF3EE' // Color 02
       });
     }
 
-    // 4. Alerte : série de mauvais scores (>= 10)
+    // 4. Alerte : série de mauvais scores (≥ 4)
     let currentBadStreak = 0;
     for (let i = validScores.length - 1; i >= 0; i--) {
-      if (validScores[i] >= 10) {
+      if (validScores[i] >= 4) {
         currentBadStreak++;
       } else {
         break;
@@ -123,7 +123,7 @@ const KeyInsights = ({ data }) => {
         type: 'alert',
         icon: 'alert',
         title: `Alerte : ${currentBadStreak} jours de poussée`,
-        description: `Votre score est élevé (≥10) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
+        description: `Votre score PRO-2 est élevé (≥ 4) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
         color: '#312620', // Color 03 - Noir pour alertes
         backgroundColor: '#FFF3EE' // Color 02
       });
@@ -133,10 +133,10 @@ const KeyInsights = ({ data }) => {
     let flareCount = 0;
     let inFlare = false;
     validScores.forEach(score => {
-      if (score >= 10 && !inFlare) {
+      if (score >= 4 && !inFlare) {
         flareCount++;
         inFlare = true;
-      } else if (score < 10) {
+      } else if (score < 4) {
         inFlare = false;
       }
     });
@@ -150,7 +150,7 @@ const KeyInsights = ({ data }) => {
           type: 'flares',
           icon: 'chart-bar',
           title: '1 poussée détectée',
-          description: `Une seule poussée (score ≥10) détectée ${periodText}.`,
+          description: `Une seule poussée (score PRO-2 ≥ 4) détectée ${periodText}.`,
           color: '#C16046', // Color 01
           backgroundColor: '#E6E0DA' // Color 04
         });
@@ -205,7 +205,7 @@ const KeyInsights = ({ data }) => {
         Analyses médicalement pertinentes de votre évolution
       </AppText>
       <AppText variant="bodySmall" style={styles.infoSubtitle}>
-        💡 Seuil de gravité : score ≥10 (selon les critères médicaux du score de Litchtiger)
+        💡 Seuil de gravité : score PRO-2 ≥ 4 (activité élevée)
       </AppText>
 
       <View style={styles.insightsContainer}>

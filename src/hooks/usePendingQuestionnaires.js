@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
-import { getSurveyDayKey } from '../utils/dayKey';
 
 export const usePendingQuestionnaires = () => {
   const [pendingCount, setPendingCount] = useState(0);
@@ -9,16 +8,17 @@ export const usePendingQuestionnaires = () => {
   const calculatePending = () => {
     let count = 0;
 
-    const todayKey = getSurveyDayKey(new Date(), 0);
-    const dailySurveyJson = storage.getString('dailySurvey');
-
-    if (dailySurveyJson) {
-      const dailySurveyMap = JSON.parse(dailySurveyJson);
-      if (!dailySurveyMap[todayKey]) count += 1;
-    } else {
+    // P-SCCAI — cooldown 7 jours
+    const psccaiLastUsedStr = storage.getString('psccaiLastUsed');
+    if (!psccaiLastUsedStr) {
       count += 1;
+    } else {
+      const lastUsed = parseInt(psccaiLastUsedStr);
+      const daysSince = Math.floor((Date.now() - lastUsed) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 7) count += 1;
     }
 
+    // IBDisk — cooldown 30 jours
     const ibdiskLastUsedStr = storage.getString('ibdiskLastUsed');
     if (!ibdiskLastUsedStr) {
       count += 1;

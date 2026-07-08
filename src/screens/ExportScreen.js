@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Text, Button, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import storage from '../utils/storage';
-import calculateLichtigerScore from '../utils/scoreCalculator';
-import { getSurveyDayKey } from '../utils/dayKey';
+import calculatePRO2Score from '../utils/scoreCalculator';
+import { interpretScore as interpretPSCCAIScore } from '../utils/psccaiCalculator';
 import {
   getMedications,
   getTherapeuticSchemas,
@@ -40,6 +42,7 @@ export default function ExportScreen() {
   const [schemas, setSchemas] = useState([]);
   const [intakes, setIntakes] = useState([]);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
+  const [psccaiHistory, setPsccaiHistory] = useState([]);
   const [symptoms, setSymptoms] = useState([]);
   const [notes, setNotes] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -111,6 +114,12 @@ export default function ExportScreen() {
     setIbdiskHistory(ibdiskData);
     console.log('📦 Export - IBDisk loaded:', ibdiskData.length, 'questionnaires');
 
+    // Charger les bilans hebdomadaires P-SCCAI
+    const psccaiJson = storage.getString('psccaiHistory');
+    const psccaiData = psccaiJson ? JSON.parse(psccaiJson) : [];
+    setPsccaiHistory(psccaiData);
+    console.log('📦 Export - P-SCCAI loaded:', psccaiData.length, 'bilans');
+
     // Charger les symptômes et notes
     const symptomsData = getSymptoms();
     setSymptoms(symptomsData);
@@ -160,6 +169,7 @@ export default function ExportScreen() {
     let filteredSurveys = { ...surveys };
     let filteredTreatments = [...treatments];
     let filteredIbdisk = [...ibdiskHistory];
+    let filteredPsccai = [...psccaiHistory];
     let filteredSymptoms = [...symptoms];
     let filteredNotes = [...notes];
 
@@ -195,6 +205,12 @@ export default function ExportScreen() {
         return treatmentDate >= startDate && treatmentDate <= endDate;
       });
 
+      // Filtrer les bilans P-SCCAI pour la période
+      filteredPsccai = psccaiHistory.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= startDate && entryDate <= endDate;
+      });
+
       // Filtrer les symptômes pour la période
       filteredSymptoms = symptoms.filter(symptom => {
         const symptomDate = new Date(symptom.timestamp);
@@ -214,13 +230,14 @@ export default function ExportScreen() {
       surveys: filteredSurveys,
       treatments: filteredTreatments,
       ibdisk: filteredIbdisk,
+      psccai: filteredPsccai,
       symptoms: filteredSymptoms,
       notes: filteredNotes
     };
   };
 
   const generateHTML = () => {
-    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk, symptoms: filteredSymptoms, notes: filteredNotes } = getFilteredData();
+    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk, psccai: filteredPsccai, symptoms: filteredSymptoms, notes: filteredNotes } = getFilteredData();
     
     const currentDate = new Date().toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -332,13 +349,13 @@ export default function ExportScreen() {
       }
     }
 
-    // Couleur du score moyen - Palette unifiée avec pastels
+    // Couleur du score moyen PRO-2 (0-6) - Palette unifiée avec pastels
     const getScoreColor = (score) => {
       if (score === 'N/A') return '#D4D4D8'; // Color 05
       const numScore = parseFloat(score);
-      if (numScore < 5) return '#397852'; // Vert pastel pour bon score
-      if (numScore <= 10) return '#C16046'; // Color 01 pour score modéré
-      return '#C0392B'; // Rouge pastel pour mauvais score
+      if (numScore <= 1) return '#397852'; // Vert pastel — rémission
+      if (numScore <= 3) return '#AD7130'; // Orange — activité légère
+      return '#C0392B'; // Rouge pastel — activité modérée à sévère
     };
 
     // Préparer les données pour le graphique histogramme des selles
@@ -442,74 +459,105 @@ export default function ExportScreen() {
     // Trier les dates (plus récentes en premier)
     const sortedDates = Array.from(allDates).sort((a, b) => new Date(b) - new Date(a));
     
-    // Générer le tableau détaillé
+    // Générer le tableau détaillé — colonnes PRO-2 (date / PRO-2 / fréquence / nb selles / % sang / saignement / nocturnes)
     const detailedTable = sortedDates.map(dateStr => {
       // Trouver le score pour ce jour
       const scoreEntry = filteredScores.find(s => s.date === dateStr);
       const score = scoreEntry ? scoreEntry.score : '—';
-      
-      const dayStools = filteredStools.filter(stool => 
+
+      const dayStools = filteredStools.filter(stool =>
         new Date(stool.timestamp).toDateString() === new Date(dateStr).toDateString()
       );
-      
+
       // Compter les selles nocturnes (23h-6h)
       const nightStoolsCount = dayStools.filter(stool => {
         const hour = new Date(stool.timestamp).getHours();
         return hour >= 23 || hour < 6;
       }).length;
-      
-      // Compter les selles de jour (6h-23h)
+
+      // Compter les selles de jour (6h-23h) — fréquence diurne
       const dayOnlyStoolsCount = dayStools.filter(stool => {
         const hour = new Date(stool.timestamp).getHours();
         return hour >= 6 && hour < 23;
       }).length;
-      
+
       const hasBlood = dayStools.some(stool => stool.hasBlood);
-      const totalStoolsCount = dayStools.length; // Total pour le calcul du pourcentage de sang
-      const bloodPercentage = totalStoolsCount > 0 ? 
+      const totalStoolsCount = dayStools.length;
+      const bloodPercentage = totalStoolsCount > 0 ?
         ((dayStools.filter(stool => stool.hasBlood).length / totalStoolsCount) * 100).toFixed(0) : 0;
-      
-      const bloodText = hasBlood ? `Oui (${bloodPercentage}%)` : 'Non';
-      
-      // Récupérer les données du bilan quotidien
-      // Important : pour l'export PDF, on cherche le survey avec la date exacte
-      // sans appliquer la logique de reset à 7h (car le score est déjà au bon jour)
-      const surveyKey = dateStr; // Utiliser directement la date
-      const survey = filteredSurveys[surveyKey];
-      
-      // Traduire les valeurs
-      const painMap = {
-        'aucune': 'Aucune',
-        'legeres': 'Légères',
-        'moyennes': 'Moyennes',
-        'intenses': 'Intenses'
-      };
-      const generalMap = {
-        'parfait': 'Parfait',
-        'tres_bon': 'Très bon',
-        'bon': 'Bon',
-        'moyen': 'Moyen',
-        'mauvais': 'Mauvais',
-        'tres_mauvais': 'Très mauvais'
-      };
-      
-      const painLevel = survey?.abdominalPain ? (painMap[survey.abdominalPain] || survey.abdominalPain) : '—';
-      const generalState = survey?.generalState ? (generalMap[survey.generalState] || survey.generalState) : '—';
-      const incontinence = survey?.fecalIncontinence === 'oui' ? 'Oui' : (survey?.fecalIncontinence === 'non' ? 'Non' : '—');
-      
+
       // Format de date DD/MM/YYYY
       const [year, month, day] = dateStr.split('-');
       const shortDate = `${day}/${month}/${year}`;
-      
+
       return `
         <tr>
           <td>${shortDate}</td>
           <td style="text-align: center; font-weight: bold;">${score}</td>
-          <td style="text-align: center;">${dayOnlyStoolsCount} / ${nightStoolsCount}</td>
-          <td style="text-align: center;">${bloodText}</td>
-          <td style="text-align: center;">${incontinence}</td>
-          <td style="text-align: center;">${painLevel}</td>
-          <td style="text-align: center;">${generalState}</td>
+          <td style="text-align: center;">${dayOnlyStoolsCount}</td>
+          <td style="text-align: center;">${totalStoolsCount}</td>
+          <td style="text-align: center;">${totalStoolsCount > 0 ? bloodPercentage + '%' : '—'}</td>
+          <td style="text-align: center;">${hasBlood ? 'Oui' : 'Non'}</td>
+          <td style="text-align: center;">${nightStoolsCount}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // --- P-SCCAI (bilan hebdomadaire) : progression sur la période + détail par item ---
+    const sortedPsccai = [...filteredPsccai].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const psccaiChartWidth = Math.min(1000, Math.max(500, sortedPsccai.length * 60));
+    const psccaiChartHeight = 260;
+    const psccaiPadding = { top: 30, right: 30, bottom: 50, left: 50 };
+    const psccaiGraphWidth = psccaiChartWidth - psccaiPadding.left - psccaiPadding.right;
+    const psccaiGraphHeight = psccaiChartHeight - psccaiPadding.top - psccaiPadding.bottom;
+
+    const psccaiPoints = sortedPsccai.map((entry, index) => {
+      const x = psccaiPadding.left + (sortedPsccai.length > 1 ? (index / (sortedPsccai.length - 1)) * psccaiGraphWidth : psccaiGraphWidth / 2);
+      const y = psccaiPadding.top + psccaiGraphHeight - ((entry.totalScore / 19) * psccaiGraphHeight);
+      const [py, pm, pd] = entry.date.split('-');
+      const color = entry.totalScore <= 2 ? '#397852' : entry.totalScore <= 5 ? '#AD7130' : '#C0392B';
+      return { x, y, value: entry.totalScore, label: `${pd}/${pm}`, color };
+    });
+
+    let psccaiLinePath = '';
+    if (psccaiPoints.length >= 2) {
+      psccaiLinePath = `M ${psccaiPoints[0].x} ${psccaiPoints[0].y}`;
+      for (let i = 1; i < psccaiPoints.length; i++) {
+        psccaiLinePath += ` L ${psccaiPoints[i].x} ${psccaiPoints[i].y}`;
+      }
+    }
+
+    const psccaiGridLines = [0, 5, 10, 15, 19].map(value => ({
+      value,
+      y: psccaiPadding.top + psccaiGraphHeight - ((value / 19) * psccaiGraphHeight)
+    }));
+    const psccaiRemissionY = psccaiPadding.top + psccaiGraphHeight - ((2 / 19) * psccaiGraphHeight);
+
+    // Tableau détaillé par item — recap pour le praticien
+    const psccaiTableRows = [...sortedPsccai].reverse().map(entry => {
+      const [py, pm, pd] = entry.date.split('-');
+      const shortDate = `${pd}/${pm}/${py}`;
+      const interp = interpretPSCCAIScore(entry.totalScore);
+      const rowColor = interp.color === 'excellent' ? '#397852' : interp.color === 'moderate' ? '#AD7130' : '#C0392B';
+
+      const dayFreq = entry.computed?.dayFrequency;
+      const nightFreq = entry.computed?.nightFrequency;
+      const blood = entry.computed?.bloodInStool;
+      const urgency = entry.answers?.urgency;
+      const wellbeing = entry.answers?.generalWellbeing;
+      const extra = entry.answers?.extracolonic;
+
+      return `
+        <tr>
+          <td>${shortDate}</td>
+          <td style="text-align: center; font-weight: bold; color: ${rowColor};">${entry.totalScore} / 19</td>
+          <td style="text-align: center;">${dayFreq ? `${dayFreq.raw}/j → ${dayFreq.score}` : '—'}</td>
+          <td style="text-align: center;">${nightFreq ? `${nightFreq.raw}/n → ${nightFreq.score}${nightFreq.overridden ? ' *' : ''}` : '—'}</td>
+          <td style="text-align: center;">${blood ? `${blood.raw}% → ${blood.score}` : '—'}</td>
+          <td style="text-align: center;">${urgency ? urgency.score : '—'}</td>
+          <td style="text-align: center;">${wellbeing ? `${wellbeing.rating}/10 → ${wellbeing.score}` : '—'}</td>
+          <td style="text-align: center;">${extra ? extra.score : '—'}</td>
         </tr>
       `;
     }).join('');
@@ -653,8 +701,8 @@ export default function ExportScreen() {
           <div class="summary-title">Résumé de la Période</div>
           <div class="summary-grid">
             <div class="summary-card">
-              <div class="summary-value" style="color: ${getScoreColor(averageScore)};">${averageScore}</div>
-              <div class="summary-label">Score de Lichtiger Moyen</div>
+              <div class="summary-value" style="color: ${getScoreColor(averageScore)};">${averageScore}${averageScore !== 'N/A' ? ' / 6' : ''}</div>
+              <div class="summary-label">Score PRO-2 Moyen</div>
             </div>
             <div class="summary-card">
               <div class="summary-value" style="color: #C0392B;">${daysWithBlood} jours (${bleedingPercentage}%)</div>
@@ -782,9 +830,9 @@ export default function ExportScreen() {
                 </linearGradient>
               </defs>
               
-              <!-- Grille horizontale pour le score (axe Y gauche, 0-20) -->
-              ${[0, 5, 10, 15, 20].map(value => {
-                const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 20) * multiAxisGraphHeight);
+              <!-- Grille horizontale pour le score (axe Y gauche, 0-6) -->
+              ${[0, 1, 2, 3, 4, 5, 6].map(value => {
+                const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 6) * multiAxisGraphHeight);
                 return `
                   <line x1="${multiAxisPadding.left}" y1="${y}" x2="${multiAxisChartWidth - multiAxisPadding.right}" y2="${y}" 
                         stroke="#FFF3EE" stroke-width="1" stroke-dasharray="2,2"/>
@@ -808,7 +856,7 @@ export default function ExportScreen() {
                 multiAxisScoreData.forEach((value, index) => {
                   if (value !== null) {
                     const x = multiAxisPadding.left + (index / (multiAxisScoreData.length - 1)) * multiAxisGraphWidth;
-                    const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 20) * multiAxisGraphHeight);
+                    const y = multiAxisPadding.top + multiAxisGraphHeight - ((value / 6) * multiAxisGraphHeight);
                     scorePoints.push({ x, y, value });
                   }
                 });
@@ -909,7 +957,7 @@ export default function ExportScreen() {
                     font-size="11" fill="#312620" text-anchor="middle" 
                     transform="rotate(-90 ${multiAxisPadding.left - 30} ${multiAxisPadding.top + multiAxisGraphHeight / 2})" 
                     font-weight="600">
-                Score Lichtiger
+                Score PRO-2
               </text>
               <text x="${multiAxisChartWidth - multiAxisPadding.right + 30}" y="${multiAxisPadding.top + multiAxisGraphHeight / 2}" 
                     font-size="11" fill="#C0392B" text-anchor="middle" 
@@ -921,13 +969,78 @@ export default function ExportScreen() {
               <!-- Légende -->
               <g transform="translate(${multiAxisPadding.left + 10}, ${multiAxisPadding.top - 20})">
                 <line x1="0" y1="0" x2="30" y2="0" stroke="#C16046" stroke-width="2" stroke-linecap="round"/>
-                <text x="35" y="4" font-size="10" fill="#312620" font-weight="500">Score Lichtiger</text>
+                <text x="35" y="4" font-size="10" fill="#312620" font-weight="500">Score PRO-2</text>
                 <line x1="0" y1="15" x2="30" y2="15" stroke="#C0392B" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>
                 <text x="35" y="19" font-size="10" fill="#312620" font-weight="500">% Selles sanglantes</text>
               </g>
             </svg>
           </div>
         </div>
+
+        ${filteredPsccai.length > 0 ? `
+        <div class="details-section" style="page-break-inside: avoid;">
+          <div class="details-title">Bilan Hebdomadaire P-SCCAI — Progression sur la Période</div>
+          <div style="margin: 20px 0; text-align: center; overflow: hidden; width: 100%;">
+            <svg width="${psccaiChartWidth}" height="${psccaiChartHeight}" viewBox="0 0 ${psccaiChartWidth} ${psccaiChartHeight}" style="background: white; border: 1px solid #E6E0DA; border-radius: 12px; width: 100%; height: auto;">
+              <!-- Grille horizontale (0-19) -->
+              ${psccaiGridLines.map(line => `
+                <line x1="${psccaiPadding.left}" y1="${line.y}" x2="${psccaiChartWidth - psccaiPadding.right}" y2="${line.y}"
+                      stroke="#FFF3EE" stroke-width="1" stroke-dasharray="2,2"/>
+                <text x="${psccaiPadding.left - 8}" y="${line.y + 4}" font-size="10" fill="#312620" text-anchor="end" font-weight="500">${line.value}</text>
+              `).join('')}
+
+              <!-- Seuil de rémission (score ≤ 2) -->
+              <line x1="${psccaiPadding.left}" y1="${psccaiRemissionY}" x2="${psccaiChartWidth - psccaiPadding.right}" y2="${psccaiRemissionY}"
+                    stroke="#397852" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
+              <text x="${psccaiChartWidth - psccaiPadding.right}" y="${psccaiRemissionY - 6}" font-size="9" fill="#397852" text-anchor="end" font-weight="600">Rémission (≤2)</text>
+
+              <!-- Ligne de progression -->
+              ${psccaiLinePath ? `<path d="${psccaiLinePath}" stroke="#C16046" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+
+              <!-- Points -->
+              ${psccaiPoints.map(p => `
+                <circle cx="${p.x}" cy="${p.y}" r="5" fill="#FFFFFF" stroke="${p.color}" stroke-width="2.5"/>
+                <circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${p.color}"/>
+                <text x="${p.x}" y="${p.y - 12}" font-size="10" fill="${p.color}" text-anchor="middle" font-weight="700">${p.value}</text>
+                <text x="${p.x}" y="${psccaiChartHeight - psccaiPadding.bottom + 20}" font-size="10" fill="#312620" text-anchor="middle">${p.label}</text>
+              `).join('')}
+
+              <!-- Axes -->
+              <line x1="${psccaiPadding.left}" y1="${psccaiPadding.top}" x2="${psccaiPadding.left}" y2="${psccaiChartHeight - psccaiPadding.bottom}" stroke="#E6E0DA" stroke-width="2"/>
+              <line x1="${psccaiPadding.left}" y1="${psccaiChartHeight - psccaiPadding.bottom}" x2="${psccaiChartWidth - psccaiPadding.right}" y2="${psccaiChartHeight - psccaiPadding.bottom}" stroke="#E6E0DA" stroke-width="2"/>
+
+              <text x="${psccaiPadding.left - 35}" y="${psccaiPadding.top + psccaiGraphHeight / 2}"
+                    font-size="11" fill="#312620" text-anchor="middle"
+                    transform="rotate(-90 ${psccaiPadding.left - 35} ${psccaiPadding.top + psccaiGraphHeight / 2})"
+                    font-weight="600">
+                Score P-SCCAI (0-19)
+              </text>
+            </svg>
+          </div>
+
+          <div class="details-title" style="margin-top: 20px; font-size: 16px;">Détail par Item Scoré</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Total (0-19)</th>
+                <th>Fréq. diurne (0-3)</th>
+                <th>Fréq. nocturne (0-2)</th>
+                <th>Sang (0-3)</th>
+                <th>Urgence (0-3)</th>
+                <th>Bien-être (0-4)</th>
+                <th>Extra-colique (0-4)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${psccaiTableRows}
+            </tbody>
+          </table>
+          <p style="margin-top: 12px; font-size: 11px; color: #666; font-style: italic;">
+            Le P-SCCAI (Patient Simple Clinical Colitis Activity Index) est la version auto-administrée du SCCAI. Il complète le PRO-2 quotidien avec des dimensions hebdomadaires supplémentaires (urgence, bien-être général, manifestations extra-coliques). Seuil de rémission : score ≤ 2. * Fréquence nocturne corrigée manuellement par le patient.
+          </p>
+        </div>
+        ` : ''}
 
         ${filteredSymptoms.length > 0 ? `
         <div class="details-section">
@@ -1000,24 +1113,27 @@ export default function ExportScreen() {
         ` : ''}
 
         <div class="details-section">
-          <div class="details-title">Historique Détaillé des Scores</div>
+          <div class="details-title">Historique Détaillé des Scores PRO-2</div>
           ${filteredScores.length > 0 ? `
             <table>
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Lichtiger</th>
-                  <th>Selles (J/N)</th>
-                  <th>Sang</th>
-                  <th>Incontinence</th>
-                  <th>Douleurs</th>
-                  <th>État</th>
+                  <th>PRO-2 (0-6)</th>
+                  <th>Fréquence (jour)</th>
+                  <th>Nb selles</th>
+                  <th>% sang</th>
+                  <th>Saignement</th>
+                  <th>Nocturnes</th>
                 </tr>
               </thead>
               <tbody>
                 ${detailedTable}
               </tbody>
             </table>
+            <p style="margin-top: 12px; font-size: 11px; color: #666; font-style: italic;">
+              Le PRO-2 (Patient-Reported Outcome-2) est un score symptomatique validé, calculé quotidiennement à partir de la fréquence des selles et des rectorragies. Il ne mesure pas directement l'inflammation intestinale.
+            </p>
           ` : '<div class="no-data">Aucune donnée disponible pour cette période</div>'}
         </div>
 
@@ -1285,19 +1401,30 @@ export default function ExportScreen() {
         newWindow.document.write(html);
         newWindow.document.close();
         newWindow.print();
-        
+
         Alert.alert(
           'Succès',
           'Le rapport s\'ouvre dans un nouvel onglet. Utilisez Ctrl+P pour l\'imprimer en PDF.',
           [{ text: 'OK' }]
         );
       } else {
-        // Version native : utiliser les bibliothèques natives
-        Alert.alert(
-          'Fonctionnalité native',
-          'La génération PDF native sera disponible dans la version mobile.',
-          [{ text: 'OK' }]
-        );
+        // Version native (iOS/Android) : générer un vrai fichier PDF et proposer le partage
+        const { uri } = await Print.printToFileAsync({ html, base64: false });
+
+        const isSharingAvailable = await Sharing.isAvailableAsync();
+        if (isSharingAvailable) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Partager le rapport de suivi RCH',
+            UTI: 'com.adobe.pdf',
+          });
+        } else {
+          Alert.alert(
+            'PDF généré',
+            `Le rapport a été généré mais le partage n'est pas disponible sur cet appareil.\nFichier : ${uri}`,
+            [{ text: 'OK' }]
+          );
+        }
       }
 
     } catch (error) {
@@ -1377,12 +1504,12 @@ export default function ExportScreen() {
       <AppCard style={styles.contentCard}>
         <AppText variant="body" style={styles.contentTitle}>Contenu du Rapport</AppText>
         <View style={styles.contentList}>
-          <AppText variant="body">• Résumé de la période (score moyen, saignements, selles)</AppText>
-          <AppText variant="body">• Évolution graphique des scores et selles sanglantes</AppText>
+          <AppText variant="body">• Résumé de la période (score PRO-2 moyen, saignements, selles)</AppText>
+          <AppText variant="body">• Évolution graphique du score PRO-2 et des selles sanglantes</AppText>
+          <AppText variant="body">• Progression du bilan hebdomadaire P-SCCAI et détail par item scoré</AppText>
           <AppText variant="body">• Symptômes enregistrés avec intensité et notes</AppText>
           <AppText variant="body">• Notes partagées avec le médecin</AppText>
-          <AppText variant="body">• Historique détaillé avec scores, selles jour/nuit, saignements</AppText>
-          <AppText variant="body">• Données des bilans quotidiens (douleurs, état général)</AppText>
+          <AppText variant="body">• Historique détaillé quotidien (PRO-2, fréquence, saignements)</AppText>
           <AppText variant="body">• Observance thérapeutique et traitements</AppText>
           <AppText variant="body">• Format médical professionnel avec codes couleur</AppText>
         </View>

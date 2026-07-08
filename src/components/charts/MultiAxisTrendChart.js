@@ -13,12 +13,12 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
-  // === GRAPHIQUE 1 : SCORE LICHTIGER ===
+  // === GRAPHIQUE 1 : SCORE PRO-2 (0-6) ===
   const scorePoints = useMemo(() => {
     const validData = scoreData.filter(d => d !== null);
     if (validData.length === 0) return [];
 
-    const maxScore = 20;
+    const maxScore = 6;
     const minScore = 0;
 
     return scoreData.map((value, index) => {
@@ -27,9 +27,9 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
       const x = padding.left + (index / Math.max(scoreData.length - 1, 1)) * innerWidth;
       const y = padding.top + innerHeight - ((value - minScore) / (maxScore - minScore)) * innerHeight;
 
-      let color = '#10B981'; // Vert pour bon score
-      if (value >= 10) color = '#C0392B'; // Rouge pour score élevé
-      else if (value >= 5) color = '#AD7130'; // Orange pour score moyen
+      let color = '#10B981'; // Vert pour bon score (0-1)
+      if (value >= 4) color = '#C0392B'; // Rouge pour score élevé (4-6)
+      else if (value >= 2) color = '#AD7130'; // Orange pour score moyen (2-3)
 
       return { x, y, value, color, index };
     }).filter(p => p !== null);
@@ -94,8 +94,8 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
   }
 
   // Grilles
-  const scoreGridLines = [0, 5, 10, 15, 20].map(value => {
-    const y = padding.top + innerHeight - ((value / 20) * innerHeight);
+  const scoreGridLines = [0, 1, 2, 3, 4, 5, 6].map(value => {
+    const y = padding.top + innerHeight - ((value / 6) * innerHeight);
     return { value, y };
   });
 
@@ -106,12 +106,12 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
 
   return (
     <View style={styles.container}>
-      {/* GRAPHIQUE 1 : Score Lichtiger */}
+      {/* GRAPHIQUE 1 : Score PRO-2 */}
       <View style={styles.chartSection}>
         <View style={styles.chartHeader}>
           <View style={styles.legendDot} />
           <AppText variant="labelLarge" style={styles.chartLabel}>
-            Score Lichtiger (0-20)
+            Score PRO-2 (0-6)
           </AppText>
         </View>
 

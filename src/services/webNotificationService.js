@@ -4,7 +4,6 @@
  */
 
 import storage from '../utils/storage';
-import { getSurveyDayKey } from '../utils/dayKey';
 import {
   getActiveTherapeuticSchemas,
   getMedications,
@@ -36,21 +35,6 @@ export async function requestNotificationPermissions() {
     return permission === 'granted';
   } catch (error) {
     console.error('❌ Erreur lors de la demande de permission:', error);
-    return false;
-  }
-}
-
-/**
- * Vérifier si le bilan du jour est complété
- */
-function isSurveyCompletedToday() {
-  const todayKey = getSurveyDayKey(new Date(), 0);
-  const json = storage.getString('dailySurvey');
-  if (!json) return false;
-  try {
-    const surveys = JSON.parse(json);
-    return surveys && surveys[todayKey] !== undefined;
-  } catch {
     return false;
   }
 }
@@ -117,19 +101,6 @@ export function showWebNotification(title, body, data = {}) {
   } catch (error) {
     console.error('❌ Erreur lors de l\'affichage de la notification:', error);
   }
-}
-
-/**
- * Envoyer une notification de test bilan (pour dev)
- */
-export async function sendTestBilanNotification() {
-  const hasPermission = await requestNotificationPermissions();
-  if (!hasPermission) throw new Error('Permission refusée.');
-  showWebNotification(
-    '📋 Bilan du jour [TEST]',
-    'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
-    { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' }
-  );
 }
 
 /**
@@ -243,7 +214,6 @@ export function disableNotifications() {
 }
 
 // Timers des rappels
-let surveyReminderTimer = null;
 let stoolReminderTimer = null;
 let treatmentReminderTimers = [];
 
@@ -256,29 +226,6 @@ function getDelayUntilTime(hour, minute) {
   target.setHours(hour, minute, 0, 0);
   if (target <= now) target.setDate(target.getDate() + 1);
   return target.getTime() - now.getTime();
-}
-
-/**
- * Planifier le rappel bilan (matin)
- */
-function scheduleSurveyReminderWeb(hour, minute) {
-  if (surveyReminderTimer) clearTimeout(surveyReminderTimer);
-
-  const scheduleNext = () => {
-    const delay = getDelayUntilTime(hour, minute);
-    surveyReminderTimer = setTimeout(() => {
-      if (!isRemissionMode() && !isSurveyCompletedToday()) {
-        showWebNotification(
-          '📋 Bilan du jour',
-          'Comment ça va ? Prenez 2 minutes pour compléter votre bilan.',
-          { type: 'SURVEY_REMINDER', action: 'OPEN_SURVEY' }
-        );
-      }
-      scheduleNext();
-    }, delay);
-  };
-
-  scheduleNext();
 }
 
 /**
@@ -413,9 +360,6 @@ export function scheduleAllReminders() {
 
   cancelAllReminders();
 
-  if (settings.surveyReminder1.enabled) {
-    scheduleSurveyReminderWeb(settings.surveyReminder1.hour, settings.surveyReminder1.minute);
-  }
   if (settings.stoolReminder?.enabled) {
     scheduleStoolReminderWeb(settings.stoolReminder.hour, settings.stoolReminder.minute);
   }
@@ -427,7 +371,6 @@ export function scheduleAllReminders() {
  * Annuler tous les rappels
  */
 export function cancelAllReminders() {
-  if (surveyReminderTimer) { clearTimeout(surveyReminderTimer); surveyReminderTimer = null; }
   if (stoolReminderTimer) { clearTimeout(stoolReminderTimer); stoolReminderTimer = null; }
   cancelTreatmentRemindersWeb();
 }

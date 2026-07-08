@@ -11,13 +11,15 @@ export const useStoolManagement = ({ onDataChange }) => {
   const [editingStool, setEditingStool] = useState(null);
   const [editBristol, setEditBristol] = useState(4);
   const [editHasBlood, setEditHasBlood] = useState(false);
+  const [editBloodOnly, setEditBloodOnly] = useState(false);
   const [editDateInput, setEditDateInput] = useState('');
   const [editTimeInput, setEditTimeInput] = useState('');
 
   const handleEditStool = (stool) => {
     setEditingStool(stool);
-    setEditBristol(stool.bristolScale);
+    setEditBristol(stool.bristolScale ?? 4);
     setEditHasBlood(stool.hasBlood);
+    setEditBloodOnly(stool.bloodOnly || false);
 
     const date = new Date(stool.timestamp);
     const dateStr = date.toLocaleDateString('fr-FR');
@@ -60,8 +62,9 @@ export const useStoolManagement = ({ onDataChange }) => {
     const updatedStool = {
       ...editingStool,
       timestamp: editDateTime.getTime(),
-      bristolScale: Math.round(editBristol),
-      hasBlood: editHasBlood
+      bristolScale: editBloodOnly ? null : Math.round(editBristol),
+      hasBlood: editBloodOnly || editHasBlood,
+      bloodOnly: editBloodOnly,
     };
 
     const stoolsJson = storage.getString('dailySells');
@@ -105,10 +108,12 @@ export const useStoolManagement = ({ onDataChange }) => {
     editingStool,
     editBristol,
     editHasBlood,
+    editBloodOnly,
     editDateInput,
     editTimeInput,
     setEditBristol,
     setEditHasBlood,
+    setEditBloodOnly,
     setEditDateInput,
     setEditTimeInput,
     handleEditStool,

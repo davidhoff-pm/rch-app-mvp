@@ -43,34 +43,34 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
   // Regrouper par catégories
   const categories = useMemo(() => {
     if (dataType === 'score') {
-      const excellent = distribution.filter(d => d.score <= 3).reduce((sum, d) => sum + d.count, 0);
-      const acceptable = distribution.filter(d => d.score >= 4 && d.score <= 9).reduce((sum, d) => sum + d.count, 0);
-      const preoccupant = distribution.filter(d => d.score >= 10).reduce((sum, d) => sum + d.count, 0);
+      const excellent = distribution.filter(d => d.score <= 1).reduce((sum, d) => sum + d.count, 0);
+      const acceptable = distribution.filter(d => d.score >= 2 && d.score <= 3).reduce((sum, d) => sum + d.count, 0);
+      const preoccupant = distribution.filter(d => d.score >= 4).reduce((sum, d) => sum + d.count, 0);
       const total = excellent + acceptable + preoccupant;
 
       return [
         {
-          label: 'Excellent',
-          range: '0-3',
+          label: 'Rémission',
+          range: '0-1',
           count: excellent,
           percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
-          color: '#C16046', // Color 01
+          color: '#397852', // Vert
           icon: 'circle'
         },
         {
-          label: 'Acceptable',
-          range: '4-9',
+          label: 'Activité légère',
+          range: '2-3',
           count: acceptable,
           percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
-          color: '#C16046', // Color 01
+          color: '#AD7130', // Orange
           icon: 'circle'
         },
         {
-          label: 'Préoccupant',
-          range: '10+',
+          label: 'Activité modérée à sévère',
+          range: '4-6',
           count: preoccupant,
           percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
-          color: '#312620', // Color 03 - Noir pour alertes
+          color: '#C0392B', // Rouge
           icon: 'circle'
         }
       ];
@@ -127,9 +127,16 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
       {/* Barres d'histogramme */}
       <View style={styles.chartContainer}>
         {distribution.filter(d => d.count > 0).map((item) => {
-          let barColor = '#C16046'; // Color 01
-          if (item.score >= 10) barColor = '#312620'; // Color 03 - Noir pour alertes
-          else if (item.score >= 4) barColor = '#C16046'; // Color 01
+          let barColor;
+          if (dataType === 'score') {
+            barColor = '#397852'; // Vert (0-1)
+            if (item.score >= 4) barColor = '#C0392B'; // Rouge (4-6)
+            else if (item.score >= 2) barColor = '#AD7130'; // Orange (2-3)
+          } else {
+            barColor = '#C16046'; // Color 01
+            if (item.score >= 10) barColor = '#312620'; // Color 03 - Noir pour alertes
+            else if (item.score >= 4) barColor = '#C16046'; // Color 01
+          }
 
           return (
             <View key={item.score} style={styles.barContainer}>

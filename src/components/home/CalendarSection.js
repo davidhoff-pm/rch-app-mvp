@@ -2,14 +2,14 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import AppText from '../ui/AppText';
 import storage from '../../utils/storage';
-import calculateLichtigerScore from '../../utils/scoreCalculator';
+import calculatePRO2Score from '../../utils/scoreCalculator';
 import designSystem from '../../theme/designSystem';
 
 /**
  * CalendarSection - Composant d'affichage du calendrier mensuel
  *
  * Affiche un calendrier avec 2 modes :
- * - score : Affiche le score de Lichtiger par jour
+ * - score : Affiche le score PRO-2 par jour
  * - bristol : Affiche le nombre de selles par jour
  */
 const CalendarSection = ({
@@ -107,13 +107,12 @@ const CalendarSection = ({
           let hasData = false;
 
           if (calendarMode === 'score') {
-            const score = calculateLichtigerScore(dateStr, storage);
+            const score = calculatePRO2Score(dateStr, storage);
             if (score !== null) {
               hasData = true;
-              // Couleurs sémantiques alignées sur la légende : vert / ambre / rouge
-              let scoreColor = '#397852'; // Excellent (0-3)
-              if (score >= 10) scoreColor = '#C0392B'; // Préoccupant (10+)
-              else if (score >= 4) scoreColor = '#AD7130'; // Acceptable (4-9)
+              let scoreColor = '#397852'; // Faible (0-1)
+              if (score >= 4) scoreColor = '#C0392B'; // Élevé (4-6)
+              else if (score >= 2) scoreColor = '#AD7130'; // Modéré (2-3)
 
               cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
               cellContent = (
