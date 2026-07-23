@@ -7,6 +7,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
 import designSystem from '../theme/designSystem';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import WellbeingCard from '../components/home/WellbeingCard';
 import { checkPSCCAICooldown, interpretScore } from '../utils/psccaiCalculator';
 
 const { colors } = designSystem;
@@ -99,6 +100,9 @@ export default function SurveyScreen() {
               Questionnaires
             </AppText>
           </View>
+
+          {/* Bilan léger quotidien (humeur / sommeil / fatigue / facteurs) */}
+          <WellbeingCard style={styles.wellbeingCardEmbedded} />
 
           {/* P-SCCAI hebdomadaire */}
           {psccaiAvailable ? (
@@ -294,6 +298,11 @@ const styles = StyleSheet.create({
   taskTextWrap: {
     flex: 1,
     minWidth: 0,
+  },
+  wellbeingCardEmbedded: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: designSystem.spacing[3],
   },
   taskOutlined: {
     flexDirection: 'row',

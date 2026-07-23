@@ -13,6 +13,8 @@ import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
 import PSCCAIQuestionnaireScreen from '../screens/PSCCAIQuestionnaireScreen';
+import ChipsManagementScreen from '../screens/ChipsManagementScreen';
+import WellbeingCheckinScreen from '../screens/WellbeingCheckinScreen';
 import CustomTabBar from '../components/navigation/CustomTabBar';
 import designSystem from '../theme/designSystem';
 
@@ -118,6 +120,22 @@ const AppNavigator = React.forwardRef((props, ref) => {
           component={PSCCAIQuestionnaireScreen}
           options={{
             title: 'Bilan hebdomadaire',
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="ChipsManagement"
+          component={ChipsManagementScreen}
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="WellbeingCheckin"
+          component={WellbeingCheckinScreen}
+          options={{
+            headerShown: false,
             presentation: 'modal',
           }}
         />

@@ -12,6 +12,7 @@ import {
   isIntervalIntakeDone,
   getTreatmentReminderTimes,
 } from '../utils/treatmentUtils';
+import { isTodayCheckinComplete } from '../utils/wellbeingUtils';
 
 /**
  * Vérifier si les notifications sont supportées par le navigateur
@@ -61,6 +62,14 @@ function isStoolLoggedToday() {
  */
 function isRemissionMode() {
   return storage.getString('trackingMode') === 'remission';
+}
+
+/**
+ * Vérifier si la saisie du soir (selles + bilan léger) est déjà complète pour aujourd'hui.
+ * Le rappel du soir est fusionné : il ne se déclenche que s'il reste quelque chose à faire.
+ */
+function isEveningCheckinComplete() {
+  return isStoolLoggedToday() && isTodayCheckinComplete();
 }
 
 /**
@@ -237,10 +246,10 @@ function scheduleStoolReminderWeb(hour, minute) {
   const scheduleNext = () => {
     const delay = getDelayUntilTime(hour, minute);
     stoolReminderTimer = setTimeout(() => {
-      if (!isRemissionMode() && !isStoolLoggedToday()) {
+      if (!isRemissionMode() && !isEveningCheckinComplete()) {
         showWebNotification(
-          '📝 Selles du jour',
-          "N'oubliez pas de saisir vos selles d'aujourd'hui.",
+          '📝 Bilan du jour',
+          "N'oubliez pas de saisir vos selles et votre bilan du jour (humeur, sommeil, fatigue...).",
           { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' }
         );
       }

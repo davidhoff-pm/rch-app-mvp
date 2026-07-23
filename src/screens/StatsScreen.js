@@ -17,7 +17,9 @@ import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
 import HistoryOverview from '../components/history/HistoryOverview';
 import ObservanceSection from '../components/charts/ObservanceSection';
+import ChipsOverlay from '../components/charts/ChipsOverlay';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import { getChipLogsGroupedByDate } from '../utils/factorChipsUtils';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import designSystem from '../theme/designSystem';
@@ -132,6 +134,7 @@ export default function StatsScreen() {
 
       return {
         labels,
+        dateRange,
         data: chartDataArray,
         bloodPercentageData: bloodPercentageArray,
         average,
@@ -163,6 +166,7 @@ export default function StatsScreen() {
 
       return {
         labels,
+        dateRange,
         data: chartDataArray,
         average,
         min,
@@ -173,6 +177,16 @@ export default function StatsScreen() {
       };
     }
   }, [scores, stools, period, dataType]);
+
+  const chipLogsByDate = useMemo(() => {
+    const range = chartData.dateRange;
+    if (!range || range.length === 0) return {};
+    const toLocalDate = (dateStr) => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+    return getChipLogsGroupedByDate(toLocalDate(range[0]), toLocalDate(range[range.length - 1]));
+  }, [chartData.dateRange]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -325,6 +339,10 @@ export default function StatsScreen() {
                   {chartData.validDays} jours de données disponibles
                 </AppText>
               </View>
+            )}
+
+            {chartData.dateRange && (
+              <ChipsOverlay dateRange={chartData.dateRange} chipLogsByDate={chipLogsByDate} />
             )}
           </AppCard>
 

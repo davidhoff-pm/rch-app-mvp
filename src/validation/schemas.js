@@ -30,6 +30,42 @@ export const DailySurveySchema = z.object({
 }).strict();
 
 /**
+ * Schéma de validation pour le bilan léger quotidien (humeur / sommeil / fatigue)
+ * Chaque champ est nullable : l'utilisateur peut désactiver une sous-partie dans les réglages.
+ */
+export const WellbeingCheckinSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
+  timestamp: z.number().int().positive('Timestamp doit être positif'),
+  mood: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
+  sleep: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
+  fatigue: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
+}).strict();
+
+/**
+ * Schéma de validation pour une chip de suivi de facteur (définition)
+ */
+export const FactorChipSchema = z.object({
+  id: z.string().min(1, 'ID requis'),
+  label: z.string().min(1, 'Label requis').max(60, 'Label trop long (max 60 caractères)'),
+  category: z.enum(['alimentation', 'comportement', 'autre'], {
+    errorMap: () => ({ message: 'Catégorie invalide' }),
+  }),
+  isDefault: z.boolean(),
+  active: z.boolean(),
+  archived: z.boolean(),
+  createdAt: z.number().int().positive('Timestamp doit être positif'),
+}).strict();
+
+/**
+ * Schéma de validation pour une occurrence quotidienne de chip (tap)
+ */
+export const FactorChipLogSchema = z.object({
+  chipId: z.string().min(1, 'chipId requis'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
+  timestamp: z.number().int().positive('Timestamp doit être positif'),
+}).strict();
+
+/**
  * Schéma de validation pour un traitement
  */
 export const TreatmentSchema = z.object({

@@ -1,5 +1,15 @@
 // Setup file for Jest
 
+global.__DEV__ = false;
+
+// Mock react-native (Platform uniquement — cible plateforme native par défaut dans les tests)
+jest.mock('react-native', () => ({
+  Platform: {
+    OS: 'ios',
+    select: (obj) => obj.ios ?? obj.default,
+  },
+}));
+
 // Mock MMKV storage
 jest.mock('react-native-mmkv', () => {
   const mockStorage = new Map();

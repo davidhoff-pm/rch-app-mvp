@@ -9,6 +9,7 @@ import {
   isIntervalIntakeDone,
   getTreatmentReminderTimes,
 } from '../utils/treatmentUtils';
+import { isTodayCheckinComplete } from '../utils/wellbeingUtils';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,7 +74,15 @@ function isRemissionMode() {
 }
 
 /**
- * Planifier le rappel selles du soir
+ * Vérifier si la saisie du soir (selles + bilan léger) est déjà complète pour aujourd'hui.
+ * Le rappel du soir est fusionné : il ne se déclenche que s'il reste quelque chose à faire.
+ */
+function isEveningCheckinComplete() {
+  return isStoolLoggedToday() && isTodayCheckinComplete();
+}
+
+/**
+ * Planifier le rappel du soir (selles + bilan léger fusionnés)
  */
 export async function scheduleStoolReminder(hour, minute) {
   try {
@@ -83,8 +92,8 @@ export async function scheduleStoolReminder(hour, minute) {
 
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
-        title: '📝 Selles du jour',
-        body: "N'oubliez pas de saisir vos selles d'aujourd'hui.",
+        title: '📝 Bilan du jour',
+        body: "N'oubliez pas de saisir vos selles et votre bilan du jour (humeur, sommeil, fatigue...).",
         data: { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' },
         sound: true,
       },
@@ -119,7 +128,7 @@ export async function refreshDailyNotifications() {
 
   const remission = isRemissionMode();
 
-  if (remission || isStoolLoggedToday()) {
+  if (remission || isEveningCheckinComplete()) {
     await cancelStoolReminder();
   } else if (settings.stoolReminder?.enabled) {
     await scheduleStoolReminder(settings.stoolReminder.hour, settings.stoolReminder.minute);

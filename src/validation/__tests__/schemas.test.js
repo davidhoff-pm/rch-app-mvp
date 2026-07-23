@@ -6,6 +6,9 @@ import {
   IBDiskQuestionnaireSchema,
   DateInputSchema,
   TimeInputSchema,
+  WellbeingCheckinSchema,
+  FactorChipSchema,
+  FactorChipLogSchema,
   validateData,
   isValidDateString,
   isValidTimestamp,
@@ -270,6 +273,187 @@ describe('Schemas de validation', () => {
       };
 
       const result = validateData(IBDiskQuestionnaireSchema, invalidQuestionnaire);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('WellbeingCheckinSchema', () => {
+    it('devrait valider un bilan léger correct', () => {
+      const validCheckin = {
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+        mood: 3,
+        sleep: 2,
+        fatigue: 1,
+      };
+
+      const result = validateData(WellbeingCheckinSchema, validCheckin);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validCheckin);
+    });
+
+    it('devrait valider un bilan léger avec des valeurs null (non renseignées)', () => {
+      const validCheckin = {
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+        mood: null,
+        sleep: null,
+        fatigue: null,
+      };
+
+      const result = validateData(WellbeingCheckinSchema, validCheckin);
+      expect(result.success).toBe(true);
+    });
+
+    it('devrait rejeter une valeur de mood hors échelle (0-5)', () => {
+      const invalidCheckin = {
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+        mood: 6,
+        sleep: 2,
+        fatigue: 1,
+      };
+
+      const result = validateData(WellbeingCheckinSchema, invalidCheckin);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter une valeur de mood négative', () => {
+      const invalidCheckin = {
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+        mood: -1,
+        sleep: 2,
+        fatigue: 1,
+      };
+
+      const result = validateData(WellbeingCheckinSchema, invalidCheckin);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter un format de date invalide', () => {
+      const invalidCheckin = {
+        date: '07/11/2025',
+        timestamp: 1699999999999,
+        mood: 1,
+        sleep: 1,
+        fatigue: 1,
+      };
+
+      const result = validateData(WellbeingCheckinSchema, invalidCheckin);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter des propriétés supplémentaires', () => {
+      const invalidCheckin = {
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+        mood: 1,
+        sleep: 1,
+        fatigue: 1,
+        extraProp: 'nope',
+      };
+
+      const result = validateData(WellbeingCheckinSchema, invalidCheckin);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('FactorChipSchema', () => {
+    it('devrait valider une chip correcte', () => {
+      const validChip = {
+        id: 'chip-123',
+        label: 'Produits laitiers',
+        category: 'alimentation',
+        isDefault: true,
+        active: false,
+        archived: false,
+        createdAt: 1699999999999,
+      };
+
+      const result = validateData(FactorChipSchema, validChip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validChip);
+    });
+
+    it('devrait rejeter une catégorie invalide', () => {
+      const invalidChip = {
+        id: 'chip-123',
+        label: 'Produits laitiers',
+        category: 'inconnue',
+        isDefault: true,
+        active: false,
+        archived: false,
+        createdAt: 1699999999999,
+      };
+
+      const result = validateData(FactorChipSchema, invalidChip);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter un label vide', () => {
+      const invalidChip = {
+        id: 'chip-123',
+        label: '',
+        category: 'autre',
+        isDefault: false,
+        active: false,
+        archived: false,
+        createdAt: 1699999999999,
+      };
+
+      const result = validateData(FactorChipSchema, invalidChip);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter un label trop long (> 60 caractères)', () => {
+      const invalidChip = {
+        id: 'chip-123',
+        label: 'A'.repeat(61),
+        category: 'autre',
+        isDefault: false,
+        active: false,
+        archived: false,
+        createdAt: 1699999999999,
+      };
+
+      const result = validateData(FactorChipSchema, invalidChip);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('FactorChipLogSchema', () => {
+    it('devrait valider un log de chip correct', () => {
+      const validLog = {
+        chipId: 'chip-123',
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+      };
+
+      const result = validateData(FactorChipLogSchema, validLog);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(validLog);
+    });
+
+    it('devrait rejeter un chipId vide', () => {
+      const invalidLog = {
+        chipId: '',
+        date: '2025-11-07',
+        timestamp: 1699999999999,
+      };
+
+      const result = validateData(FactorChipLogSchema, invalidLog);
+      expect(result.success).toBe(false);
+    });
+
+    it('devrait rejeter un format de date invalide', () => {
+      const invalidLog = {
+        chipId: 'chip-123',
+        date: '07/11/2025',
+        timestamp: 1699999999999,
+      };
+
+      const result = validateData(FactorChipLogSchema, invalidLog);
       expect(result.success).toBe(false);
     });
   });
