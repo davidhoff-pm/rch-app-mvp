@@ -19,6 +19,8 @@ import * as NotificationService from '../services/notificationService';
 import * as WebNotificationService from '../services/webNotificationService';
 import { useTrackingMode } from '../hooks/useTrackingMode';
 import { getTreatmentReminderTimes, saveTreatmentReminderTimes } from '../utils/treatmentUtils';
+import { getWellbeingSettings, saveWellbeingSettings } from '../utils/wellbeingUtils';
+import { useNavigation } from '@react-navigation/native';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -29,7 +31,15 @@ export default function SettingsScreen() {
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef(null);
   const theme = useTheme();
+  const navigation = useNavigation();
   const { mode: trackingMode, setMode: setTrackingMode, isRemission } = useTrackingMode();
+  const [wellbeingSettings, setWellbeingSettings] = useState(() => getWellbeingSettings());
+
+  const handleToggleWellbeing = (key) => (value) => {
+    const updated = { ...wellbeingSettings, [key]: value };
+    setWellbeingSettings(updated);
+    saveWellbeingSettings(updated);
+  };
 
   const [normalStoolCount, setNormalStoolCount] = useState(() => {
     const saved = storage.getString('normalStoolCount');
@@ -561,6 +571,101 @@ export default function SettingsScreen() {
             <AppText style={[styles.modeBtnText, isRemission && styles.modeBtnTextActive]}>Rémission</AppText>
           </TouchableOpacity>
         </View>
+      </AppCard>
+
+      {/* Bilan léger quotidien (humeur / sommeil / fatigue / facteurs) */}
+      <AppCard style={styles.notificationCard}>
+        <View style={styles.notificationHeader}>
+          <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color="#C16046" style={{ marginRight: 12 }} />
+          <AppText variant="headlineLarge" style={styles.notificationTitle}>
+            Bilan du jour
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.notificationDescription}>
+          Questionnaire léger (humeur, sommeil, fatigue) et facteurs personnalisables, affichés sur l'accueil.
+        </AppText>
+
+        <View style={styles.settingRow}>
+          <View style={styles.settingLabelContainer}>
+            <MaterialCommunityIcons name="toggle-switch-outline" size={20} color="#C16046" />
+            <AppText variant="bodyMedium" style={styles.settingLabel}>
+              Activer le bilan du jour
+            </AppText>
+          </View>
+          <Switch
+            value={wellbeingSettings.enabled}
+            onValueChange={handleToggleWellbeing('enabled')}
+            trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+            thumbColor={wellbeingSettings.enabled ? '#C16046' : '#FFF3EE'}
+          />
+        </View>
+
+        {wellbeingSettings.enabled && (
+          <>
+            <View style={styles.divider} />
+
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <MaterialCommunityIcons name="emoticon-outline" size={20} color="#C16046" />
+                <AppText variant="bodyMedium" style={styles.settingLabel}>Humeur</AppText>
+              </View>
+              <Switch
+                value={wellbeingSettings.moodEnabled}
+                onValueChange={handleToggleWellbeing('moodEnabled')}
+                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                thumbColor={wellbeingSettings.moodEnabled ? '#C16046' : '#FFF3EE'}
+              />
+            </View>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <MaterialCommunityIcons name="sleep" size={20} color="#C16046" />
+                <AppText variant="bodyMedium" style={styles.settingLabel}>Sommeil</AppText>
+              </View>
+              <Switch
+                value={wellbeingSettings.sleepEnabled}
+                onValueChange={handleToggleWellbeing('sleepEnabled')}
+                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                thumbColor={wellbeingSettings.sleepEnabled ? '#C16046' : '#FFF3EE'}
+              />
+            </View>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <MaterialCommunityIcons name="lightning-bolt-outline" size={20} color="#C16046" />
+                <AppText variant="bodyMedium" style={styles.settingLabel}>Fatigue</AppText>
+              </View>
+              <Switch
+                value={wellbeingSettings.fatigueEnabled}
+                onValueChange={handleToggleWellbeing('fatigueEnabled')}
+                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                thumbColor={wellbeingSettings.fatigueEnabled ? '#C16046' : '#FFF3EE'}
+              />
+            </View>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <MaterialCommunityIcons name="tag-multiple-outline" size={20} color="#C16046" />
+                <AppText variant="bodyMedium" style={styles.settingLabel}>Facteurs (chips)</AppText>
+              </View>
+              <Switch
+                value={wellbeingSettings.chipsEnabled}
+                onValueChange={handleToggleWellbeing('chipsEnabled')}
+                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
+                thumbColor={wellbeingSettings.chipsEnabled ? '#C16046' : '#FFF3EE'}
+              />
+            </View>
+
+            {wellbeingSettings.chipsEnabled && (
+              <PrimaryButton
+                onPress={() => navigation.navigate('ChipsManagement')}
+                variant="secondary"
+                outlined
+                style={{ marginTop: designSystem.spacing[3] }}
+                icon="cog-outline"
+              >
+                Gérer mes facteurs
+              </PrimaryButton>
+            )}
+          </>
+        )}
       </AppCard>
 
       {/* Mode Développeur — visible uniquement si activé */}

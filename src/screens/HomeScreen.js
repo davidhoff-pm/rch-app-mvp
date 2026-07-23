@@ -25,6 +25,10 @@ import { fetchRSSFeed } from '../services/rssService';
 import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 import { useStoolModal } from '../contexts/StoolModalContext';
 import ActionCard from '../components/home/ActionCard';
+import WellbeingCard from '../components/home/WellbeingCard';
+import SwipeToDismiss from '../components/home/SwipeToDismiss';
+import { shouldShowWellbeingCard } from '../utils/wellbeingUtils';
+import { isDismissedToday, dismissForToday } from '../utils/homeDismissUtils';
 import usePendingTreatments from '../hooks/usePendingTreatments';
 import TreatmentCard from '../components/treatment/TreatmentCard';
 import {
@@ -84,6 +88,12 @@ export default function HomeScreen({ route }) {
 
   // États pour P-SCCAI
   const [psccaiAvailable, setPsccaiAvailable] = useState(true);
+
+  // Cartes masquées pour la journée (swipe sur l'accueil) + visibilité du bilan léger
+  const [dismissedPsccai, setDismissedPsccai] = useState(false);
+  const [dismissedIbdisk, setDismissedIbdisk] = useState(false);
+  const [dismissedWellbeing, setDismissedWellbeing] = useState(false);
+  const [wellbeingVisible, setWellbeingVisible] = useState(false);
 
   // États pour les actualités RSS
   const [rssArticles, setRssArticles] = useState([]);
@@ -280,6 +290,12 @@ export default function HomeScreen({ route }) {
       checkIBDiskAvailability();
       const psccaiCooldown = checkPSCCAICooldown();
       setPsccaiAvailable(psccaiCooldown.available);
+
+      // Cartes masquées pour la journée + visibilité du bilan léger
+      setDismissedPsccai(isDismissedToday('psccai'));
+      setDismissedIbdisk(isDismissedToday('ibdisk'));
+      setDismissedWellbeing(isDismissedToday('wellbeing'));
+      setWellbeingVisible(shouldShowWellbeingCard());
 
       // Charger les traitements en attente
       refreshTreatments();
@@ -543,38 +559,19 @@ export default function HomeScreen({ route }) {
     hideModal();
   };
 
-  const pendingTasks = [];
-  if (psccaiAvailable) {
-    pendingTasks.push({
-      key: 'psccai',
-      title: 'Bilan hebdomadaire',
-      description: 'Questionnaire P-SCCAI',
-      duration: '~2 min',
-      icon: 'clipboard-pulse-outline',
-      accent: 'primary',
-      onPress: () => navigation.navigate('PSCCAIQuestionnaire'),
-    });
-  }
-  if (!isRemission && ibdiskAvailable) {
-    pendingTasks.push({
-      key: 'ibdisk',
-      title: 'Questionnaire mensuel',
-      description: 'Évaluez votre qualité de vie',
-      icon: 'chart-box-outline',
-      accent: 'gold',
-      onPress: () => navigation.navigate('IBDiskQuestionnaire'),
-    });
-  }
-  if (!isRemission && !stoolsDismissed) {
-    pendingTasks.push({
-      key: 'stools',
-      title: 'Renseigner mes selles du jour',
-      icon: 'plus',
-      accent: 'primary',
-      compact: true,
-      onPress: () => openBatchModal(),
-    });
-  }
+  // Ordre fixe des tâches de l'accueil (priorité décroissante) : Selles > P-SCCAI >
+  // Bilan du jour > Questionnaire mensuel. Le style de chaque carte est fixe (pas
+  // dérivé de la position), cf. demande de réordonnancement.
+  const showStoolsTask = !isRemission && !stoolsDismissed;
+  const showPsccaiTask = psccaiAvailable && !dismissedPsccai;
+  const showWellbeingTask = wellbeingVisible && !dismissedWellbeing;
+  const showIbdiskTask = !isRemission && ibdiskAvailable && !dismissedIbdisk;
+  const visibleTaskCount = [showStoolsTask, showPsccaiTask, showWellbeingTask, showIbdiskTask].filter(Boolean).length;
+
+  const handleDismissPsccai = () => { dismissForToday('psccai'); setDismissedPsccai(true); };
+  const handleDismissIbdisk = () => { dismissForToday('ibdisk'); setDismissedIbdisk(true); };
+  const handleDismissWellbeing = () => { dismissForToday('wellbeing'); setDismissedWellbeing(true); };
+
   const handleHomeToggleMoment = (schema, medication, moment) => {
     toggleMomentIntake(schema.medicationId, schema.id, moment, schema.frequency);
     buttonPressFeedback();
@@ -601,10 +598,6 @@ export default function HomeScreen({ route }) {
         : { label: 'Élevé', color: designSystem.colors.health.danger.main, bg: designSystem.colors.health.danger.light };
 
   const shortDate = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-
-  const secondaryAccentStyle = (accent) => accent === 'gold'
-    ? { bg: designSystem.colors.accent[100], color: designSystem.colors.accent[500] }
-    : { bg: designSystem.colors.primary[100], color: designSystem.colors.primary[500] };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -654,63 +647,64 @@ export default function HomeScreen({ route }) {
         {/* Aujourd'hui */}
         <View style={styles.sectionHeaderRow}>
           <AppText style={styles.sectionHeaderTitle}>Aujourd'hui</AppText>
-          {pendingTasks.length > 0 && (
+          {visibleTaskCount > 0 && (
             <View style={styles.countPill}>
-              <AppText style={styles.countPillText}>{pendingTasks.length} tâche{pendingTasks.length > 1 ? 's' : ''}</AppText>
+              <AppText style={styles.countPillText}>{visibleTaskCount} tâche{visibleTaskCount > 1 ? 's' : ''}</AppText>
             </View>
           )}
         </View>
 
-        {pendingTasks.length > 0 ? (
+        {visibleTaskCount > 0 ? (
           <View style={styles.todoList}>
-            {pendingTasks.map((task, index) => {
-              const isPrimary = index === 0;
-              if (task.compact) {
-                return (
-                  <TouchableOpacity key={task.key} style={styles.taskCompact} onPress={task.onPress} activeOpacity={0.9}>
-                    <View style={styles.taskCompactIcon}>
-                      <MaterialCommunityIcons name={task.icon} size={18} color="#FFFFFF" />
-                    </View>
-                    <AppText style={styles.taskCompactTitle} numberOfLines={1}>{task.title}</AppText>
-                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.85)" />
-                  </TouchableOpacity>
-                );
-              }
-              if (isPrimary) {
-                return (
-                  <TouchableOpacity key={task.key} style={styles.taskPrimary} onPress={task.onPress} activeOpacity={0.9}>
-                    <View style={styles.taskPrimaryIcon}>
-                      <MaterialCommunityIcons name={task.icon} size={24} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.taskTextWrap}>
-                      <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>{task.title}</AppText>
-                      {task.description && (
-                        <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>
-                          {task.description}{task.duration ? ` · ${task.duration}` : ''}
-                        </AppText>
-                      )}
-                    </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
-                  </TouchableOpacity>
-                );
-              }
-              return (
-                <TouchableOpacity key={task.key} style={styles.taskOutlined} onPress={task.onPress} activeOpacity={0.85}>
-                  <View style={styles.taskOutlinedIcon}>
-                    <MaterialCommunityIcons name={task.icon} size={22} color={colors.primary[500]} />
+            {/* 1. Selles du jour — priorité maximale, pas de swipe (dismiss via "pas de selles") */}
+            {showStoolsTask && (
+              <TouchableOpacity style={styles.taskCompact} onPress={() => openBatchModal()} activeOpacity={0.9}>
+                <View style={styles.taskCompactIcon}>
+                  <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+                </View>
+                <AppText style={styles.taskCompactTitle} numberOfLines={1}>Renseigner mes selles du jour</AppText>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.85)" />
+              </TouchableOpacity>
+            )}
+
+            {/* 2. P-SCCAI — important, full terracotta */}
+            {showPsccaiTask && (
+              <SwipeToDismiss onDismiss={handleDismissPsccai}>
+                <TouchableOpacity style={styles.taskPrimary} onPress={() => navigation.navigate('PSCCAIQuestionnaire')} activeOpacity={0.9}>
+                  <View style={styles.taskPrimaryIcon}>
+                    <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color="#FFFFFF" />
                   </View>
                   <View style={styles.taskTextWrap}>
-                    <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>{task.title}</AppText>
-                    {task.description && (
-                      <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>
-                        {task.description}
-                      </AppText>
-                    )}
+                    <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>Bilan hebdomadaire</AppText>
+                    <AppText style={styles.taskPrimaryDesc} numberOfLines={1}>Questionnaire P-SCCAI · ~2 min</AppText>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="rgba(255,255,255,0.85)" />
+                </TouchableOpacity>
+              </SwipeToDismiss>
+            )}
+
+            {/* 3. Bilan du jour — normal (outline terracotta) */}
+            {showWellbeingTask && (
+              <SwipeToDismiss onDismiss={handleDismissWellbeing}>
+                <WellbeingCard style={styles.wellbeingCardInList} />
+              </SwipeToDismiss>
+            )}
+
+            {/* 4. Questionnaire mensuel (IBDisk) — normal (outline terracotta) */}
+            {showIbdiskTask && (
+              <SwipeToDismiss onDismiss={handleDismissIbdisk}>
+                <TouchableOpacity style={styles.taskOutlined} onPress={() => navigation.navigate('IBDiskQuestionnaire')} activeOpacity={0.85}>
+                  <View style={styles.taskOutlinedIcon}>
+                    <MaterialCommunityIcons name="chart-box-outline" size={22} color={colors.primary[500]} />
+                  </View>
+                  <View style={styles.taskTextWrap}>
+                    <AppText style={styles.taskOutlinedTitle} numberOfLines={1}>Questionnaire mensuel</AppText>
+                    <AppText style={styles.taskOutlinedDesc} numberOfLines={1}>Évaluez votre qualité de vie</AppText>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={20} color={colors.primary[400]} />
                 </TouchableOpacity>
-              );
-            })}
+              </SwipeToDismiss>
+            )}
           </View>
         ) : pendingSchemas.length === 0 ? (
           <AppText style={styles.noActionText}>Rien à faire aujourd'hui, tout est à jour.</AppText>
@@ -718,7 +712,7 @@ export default function HomeScreen({ route }) {
 
         {/* Traitements en attente — cases cochables directement */}
         {pendingSchemas.length > 0 && (
-          <View style={{ marginTop: pendingTasks.length > 0 ? 12 : 0 }}>
+          <View style={{ marginTop: visibleTaskCount > 0 ? 12 : 0 }}>
             <View style={styles.treatmentSectionHeader}>
               <MaterialCommunityIcons name="pill" size={18} color={colors.primary[500]} />
               <AppText style={styles.treatmentSectionTitle}>Traitement</AppText>
@@ -1277,6 +1271,10 @@ const styles = StyleSheet.create({
   // Tasks
   todoList: {
     gap: 12,
+  },
+  wellbeingCardInList: {
+    marginHorizontal: 0,
+    marginTop: 0,
   },
   taskPrimary: {
     flexDirection: 'row',

@@ -25,6 +25,13 @@ import {
   getSharedNotes,
   getCategoryLabel
 } from '../utils/notesUtils';
+import {
+  getCheckins,
+  MOOD_LABELS,
+  SLEEP_LABELS,
+  FATIGUE_LABELS
+} from '../utils/wellbeingUtils';
+import { getFactorChips, getFactorChipLogs } from '../utils/factorChipsUtils';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -45,6 +52,9 @@ export default function ExportScreen() {
   const [psccaiHistory, setPsccaiHistory] = useState([]);
   const [symptoms, setSymptoms] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [wellbeingCheckins, setWellbeingCheckins] = useState([]);
+  const [factorChipLogs, setFactorChipLogs] = useState([]);
+  const [factorChips, setFactorChips] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
   const theme = useTheme();
@@ -128,6 +138,16 @@ export default function ExportScreen() {
     const notesData = getSharedNotes(); // Only load shared notes for export
     setNotes(notesData);
     console.log('📦 Export - Shared notes loaded:', notesData.length, 'notes');
+
+    // Charger le bilan léger (humeur/sommeil/fatigue) et les facteurs (chips)
+    const checkinsData = getCheckins();
+    setWellbeingCheckins(checkinsData);
+    console.log('📦 Export - Wellbeing checkins loaded:', checkinsData.length);
+
+    const chipLogsData = getFactorChipLogs();
+    setFactorChipLogs(chipLogsData);
+    setFactorChips(getFactorChips());
+    console.log('📦 Export - Factor chip logs loaded:', chipLogsData.length);
   };
 
   const formatDate = (dateStr) => {
@@ -172,6 +192,8 @@ export default function ExportScreen() {
     let filteredPsccai = [...psccaiHistory];
     let filteredSymptoms = [...symptoms];
     let filteredNotes = [...notes];
+    let filteredWellbeingCheckins = [...wellbeingCheckins];
+    let filteredFactorChipLogs = [...factorChipLogs];
 
     if (selectedPeriod !== 'complet' && scores.length > 0) {
       const days = parseInt(selectedPeriod);
@@ -222,6 +244,18 @@ export default function ExportScreen() {
         const noteDate = new Date(note.timestamp);
         return noteDate >= startDate && noteDate <= endDate;
       });
+
+      // Filtrer le bilan léger pour la période
+      filteredWellbeingCheckins = wellbeingCheckins.filter(checkin => {
+        const checkinDate = new Date(checkin.date);
+        return checkinDate >= startDate && checkinDate <= endDate;
+      });
+
+      // Filtrer les occurrences de facteurs (chips) pour la période
+      filteredFactorChipLogs = factorChipLogs.filter(log => {
+        const logDate = new Date(log.date);
+        return logDate >= startDate && logDate <= endDate;
+      });
     }
 
     return {
@@ -232,12 +266,23 @@ export default function ExportScreen() {
       ibdisk: filteredIbdisk,
       psccai: filteredPsccai,
       symptoms: filteredSymptoms,
-      notes: filteredNotes
+      notes: filteredNotes,
+      wellbeingCheckins: filteredWellbeingCheckins,
+      factorChipLogs: filteredFactorChipLogs
     };
   };
 
   const generateHTML = () => {
-    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk, psccai: filteredPsccai, symptoms: filteredSymptoms, notes: filteredNotes } = getFilteredData();
+    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk, psccai: filteredPsccai, symptoms: filteredSymptoms, notes: filteredNotes, wellbeingCheckins: filteredWellbeingCheckins, factorChipLogs: filteredFactorChipLogs } = getFilteredData();
+
+    const factorChipsById = {};
+    factorChips.forEach(c => { factorChipsById[c.id] = c; });
+
+    const factorLogsByDate = {};
+    filteredFactorChipLogs.forEach(log => {
+      if (!factorLogsByDate[log.date]) factorLogsByDate[log.date] = [];
+      factorLogsByDate[log.date].push(log.chipId);
+    });
     
     const currentDate = new Date().toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -1109,6 +1154,64 @@ export default function ExportScreen() {
               }).join('')}
             </tbody>
           </table>
+        </div>
+        ` : ''}
+
+        ${(filteredWellbeingCheckins.length > 0 || Object.keys(factorLogsByDate).length > 0) ? `
+        <div class="details-section">
+          <div class="details-title">Bilan Léger Quotidien &amp; Facteurs Suivis</div>
+          <p style="margin-bottom: 12px; font-size: 11px; color: #666; font-style: italic;">
+            Ces données sont déclaratives (échelle 0-5 pour l'humeur/sommeil/fatigue) et les facteurs
+            sont de simples marqueurs journaliers (présence/absence). Elles n'établissent aucun lien
+            de cause à effet avec l'évolution des symptômes — à interpréter comme des repères exploratoires.
+          </p>
+          ${(() => {
+            const checkinsByDate = {};
+            filteredWellbeingCheckins.forEach(c => { checkinsByDate[c.date] = c; });
+            const allDates = Array.from(new Set([
+              ...filteredWellbeingCheckins.map(c => c.date),
+              ...Object.keys(factorLogsByDate),
+            ])).sort();
+
+            if (allDates.length === 0) {
+              return '<div class="no-data">Aucun bilan léger enregistré pour cette période</div>';
+            }
+
+            const rows = allDates.map(date => {
+              const checkin = checkinsByDate[date];
+              const dateStr = formatDate(date);
+              const moodLabel = checkin?.mood != null ? MOOD_LABELS[checkin.mood] : '—';
+              const sleepLabel = checkin?.sleep != null ? SLEEP_LABELS[checkin.sleep] : '—';
+              const fatigueLabel = checkin?.fatigue != null ? FATIGUE_LABELS[checkin.fatigue] : '—';
+              const dayChipIds = factorLogsByDate[date] || [];
+              const dayChipLabels = dayChipIds.map(id => factorChipsById[id]?.label).filter(Boolean).join(', ') || '—';
+
+              return `
+                <tr>
+                  <td style="white-space: nowrap;">${dateStr}</td>
+                  <td style="text-align: center;">${moodLabel}</td>
+                  <td style="text-align: center;">${sleepLabel}</td>
+                  <td style="text-align: center;">${fatigueLabel}</td>
+                  <td>${dayChipLabels}</td>
+                </tr>
+              `;
+            }).join('');
+
+            return `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Humeur</th>
+                    <th>Sommeil</th>
+                    <th>Fatigue</th>
+                    <th>Facteurs du jour</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            `;
+          })()}
         </div>
         ` : ''}
 
