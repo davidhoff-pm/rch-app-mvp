@@ -29,6 +29,7 @@ import WellbeingCard from '../components/home/WellbeingCard';
 import SwipeToDismiss from '../components/home/SwipeToDismiss';
 import { shouldShowWellbeingCard, isTodayCheckinComplete } from '../utils/wellbeingUtils';
 import { isDismissedToday, dismissForToday } from '../utils/homeDismissUtils';
+import { refreshDailyNotifications } from '../services/notificationService';
 import usePendingTreatments from '../hooks/usePendingTreatments';
 import TreatmentCard from '../components/treatment/TreatmentCard';
 import {
@@ -299,6 +300,11 @@ export default function HomeScreen({ route }) {
       setWellbeingVisible(shouldShowWellbeingCard());
       setWellbeingComplete(isTodayCheckinComplete());
 
+      // Réévaluer les notifications du jour (mode rémission, bilan déjà fait...)
+      if (Platform.OS !== 'web') {
+        refreshDailyNotifications();
+      }
+
       // Charger les traitements en attente
       refreshTreatments();
 
@@ -566,7 +572,7 @@ export default function HomeScreen({ route }) {
   // dérivé de la position), cf. demande de réordonnancement.
   const showStoolsTask = !isRemission && !stoolsDismissed;
   const showPsccaiTask = psccaiAvailable && !dismissedPsccai;
-  const showWellbeingTask = wellbeingVisible && !wellbeingComplete && !dismissedWellbeing;
+  const showWellbeingTask = !isRemission && wellbeingVisible && !wellbeingComplete && !dismissedWellbeing;
   const showIbdiskTask = !isRemission && ibdiskAvailable && !dismissedIbdisk;
   const visibleTaskCount = [showStoolsTask, showPsccaiTask, showWellbeingTask, showIbdiskTask].filter(Boolean).length;
 

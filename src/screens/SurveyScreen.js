@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
@@ -11,6 +11,8 @@ import WellbeingCard from '../components/home/WellbeingCard';
 import { checkPSCCAICooldown, interpretScore, deletePSCCAIResult } from '../utils/psccaiCalculator';
 import { getCheckins, deleteCheckin, getTodayDateString } from '../utils/wellbeingUtils';
 import { getLogsByDate, getChipById } from '../utils/factorChipsUtils';
+import { deleteFeedback } from '../utils/haptics';
+import { refreshDailyNotifications } from '../services/notificationService';
 
 const { colors } = designSystem;
 
@@ -68,6 +70,10 @@ export default function SurveyScreen() {
   const [wellbeingVisibleCount, setWellbeingVisibleCount] = useState(HISTORY_PAGE_SIZE);
   const [psccaiVisibleCount, setPsccaiVisibleCount] = useState(HISTORY_PAGE_SIZE);
   const [ibdiskVisibleCount, setIbdiskVisibleCount] = useState(HISTORY_PAGE_SIZE);
+  // Forcer le remontage de WellbeingCard après suppression du bilan du jour :
+  // son état "complet" est géré en interne et ne se réévalue qu'au focus de
+  // l'écran, pas quand on supprime une entrée sans quitter l'écran Bilan.
+  const [wellbeingRefreshKey, setWellbeingRefreshKey] = useState(0);
 
   const checkIBDiskAvailability = () => {
     const lastUsedStr = storage.getString('ibdiskLastUsed');
@@ -130,59 +136,72 @@ export default function SurveyScreen() {
     return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
   };
 
+  // Alert.alert() n'affiche aucune boîte de dialogue sur web (react-native-web) —
+  // les boutons/onPress ne se déclenchent jamais. Comme le reste de l'app
+  // (cf. useStoolManagement.js), on bascule sur window.confirm côté web.
+  const confirmDelete = (title, message, executeDelete) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${message}`)) {
+        deleteFeedback();
+        executeDelete();
+      }
+    } else {
+      Alert.alert(title, message, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: () => { deleteFeedback(); executeDelete(); } },
+      ]);
+    }
+  };
+
   const handleDeletePsccai = (date) => {
-    Alert.alert(
+    confirmDelete(
       'Supprimer ce bilan ?',
       `Le bilan hebdomadaire du ${formatShortDate(date)} sera définitivement supprimé.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: () => {
-            deletePSCCAIResult(date);
-            loadPsccaiHistory();
-          },
-        },
-      ]
+      () => {
+        deletePSCCAIResult(date);
+        loadPsccaiHistory();
+        checkPSCCAIAvailability();
+        if (Platform.OS !== 'web') refreshDailyNotifications();
+      }
     );
   };
 
   const handleDeleteIbdisk = (date) => {
-    Alert.alert(
+    confirmDelete(
       'Supprimer ce questionnaire ?',
       `Le questionnaire mensuel du ${formatShortDate(date)} sera définitivement supprimé.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: () => {
-            const json = storage.getString('ibdiskHistory');
-            const list = json ? JSON.parse(json) : [];
-            storage.set('ibdiskHistory', JSON.stringify(list.filter(h => h.date !== date)));
-            loadIbdiskHistory();
-          },
-        },
-      ]
+      () => {
+        const json = storage.getString('ibdiskHistory');
+        const list = json ? JSON.parse(json) : [];
+        const remaining = list.filter(h => h.date !== date);
+        storage.set('ibdiskHistory', JSON.stringify(remaining));
+
+        // Recalcule le cooldown mensuel à partir du questionnaire restant le plus
+        // récent, pour que la suppression du dernier en date le rende disponible.
+        if (remaining.length > 0) {
+          const mostRecentTimestamp = Math.max(...remaining.map(h => h.timestamp || 0));
+          storage.set('ibdiskLastUsed', String(mostRecentTimestamp));
+        } else {
+          storage.delete('ibdiskLastUsed');
+        }
+
+        loadIbdiskHistory();
+        checkIBDiskAvailability();
+        if (Platform.OS !== 'web') refreshDailyNotifications();
+      }
     );
   };
 
   const handleDeleteWellbeing = (date) => {
-    Alert.alert(
+    confirmDelete(
       'Supprimer ce bilan ?',
       `Le bilan du ${formatShortDate(date)} sera définitivement supprimé.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: () => {
-            deleteCheckin(date);
-            loadWellbeingHistory();
-          },
-        },
-      ]
+      () => {
+        deleteCheckin(date);
+        loadWellbeingHistory();
+        setWellbeingRefreshKey(k => k + 1);
+        if (Platform.OS !== 'web') refreshDailyNotifications();
+      }
     );
   };
 
@@ -219,7 +238,7 @@ export default function SurveyScreen() {
           </View>
 
           {/* Bilan léger quotidien (humeur / sommeil / fatigue / facteurs) */}
-          <WellbeingCard style={styles.wellbeingCardEmbedded} />
+          <WellbeingCard key={wellbeingRefreshKey} style={styles.wellbeingCardEmbedded} />
 
           {/* P-SCCAI hebdomadaire */}
           {psccaiAvailable ? (
@@ -312,7 +331,7 @@ export default function SurveyScreen() {
                   return (
                     <HistoryTableRow
                       key={checkin.date}
-                      icon="clipboard-pulse"
+                      icon="white-balance-sunny"
                       iconColor={colors.primary[500]}
                       title={formatShortDate(checkin.date)}
                       onEdit={isToday ? () => navigation.navigate('WellbeingCheckin') : undefined}
