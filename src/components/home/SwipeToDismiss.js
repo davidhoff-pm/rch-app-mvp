@@ -19,6 +19,7 @@ export default function SwipeToDismiss({ children, onDismiss }) {
   const heightAnim = useRef(new Animated.Value(1)).current;
   const [measuredHeight, setMeasuredHeight] = useState(null);
   const [removed, setRemoved] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -29,6 +30,7 @@ export default function SwipeToDismiss({ children, onDismiss }) {
       },
       onPanResponderRelease: (_, gesture) => {
         if (gesture.dx < -SWIPE_THRESHOLD) {
+          setIsDismissing(true);
           Animated.timing(translateX, {
             toValue: -SWIPE_OUT_DISTANCE,
             duration: 220,
@@ -69,10 +71,13 @@ export default function SwipeToDismiss({ children, onDismiss }) {
 
   return (
     <Animated.View
-      style={{
+      // `overflow: hidden` n'est appliqué que pendant l'animation de suppression
+      // (pour l'effet de repli en hauteur). En permanence, ça rognait l'ombre
+      // portée des cartes (bug visuel : angles marqués/coupés au repos).
+      style={isDismissing ? {
         overflow: 'hidden',
         height: measuredHeight != null ? heightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, measuredHeight] }) : undefined,
-      }}
+      } : null}
     >
       <Animated.View
         onLayout={(e) => {

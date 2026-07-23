@@ -152,6 +152,14 @@ export const saveTodayCheckin = (updates) => {
 };
 
 /**
+ * Supprime le bilan d'une date donnée (YYYY-MM-DD), s'il existe.
+ */
+export const deleteCheckin = (dateStr) => {
+  const checkins = getCheckins().filter(c => c.date !== dateStr);
+  saveCheckins(checkins);
+};
+
+/**
  * Récupère les bilans sur une plage de dates (inclusive), triés par date croissante
  * @param {Date} startDate
  * @param {Date} endDate

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
@@ -8,9 +8,52 @@ import storage from '../utils/storage';
 import designSystem from '../theme/designSystem';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import WellbeingCard from '../components/home/WellbeingCard';
-import { checkPSCCAICooldown, interpretScore } from '../utils/psccaiCalculator';
+import { checkPSCCAICooldown, interpretScore, deletePSCCAIResult } from '../utils/psccaiCalculator';
+import { getCheckins, deleteCheckin, getTodayDateString } from '../utils/wellbeingUtils';
+import { getLogsByDate, getChipById } from '../utils/factorChipsUtils';
 
 const { colors } = designSystem;
+
+const HISTORY_PAGE_SIZE = 5;
+
+// Ligne générique d'un tableau d'historique (date + contenu libre + score optionnel
+// + actions éditer/supprimer). Réutilisée pour les 3 types de questionnaires.
+function HistoryTableRow({ icon, iconColor, title, rightBadge, onEdit, onDelete, children }) {
+  return (
+    <View style={styles.tableRow}>
+      <View style={styles.tableRowMain}>
+        <MaterialCommunityIcons name={icon} size={18} color={iconColor} />
+        <View style={styles.tableRowText}>
+          <AppText style={styles.tableRowTitle}>{title}</AppText>
+          {children}
+        </View>
+      </View>
+      <View style={styles.tableRowRight}>
+        {rightBadge}
+        <View style={styles.tableRowActions}>
+          {onEdit && (
+            <TouchableOpacity onPress={onEdit} hitSlop={8} style={styles.tableRowActionBtn}>
+              <MaterialCommunityIcons name="pencil-outline" size={17} color={colors.primary[500]} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onDelete} hitSlop={8} style={styles.tableRowActionBtn}>
+            <MaterialCommunityIcons name="trash-can-outline" size={17} color={colors.health.danger.main} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function ShowMoreButton({ remaining, onPress }) {
+  if (remaining <= 0) return null;
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.showMoreBtn} activeOpacity={0.7}>
+      <AppText style={styles.showMoreText}>Voir {Math.min(remaining, HISTORY_PAGE_SIZE)} de plus</AppText>
+      <MaterialCommunityIcons name="chevron-down" size={16} color={colors.primary[500]} />
+    </TouchableOpacity>
+  );
+}
 
 export default function SurveyScreen() {
   const navigation = useNavigation();
@@ -20,6 +63,11 @@ export default function SurveyScreen() {
   const [psccaiAvailable, setPsccaiAvailable] = useState(true);
   const [psccaiDaysRemaining, setPsccaiDaysRemaining] = useState(0);
   const [psccaiHistory, setPsccaiHistory] = useState([]);
+  const [wellbeingHistory, setWellbeingHistory] = useState([]);
+
+  const [wellbeingVisibleCount, setWellbeingVisibleCount] = useState(HISTORY_PAGE_SIZE);
+  const [psccaiVisibleCount, setPsccaiVisibleCount] = useState(HISTORY_PAGE_SIZE);
+  const [ibdiskVisibleCount, setIbdiskVisibleCount] = useState(HISTORY_PAGE_SIZE);
 
   const checkIBDiskAvailability = () => {
     const lastUsedStr = storage.getString('ibdiskLastUsed');
@@ -60,14 +108,83 @@ export default function SurveyScreen() {
     setPsccaiHistory(list);
   };
 
+  const loadWellbeingHistory = () => {
+    const list = [...getCheckins()].sort((a, b) => b.date.localeCompare(a.date));
+    setWellbeingHistory(list);
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       checkIBDiskAvailability();
       loadIbdiskHistory();
       checkPSCCAIAvailability();
       loadPsccaiHistory();
+      loadWellbeingHistory();
     }, [])
   );
+
+  // Score moyen /10 d'un questionnaire IBDisk (moyenne des 10 dimensions)
+  const getIbdiskAverageScore = (answers) => {
+    const values = Object.values(answers || {}).filter(v => typeof v === 'number');
+    if (values.length === 0) return null;
+    return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+  };
+
+  const handleDeletePsccai = (date) => {
+    Alert.alert(
+      'Supprimer ce bilan ?',
+      `Le bilan hebdomadaire du ${formatShortDate(date)} sera définitivement supprimé.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            deletePSCCAIResult(date);
+            loadPsccaiHistory();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteIbdisk = (date) => {
+    Alert.alert(
+      'Supprimer ce questionnaire ?',
+      `Le questionnaire mensuel du ${formatShortDate(date)} sera définitivement supprimé.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            const json = storage.getString('ibdiskHistory');
+            const list = json ? JSON.parse(json) : [];
+            storage.set('ibdiskHistory', JSON.stringify(list.filter(h => h.date !== date)));
+            loadIbdiskHistory();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteWellbeing = (date) => {
+    Alert.alert(
+      'Supprimer ce bilan ?',
+      `Le bilan du ${formatShortDate(date)} sera définitivement supprimé.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            deleteCheckin(date);
+            loadWellbeingHistory();
+          },
+        },
+      ]
+    );
+  };
 
   const formatShortDate = (dateKey) => {
     const [year, month, day] = dateKey.split('-');
@@ -172,7 +289,7 @@ export default function SurveyScreen() {
         </View>
 
         {/* Section : Historique des questionnaires */}
-        {(psccaiHistory.length > 0 || ibdiskHistory.length > 0) && (
+        {(wellbeingHistory.length > 0 || psccaiHistory.length > 0 || ibdiskHistory.length > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons name="history" size={24} color={colors.primary[500]} />
@@ -181,88 +298,123 @@ export default function SurveyScreen() {
               </AppText>
             </View>
 
+            {/* Bilans du jour (humeur / sommeil / fatigue / facteurs) */}
+            {wellbeingHistory.length > 0 && (
+              <AppCard style={styles.historyCard}>
+                <AppText variant="h4" style={styles.historySectionTitle}>
+                  Bilans du jour
+                </AppText>
+                {wellbeingHistory.slice(0, wellbeingVisibleCount).map((checkin) => {
+                  const tags = getLogsByDate(checkin.date)
+                    .map(log => getChipById(log.chipId))
+                    .filter(Boolean);
+                  const isToday = checkin.date === getTodayDateString();
+                  return (
+                    <HistoryTableRow
+                      key={checkin.date}
+                      icon="clipboard-pulse"
+                      iconColor={colors.primary[500]}
+                      title={formatShortDate(checkin.date)}
+                      onEdit={isToday ? () => navigation.navigate('WellbeingCheckin') : undefined}
+                      onDelete={() => handleDeleteWellbeing(checkin.date)}
+                    >
+                      <View style={styles.wellbeingScoresRow}>
+                        <View style={styles.wellbeingScoreBadge}>
+                          <MaterialCommunityIcons name="emoticon-outline" size={13} color={colors.text.secondary} />
+                          <AppText style={styles.wellbeingScoreValue}>{checkin.mood ?? '—'}</AppText>
+                        </View>
+                        <View style={styles.wellbeingScoreBadge}>
+                          <MaterialCommunityIcons name="weather-night" size={13} color={colors.text.secondary} />
+                          <AppText style={styles.wellbeingScoreValue}>{checkin.sleep ?? '—'}</AppText>
+                        </View>
+                        <View style={styles.wellbeingScoreBadge}>
+                          <MaterialCommunityIcons name="battery-charging-medium" size={13} color={colors.text.secondary} />
+                          <AppText style={styles.wellbeingScoreValue}>{checkin.fatigue ?? '—'}</AppText>
+                        </View>
+                      </View>
+                      {tags.length > 0 && (
+                        <View style={styles.wellbeingTagsRow}>
+                          {tags.map(tag => (
+                            <View key={tag.id} style={styles.wellbeingTagChip}>
+                              <AppText style={styles.wellbeingTagText} numberOfLines={1}>{tag.label}</AppText>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </HistoryTableRow>
+                  );
+                })}
+                <ShowMoreButton
+                  remaining={wellbeingHistory.length - wellbeingVisibleCount}
+                  onPress={() => setWellbeingVisibleCount(c => c + HISTORY_PAGE_SIZE)}
+                />
+              </AppCard>
+            )}
+
+            {/* Bilan hebdomadaire (P-SCCAI) */}
             {psccaiHistory.length > 0 && (
               <AppCard style={styles.historyCard}>
                 <AppText variant="h4" style={styles.historySectionTitle}>
                   Bilan hebdomadaire (P-SCCAI)
                 </AppText>
-                {psccaiHistory.map((entry, index) => {
+                {psccaiHistory.slice(0, psccaiVisibleCount).map((entry) => {
                   const interp = interpretScore(entry.totalScore);
                   const healthColor =
                     interp.color === 'excellent' ? colors.secondary[500] :
                     interp.color === 'moderate' ? colors.accent[500] :
                     colors.health.danger.main;
                   return (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.historyItem}
-                      onPress={() => navigation.navigate('PSCCAIQuestionnaire', { date: entry.date })}
-                    >
-                      <View style={styles.historyItemContent}>
-                        <MaterialCommunityIcons
-                          name="clipboard-pulse"
-                          size={20}
-                          color={healthColor}
-                        />
-                        <View style={styles.historyItemText}>
-                          <AppText variant="bodyMedium" style={styles.historyItemDate}>
-                            {formatShortDate(entry.date)}
-                          </AppText>
-                          <AppText variant="bodySmall" style={styles.historyItemDetails}>
-                            Score : {entry.totalScore}/19 — {interp.label}
-                          </AppText>
-                        </View>
-                      </View>
-                      <View style={styles.historyItemAction}>
-                        <AppText style={[styles.historyScore, { color: healthColor }]}>
-                          {entry.totalScore}
+                    <HistoryTableRow
+                      key={entry.date}
+                      icon="clipboard-pulse"
+                      iconColor={healthColor}
+                      title={formatShortDate(entry.date)}
+                      rightBadge={
+                        <AppText style={[styles.rowScoreBadge, { color: healthColor }]}>
+                          {entry.totalScore}/19
                         </AppText>
-                        <MaterialCommunityIcons
-                          name="pencil"
-                          size={18}
-                          color={colors.primary[500]}
-                        />
-                      </View>
-                    </TouchableOpacity>
+                      }
+                      onEdit={() => navigation.navigate('PSCCAIQuestionnaire', { date: entry.date })}
+                      onDelete={() => handleDeletePsccai(entry.date)}
+                    />
                   );
                 })}
+                <ShowMoreButton
+                  remaining={psccaiHistory.length - psccaiVisibleCount}
+                  onPress={() => setPsccaiVisibleCount(c => c + HISTORY_PAGE_SIZE)}
+                />
               </AppCard>
             )}
 
+            {/* Questionnaire mensuel (IBDisk) */}
             {ibdiskHistory.length > 0 && (
-            <AppCard style={styles.historyCard}>
-              <AppText variant="h4" style={styles.historySectionTitle}>
-                Questionnaire qualité de vie
-              </AppText>
-              {ibdiskHistory.map((ibdisk, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.historyItem}
-                  onPress={() => navigation.navigate('IBDiskQuestionnaire', { date: ibdisk.date })}
-                >
-                  <View style={styles.historyItemContent}>
-                    <MaterialCommunityIcons
-                      name="chart-box"
-                      size={20}
-                      color={colors.primary[500]}
+              <AppCard style={styles.historyCard}>
+                <AppText variant="h4" style={styles.historySectionTitle}>
+                  Questionnaire qualité de vie
+                </AppText>
+                {ibdiskHistory.slice(0, ibdiskVisibleCount).map((ibdisk) => {
+                  const avgScore = getIbdiskAverageScore(ibdisk.answers);
+                  return (
+                    <HistoryTableRow
+                      key={ibdisk.date}
+                      icon="chart-box"
+                      iconColor={colors.primary[500]}
+                      title={formatShortDate(ibdisk.date)}
+                      rightBadge={
+                        avgScore !== null && (
+                          <AppText style={styles.rowScoreBadge}>{avgScore}/10</AppText>
+                        )
+                      }
+                      onEdit={() => navigation.navigate('IBDiskQuestionnaire', { date: ibdisk.date })}
+                      onDelete={() => handleDeleteIbdisk(ibdisk.date)}
                     />
-                    <View style={styles.historyItemText}>
-                      <AppText variant="bodyMedium" style={styles.historyItemDate}>
-                        {formatShortDate(ibdisk.date)}
-                      </AppText>
-                      <AppText variant="bodySmall" style={styles.historyItemDetails}>
-                        Score calculé
-                      </AppText>
-                    </View>
-                  </View>
-                  <MaterialCommunityIcons
-                    name="pencil"
-                    size={20}
-                    color={colors.primary[500]}
-                  />
-                </TouchableOpacity>
-              ))}
-            </AppCard>
+                  );
+                })}
+                <ShowMoreButton
+                  remaining={ibdiskHistory.length - ibdiskVisibleCount}
+                  onPress={() => setIbdiskVisibleCount(c => c + HISTORY_PAGE_SIZE)}
+                />
+              </AppCard>
             )}
           </View>
         )}
@@ -380,38 +532,95 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[3],
     fontWeight: '600',
   },
-  historyItem: {
+  // Tableau d'historique (ligne générique, cf. HistoryTableRow)
+  tableRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingVertical: designSystem.spacing[3],
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
+    gap: designSystem.spacing[2],
   },
-  historyItemContent: {
+  tableRowMain: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
+    minWidth: 0,
+    gap: designSystem.spacing[3],
   },
-  historyItemText: {
-    marginLeft: designSystem.spacing[3],
+  tableRowText: {
     flex: 1,
+    minWidth: 0,
   },
-  historyItemDate: {
+  tableRowTitle: {
     color: colors.text.primary,
     fontWeight: '500',
-    marginBottom: designSystem.spacing[1],
+    fontSize: 14,
   },
-  historyItemDetails: {
-    color: colors.text.secondary,
-  },
-  historyItemAction: {
+  tableRowRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: designSystem.spacing[2],
   },
-  historyScore: {
-    fontSize: 17,
+  tableRowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[1],
+  },
+  tableRowActionBtn: {
+    padding: 4,
+  },
+  rowScoreBadge: {
+    fontSize: 15,
     fontWeight: '700',
+    color: colors.text.primary,
+  },
+  // Bilans du jour : 3 scores + tags
+  wellbeingScoresRow: {
+    flexDirection: 'row',
+    gap: designSystem.spacing[3],
+    marginTop: designSystem.spacing[1],
+  },
+  wellbeingScoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  wellbeingScoreValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text.secondary,
+  },
+  wellbeingTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: designSystem.spacing[1],
+    marginTop: designSystem.spacing[2],
+  },
+  wellbeingTagChip: {
+    backgroundColor: colors.primary[50],
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    maxWidth: 140,
+  },
+  wellbeingTagText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.primary[500],
+  },
+  // Pagination "voir plus"
+  showMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: designSystem.spacing[3],
+  },
+  showMoreText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary[500],
   },
 });

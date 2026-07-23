@@ -165,3 +165,13 @@ export function savePSCCAIResult(result, { isEdit = false } = {}) {
     storage.set('psccaiLastUsed', String(Date.now()));
   }
 }
+
+/**
+ * Supprime un résultat P-SCCAI par date (YYYY-MM-DD). Ne touche pas au
+ * cooldown hebdomadaire (psccaiLastUsed).
+ */
+export function deletePSCCAIResult(date) {
+  const historyJson = storage.getString('psccaiHistory');
+  const history = historyJson ? JSON.parse(historyJson) : [];
+  storage.set('psccaiHistory', JSON.stringify(history.filter(h => h.date !== date)));
+}

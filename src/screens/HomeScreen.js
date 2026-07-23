@@ -27,7 +27,7 @@ import { useStoolModal } from '../contexts/StoolModalContext';
 import ActionCard from '../components/home/ActionCard';
 import WellbeingCard from '../components/home/WellbeingCard';
 import SwipeToDismiss from '../components/home/SwipeToDismiss';
-import { shouldShowWellbeingCard } from '../utils/wellbeingUtils';
+import { shouldShowWellbeingCard, isTodayCheckinComplete } from '../utils/wellbeingUtils';
 import { isDismissedToday, dismissForToday } from '../utils/homeDismissUtils';
 import usePendingTreatments from '../hooks/usePendingTreatments';
 import TreatmentCard from '../components/treatment/TreatmentCard';
@@ -94,6 +94,7 @@ export default function HomeScreen({ route }) {
   const [dismissedIbdisk, setDismissedIbdisk] = useState(false);
   const [dismissedWellbeing, setDismissedWellbeing] = useState(false);
   const [wellbeingVisible, setWellbeingVisible] = useState(false);
+  const [wellbeingComplete, setWellbeingComplete] = useState(false);
 
   // États pour les actualités RSS
   const [rssArticles, setRssArticles] = useState([]);
@@ -296,6 +297,7 @@ export default function HomeScreen({ route }) {
       setDismissedIbdisk(isDismissedToday('ibdisk'));
       setDismissedWellbeing(isDismissedToday('wellbeing'));
       setWellbeingVisible(shouldShowWellbeingCard());
+      setWellbeingComplete(isTodayCheckinComplete());
 
       // Charger les traitements en attente
       refreshTreatments();
@@ -564,7 +566,7 @@ export default function HomeScreen({ route }) {
   // dérivé de la position), cf. demande de réordonnancement.
   const showStoolsTask = !isRemission && !stoolsDismissed;
   const showPsccaiTask = psccaiAvailable && !dismissedPsccai;
-  const showWellbeingTask = wellbeingVisible && !dismissedWellbeing;
+  const showWellbeingTask = wellbeingVisible && !wellbeingComplete && !dismissedWellbeing;
   const showIbdiskTask = !isRemission && ibdiskAvailable && !dismissedIbdisk;
   const visibleTaskCount = [showStoolsTask, showPsccaiTask, showWellbeingTask, showIbdiskTask].filter(Boolean).length;
 
