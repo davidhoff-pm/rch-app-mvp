@@ -7,36 +7,32 @@ import storage from './storage';
 // Contrairement aux selles/scores, ce bilan ne concerne QUE le jour courant :
 // pas de saisie rétroactive (anti-biais mémoire).
 
+// Échelle volontairement courte (0-3, sélection au tap plutôt qu'au slider) :
+// plus rapide et plus précis à remplir qu'une échelle 0-5 sur mobile.
 export const MOOD_LABELS = {
-  0: 'Très difficile',
-  1: 'Difficile',
-  2: 'Plutôt difficile',
-  3: 'Plutôt bonne',
-  4: 'Bonne',
-  5: 'Très bonne',
+  0: 'Difficile',
+  1: 'Moyenne',
+  2: 'Bonne',
+  3: 'Très bonne',
 };
 
 export const SLEEP_LABELS = {
-  0: 'Très mauvais',
-  1: 'Mauvais',
-  2: 'Moyen -',
-  3: 'Moyen +',
-  4: 'Bon',
-  5: 'Très bon',
+  0: 'Mauvais',
+  1: 'Moyen',
+  2: 'Bon',
+  3: 'Très bon',
 };
 
 export const FATIGUE_LABELS = {
-  0: 'Épuisé',
-  1: 'Très fatigué',
-  2: 'Fatigué',
-  3: 'Un peu fatigué',
-  4: 'En forme',
-  5: 'Pleine forme',
+  0: 'Fatigué',
+  1: 'Un peu fatigué',
+  2: 'En forme',
+  3: 'Pleine forme',
 };
 
 export const WELLBEING_SCALE_MIN = 0;
-export const WELLBEING_SCALE_MAX = 5;
-export const WELLBEING_SCALE_DEFAULT = 3;
+export const WELLBEING_SCALE_MAX = 3;
+export const WELLBEING_SCALE_DEFAULT = 2;
 
 const CHECKINS_KEY = 'wellbeingCheckins';
 const SETTINGS_KEY = 'wellbeingSettings';

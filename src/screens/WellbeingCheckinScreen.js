@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import Slider from '@react-native-community/slider';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AppText from '../components/ui/AppText';
@@ -29,7 +28,14 @@ import {
 
 const { colors, spacing, borderRadius } = designSystem;
 
-function ScaleSlider({ icon, title, labels, value, onChange }) {
+const SCALE_OPTIONS = Array.from(
+  { length: WELLBEING_SCALE_MAX - WELLBEING_SCALE_MIN + 1 },
+  (_, i) => WELLBEING_SCALE_MIN + i
+);
+
+// Sélecteur au tap (plutôt qu'un slider) : plus rapide et plus précis pour une
+// échelle courte à choix labellisés — un seul geste suffit pour choisir sa valeur.
+function ScalePicker({ icon, title, labels, value, onChange }) {
   return (
     <View style={styles.sliderBlock}>
       <View style={styles.sliderHeader}>
@@ -42,31 +48,35 @@ function ScaleSlider({ icon, title, labels, value, onChange }) {
         </AppText>
       </View>
 
-      <Slider
-        style={styles.slider}
-        minimumValue={WELLBEING_SCALE_MIN}
-        maximumValue={WELLBEING_SCALE_MAX}
-        step={1}
-        value={value}
-        onValueChange={(v) => onChange(Math.round(v))}
-        minimumTrackTintColor={colors.primary[500]}
-        maximumTrackTintColor={colors.neutral[200]}
-        thumbTintColor={colors.primary[500]}
-      />
-
-      <View style={styles.scaleMarkers}>
-        {Array.from({ length: WELLBEING_SCALE_MAX - WELLBEING_SCALE_MIN + 1 }, (_, i) => (
-          <AppText key={i} variant="labelSmall" style={styles.markerText}>{i}</AppText>
-        ))}
+      <View style={styles.scaleOptionsRow}>
+        {SCALE_OPTIONS.map((opt) => {
+          const active = value === opt;
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={[styles.scaleOption, active && styles.scaleOptionActive]}
+              onPress={() => onChange(opt)}
+              activeOpacity={0.7}
+            >
+              <AppText
+                variant="bodyLarge"
+                weight="semiBold"
+                style={active ? styles.scaleOptionTextActive : styles.scaleOptionText}
+              >
+                {opt}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 /**
- * Formulaire du bilan léger quotidien (humeur / sommeil / fatigue, échelle 0-5)
- * + facteurs personnalisables (chips). Ne concerne que la journée courante :
- * pas de saisie rétroactive (anti-biais mémoire).
+ * Formulaire du bilan léger quotidien (humeur / sommeil / fatigue, échelle 0-3,
+ * sélection au tap) + facteurs personnalisables (chips). Ne concerne que la
+ * journée courante : pas de saisie rétroactive (anti-biais mémoire).
  */
 export default function WellbeingCheckinScreen() {
   const navigation = useNavigation();
@@ -135,13 +145,13 @@ export default function WellbeingCheckinScreen() {
         {showSliders ? (
           <AppCard style={styles.card}>
             {showMood && (
-              <ScaleSlider icon="emoticon-outline" title="Humeur" labels={MOOD_LABELS} value={mood} onChange={handleMoodChange} />
+              <ScalePicker icon="emoticon-outline" title="Humeur" labels={MOOD_LABELS} value={mood} onChange={handleMoodChange} />
             )}
             {showSleep && (
-              <ScaleSlider icon="sleep" title="Sommeil" labels={SLEEP_LABELS} value={sleep} onChange={handleSleepChange} />
+              <ScalePicker icon="sleep" title="Sommeil" labels={SLEEP_LABELS} value={sleep} onChange={handleSleepChange} />
             )}
             {showFatigue && (
-              <ScaleSlider icon="lightning-bolt-outline" title="Fatigue" labels={FATIGUE_LABELS} value={fatigue} onChange={handleFatigueChange} />
+              <ScalePicker icon="lightning-bolt-outline" title="Fatigue" labels={FATIGUE_LABELS} value={fatigue} onChange={handleFatigueChange} />
             )}
           </AppCard>
         ) : (
@@ -234,21 +244,30 @@ const styles = StyleSheet.create({
   sliderValueLabel: {
     color: colors.primary[600],
   },
-  slider: {
-    width: '100%',
-    height: 40,
-    marginVertical: spacing[1],
-  },
-  scaleMarkers: {
+  scaleOptionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    gap: spacing[2],
+    marginTop: spacing[1],
   },
-  markerText: {
-    color: colors.neutral[400],
-    fontWeight: '600',
-    fontSize: 10,
-    textAlign: 'center',
+  scaleOption: {
+    flex: 1,
+    height: 44,
+    borderRadius: borderRadius.base,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1.5,
+    borderColor: colors.border.light,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scaleOptionActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  scaleOptionText: {
+    color: colors.text.primary,
+  },
+  scaleOptionTextActive: {
+    color: '#FFFFFF',
   },
   chipsSectionHeader: {
     flexDirection: 'row',

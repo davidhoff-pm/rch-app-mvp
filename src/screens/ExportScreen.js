@@ -1161,7 +1161,7 @@ export default function ExportScreen() {
         <div class="details-section">
           <div class="details-title">Bilan Léger Quotidien &amp; Facteurs Suivis</div>
           <p style="margin-bottom: 12px; font-size: 11px; color: #666; font-style: italic;">
-            Ces données sont déclaratives (échelle 0-5 pour l'humeur/sommeil/fatigue) et les facteurs
+            Ces données sont déclaratives (échelle 0-3 pour l'humeur/sommeil/fatigue) et les facteurs
             sont de simples marqueurs journaliers (présence/absence). Elles n'établissent aucun lien
             de cause à effet avec l'évolution des symptômes — à interpréter comme des repères exploratoires.
           </p>

@@ -10,7 +10,7 @@ const { colors } = designSystem;
 
 /**
  * Carte d'entrée "Bilan du jour" (accueil + onglet Bilan) : humeur / sommeil / fatigue
- * (échelle 0-5) + facteurs personnalisables. Au tap, ouvre le formulaire dédié.
+ * (échelle 0-3) + facteurs personnalisables. Au tap, ouvre le formulaire dédié.
  * Ne concerne que la journée courante (pas de saisie rétroactive).
  */
 export default function WellbeingCard({ style }) {
