@@ -158,13 +158,10 @@ export default function SettingsScreen() {
 
   // Générer des questionnaires IBDisk de test
   const handleGenerateIBDiskData = () => {
-    console.log('🎯 Début génération IBDisk...');
     
     // Génération directe sans alerte pour éviter les problèmes de compatibilité
     try {
-      console.log('🎯 Génération directe des questionnaires IBDisk...');
       const result = generateIBDiskTestData(3);
-      console.log('✅ IBDisk générés:', result);
       
       // Afficher un message de succès simple
       alert(`✅ ${result.length} questionnaires IBDisk générés !\n\nAllez dans l'onglet Historique pour voir les graphiques en araignée.`);
@@ -390,30 +387,21 @@ export default function SettingsScreen() {
             
             try {
               // Effacer toutes les données
-              console.log('Début de la suppression des données...');
               
               storage.set('dailySells', '[]');
-              console.log('dailySells effacé');
               
               storage.set('dailySurvey', '{}');
-              console.log('dailySurvey effacé');
               
               storage.set('scoresHistory', '[]');
-              console.log('scoresHistory effacé');
 
               storage.set('psccaiHistory', '[]');
               storage.delete('psccaiLastUsed');
-              console.log('psccaiHistory effacé');
               
               // Vérifier que les données ont bien été effacées
               const dailySells = storage.getString('dailySells');
               const dailySurvey = storage.getString('dailySurvey');
               const scoresHistory = storage.getString('scoresHistory');
               
-              console.log('Vérification après suppression:');
-              console.log('dailySells:', dailySells);
-              console.log('dailySurvey:', dailySurvey);
-              console.log('scoresHistory:', scoresHistory);
               
               if (dailySells === '[]' && dailySurvey === '{}' && scoresHistory === '[]') {
                 Alert.alert('Succès', 'Toutes les données ont été effacées avec succès. Les écrans se mettront à jour automatiquement.');
@@ -437,7 +425,6 @@ export default function SettingsScreen() {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         window.localStorage.clear();
-        console.log('localStorage effacé manuellement');
         Alert.alert('Succès', 'localStorage effacé manuellement. Les écrans se mettront à jour automatiquement.');
       } catch (error) {
         console.error('Erreur localStorage:', error);

@@ -17,7 +17,6 @@ import { initPWA } from './src/utils/registerServiceWorker';
 
 export default function App() {
   const navigationRef = useRef(null);
-  const notificationListener = useRef();
   const responseListener = useRef();
 
   // Charger Hanken Grotesk + Newsreader depuis Google Fonts pour le web et initialiser PWA
@@ -39,7 +38,6 @@ export default function App() {
 
       // Initialiser le service worker PWA
       initPWA().then((result) => {
-        console.log('✅ PWA initialisée:', result);
       }).catch((error) => {
         console.error('❌ Erreur lors de l\'initialisation PWA:', error);
       });
@@ -57,11 +55,6 @@ export default function App() {
       if (state === 'active' && Platform.OS !== 'web') {
         refreshDailyNotifications();
       }
-    });
-
-    // Écouter les notifications reçues quand l'app est ouverte
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('📬 Notification reçue:', notification);
     });
 
     // Écouter les clics sur les notifications
@@ -86,7 +79,6 @@ export default function App() {
 
     return () => {
       appStateSub.remove();
-      notificationListener.current?.remove();
       responseListener.current?.remove();
     };
   }, []);

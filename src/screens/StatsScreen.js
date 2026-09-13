@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SegmentedButtons } from 'react-native-paper';
@@ -33,15 +33,6 @@ export default function StatsScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
-  useEffect(() => {
-    loadData();
-    // Simuler un court délai pour montrer les skeletons
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Recharger les données à chaque fois qu'on navigue vers cet écran
   useFocusEffect(
     React.useCallback(() => {
@@ -53,15 +44,6 @@ export default function StatsScreen() {
       return () => clearTimeout(timer);
     }, [])
   );
-
-  // Recharger les données périodiquement pour capturer les changements
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadData();
-    }, 2000); // Recharger toutes les 2 secondes
-
-    return () => clearInterval(interval);
-  }, []);
 
   const loadData = () => {
     // Charger les scores
@@ -386,7 +368,7 @@ export default function StatsScreen() {
       <ObservanceSection />
 
       {/* Historique, calendrier et IBDisk (déplacés depuis l'accueil) */}
-      <HistoryOverview />
+      <HistoryOverview onDataChange={loadData} />
     </ScrollView>
     </View>
   );

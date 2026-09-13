@@ -75,11 +75,9 @@ export async function requestNotificationPermissions() {
     }
     
     if (finalStatus !== 'granted') {
-      console.log('❌ Permission de notification refusée');
       return false;
     }
     
-    console.log('✅ Permission de notification accordée');
     return true;
   } catch (error) {
     console.error('❌ Erreur lors de la demande de permission:', error);
@@ -311,7 +309,6 @@ export async function scheduleTreatmentReminders() {
 export async function cancelAllNotifications() {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('🗑️ Toutes les notifications annulées');
   } catch (error) {
     console.error('Erreur lors de l\'annulation des notifications:', error);
   }
@@ -351,7 +348,6 @@ export function getNotificationSettings() {
 export function saveNotificationSettings(settings) {
   try {
     storage.set('notificationSettings', JSON.stringify(settings));
-    console.log('💾 Paramètres de notification sauvegardés');
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des paramètres:', error);
   }
@@ -449,13 +445,10 @@ export async function sendTestBilanNotification() {
  */
 export async function sendTestNotification() {
   try {
-    console.log('🧪 Début du test de notification...');
     
     // Vérifier la plateforme
-    console.log('📱 Plateforme:', Platform.OS);
     
     const hasPermission = await requestNotificationPermissions();
-    console.log('🔐 Permission:', hasPermission);
     
     if (!hasPermission) {
       throw new Error('Permission de notification refusée. Veuillez autoriser les notifications dans les paramètres de votre appareil.');
@@ -463,7 +456,6 @@ export async function sendTestNotification() {
     
     // Sur web, les notifications ne fonctionnent pas de la même manière
     if (Platform.OS === 'web') {
-      console.log('⚠️ Les notifications sur web sont limitées. Testez sur mobile pour une expérience complète.');
       
       // Essayer quand même d'envoyer une notification web
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -471,7 +463,6 @@ export async function sendTestNotification() {
           body: 'Vos notifications fonctionnent correctement !',
           icon: '/favicon.png',
         });
-        console.log('✅ Notification web native envoyée');
         return true;
       }
     }
@@ -487,7 +478,6 @@ export async function sendTestNotification() {
       trigger: secondsTrigger(2),
     });
     
-    console.log('✅ Notification de test planifiée avec ID:', notificationId);
     return true;
   } catch (error) {
     console.error('❌ Erreur lors de l\'envoi de la notification de test:', error);
@@ -501,7 +491,6 @@ export async function sendTestNotification() {
 export async function getAllScheduledNotifications() {
   try {
     const notifications = await Notifications.getAllScheduledNotificationsAsync();
-    console.log('📋 Notifications planifiées:', notifications);
     return notifications;
   } catch (error) {
     console.error('Erreur lors de la récupération des notifications:', error);

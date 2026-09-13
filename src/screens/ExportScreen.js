@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Text, Button, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -59,10 +59,6 @@ export default function ExportScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
   const theme = useTheme();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   // Recharger les données à chaque fois qu'on navigue vers cet écran
   useFocusEffect(
     React.useCallback(() => {
@@ -70,84 +66,61 @@ export default function ExportScreen() {
     }, [])
   );
 
-  // Recharger les données périodiquement pour capturer les changements
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadData();
-    }, 2000); // Recharger toutes les 2 secondes
-
-    return () => clearInterval(interval);
-  }, []);
-
   const loadData = () => {
     // Charger les scores
     const histJson = storage.getString('scoresHistory');
     const history = histJson ? JSON.parse(histJson) : [];
     setScores(history);
-    console.log('📦 Export - Scores loaded:', history.length, 'scores');
 
     // Charger les selles
     const stoolsJson = storage.getString('dailySells');
     const stoolsData = stoolsJson ? JSON.parse(stoolsJson) : [];
     setStools(stoolsData);
-    console.log('📦 Export - Stools loaded:', stoolsData.length, 'stools');
 
     // Charger les bilans
     const surveysJson = storage.getString('dailySurvey');
     const surveysData = surveysJson ? JSON.parse(surveysJson) : {};
     setSurveys(surveysData);
-    console.log('📦 Export - Surveys loaded:', Object.keys(surveysData));
-    console.log('📦 Export - Survey details:', surveysData);
 
     // Charger les anciens traitements (pour rétrocompatibilité)
     const treatmentsJson = storage.getString('treatments');
     const treatmentsData = treatmentsJson ? JSON.parse(treatmentsJson) : [];
     setTreatments(treatmentsData);
-    console.log('📦 Export - Old Treatments loaded:', treatmentsData.length, 'treatments');
 
     // Charger les nouveaux traitements
     const medicationsData = getMedications();
     setMedications(medicationsData);
-    console.log('📦 Export - Medications loaded:', medicationsData.length, 'medications');
 
     const schemasData = getTherapeuticSchemas();
     setSchemas(schemasData);
-    console.log('📦 Export - Schemas loaded:', schemasData.length, 'schemas');
 
     const intakesData = getAllIntakes();
     setIntakes(intakesData);
-    console.log('📦 Export - Intakes loaded:', intakesData.length, 'intakes');
 
     // Charger les questionnaires IBDisk
     const ibdiskJson = storage.getString('ibdiskHistory');
     const ibdiskData = ibdiskJson ? JSON.parse(ibdiskJson) : [];
     setIbdiskHistory(ibdiskData);
-    console.log('📦 Export - IBDisk loaded:', ibdiskData.length, 'questionnaires');
 
     // Charger les bilans hebdomadaires P-SCCAI
     const psccaiJson = storage.getString('psccaiHistory');
     const psccaiData = psccaiJson ? JSON.parse(psccaiJson) : [];
     setPsccaiHistory(psccaiData);
-    console.log('📦 Export - P-SCCAI loaded:', psccaiData.length, 'bilans');
 
     // Charger les symptômes et notes
     const symptomsData = getSymptoms();
     setSymptoms(symptomsData);
-    console.log('📦 Export - Symptoms loaded:', symptomsData.length, 'symptoms');
 
     const notesData = getSharedNotes(); // Only load shared notes for export
     setNotes(notesData);
-    console.log('📦 Export - Shared notes loaded:', notesData.length, 'notes');
 
     // Charger le bilan léger (humeur/sommeil/fatigue) et les facteurs (chips)
     const checkinsData = getCheckins();
     setWellbeingCheckins(checkinsData);
-    console.log('📦 Export - Wellbeing checkins loaded:', checkinsData.length);
 
     const chipLogsData = getFactorChipLogs();
     setFactorChipLogs(chipLogsData);
     setFactorChips(getFactorChips());
-    console.log('📦 Export - Factor chip logs loaded:', chipLogsData.length);
   };
 
   const formatDate = (dateStr) => {

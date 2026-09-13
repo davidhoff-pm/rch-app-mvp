@@ -47,14 +47,6 @@ export const useSpeechRecognition = (options = {}) => {
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // Log pour diagnostic de l'environnement
-    console.log('Speech Recognition Setup:', {
-      supported: !!SpeechRecognition,
-      protocol: window.location.protocol,
-      hostname: window.location.hostname,
-      isSecure: window.isSecureContext,
-    });
-
     if (SpeechRecognition) {
       setIsSupported(true);
       recognitionRef.current = new SpeechRecognition();
@@ -107,14 +99,6 @@ export const useSpeechRecognition = (options = {}) => {
       recognitionRef.current.onerror = (event) => {
         setIsRecording(false);
         setInterimTranscript('');
-
-        // Log pour diagnostic
-        console.log('Speech Recognition Error:', {
-          error: event.error,
-          message: event.message,
-          protocol: window.location.protocol,
-          hostname: window.location.hostname,
-        });
 
         switch (event.error) {
           case 'not-allowed':
@@ -179,12 +163,10 @@ export const useSpeechRecognition = (options = {}) => {
 
     // Ne pas démarrer si déjà en cours
     if (isRecording) {
-      console.log('Already recording, ignoring start request');
       return;
     }
 
     try {
-      console.log('Starting speech recognition...');
       setError(null);
       recognitionRef.current.start();
     } catch (e) {
