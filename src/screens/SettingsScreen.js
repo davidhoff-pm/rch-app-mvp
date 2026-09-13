@@ -518,7 +518,7 @@ export default function SettingsScreen() {
       {/* Nombre normal de selles/jour */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
-          <MaterialCommunityIcons name="toilet" size={28} color="#C16046" style={{ marginRight: 16 }} />
+          <MaterialCommunityIcons name="toilet" size={28} color={designSystem.colors.primary[500]} style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.infoTitle}>
             Selles normales / jour
           </AppText>
@@ -534,7 +534,7 @@ export default function SettingsScreen() {
       {/* Mode de suivi */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
-          <MaterialCommunityIcons name="swap-horizontal" size={28} color="#C16046" style={{ marginRight: 16 }} />
+          <MaterialCommunityIcons name="swap-horizontal" size={28} color={designSystem.colors.primary[500]} style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.infoTitle}>
             Mode de suivi
           </AppText>
@@ -547,14 +547,14 @@ export default function SettingsScreen() {
             style={[styles.modeBtn, !isRemission && styles.modeBtnActive]}
             onPress={() => setTrackingMode('active')}
           >
-            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={!isRemission ? '#fff' : designSystem.colors.text.secondary} />
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={!isRemission ? designSystem.colors.text.inverse : designSystem.colors.text.secondary} />
             <AppText style={[styles.modeBtnText, !isRemission && styles.modeBtnTextActive]}>Phase active</AppText>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.modeBtn, isRemission && styles.modeBtnActiveGreen]}
             onPress={() => setTrackingMode('remission')}
           >
-            <MaterialCommunityIcons name="moon-waning-crescent" size={18} color={isRemission ? '#fff' : designSystem.colors.text.secondary} />
+            <MaterialCommunityIcons name="moon-waning-crescent" size={18} color={isRemission ? designSystem.colors.text.inverse : designSystem.colors.text.secondary} />
             <AppText style={[styles.modeBtnText, isRemission && styles.modeBtnTextActive]}>Rémission</AppText>
           </TouchableOpacity>
         </View>
@@ -563,7 +563,7 @@ export default function SettingsScreen() {
       {/* Bilan léger quotidien (humeur / sommeil / fatigue / facteurs) */}
       <AppCard style={styles.notificationCard}>
         <View style={styles.notificationHeader}>
-          <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color="#C16046" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.notificationTitle}>
             Bilan du jour
           </AppText>
@@ -574,7 +574,7 @@ export default function SettingsScreen() {
 
         <View style={styles.settingRow}>
           <View style={styles.settingLabelContainer}>
-            <MaterialCommunityIcons name="toggle-switch-outline" size={20} color="#C16046" />
+            <MaterialCommunityIcons name="toggle-switch-outline" size={20} color={designSystem.colors.primary[500]} />
             <AppText variant="bodyMedium" style={styles.settingLabel}>
               Activer le bilan du jour
             </AppText>
@@ -582,8 +582,8 @@ export default function SettingsScreen() {
           <Switch
             value={wellbeingSettings.enabled}
             onValueChange={handleToggleWellbeing('enabled')}
-            trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-            thumbColor={wellbeingSettings.enabled ? '#C16046' : '#FFF3EE'}
+            trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+            thumbColor={wellbeingSettings.enabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
           />
         </View>
 
@@ -593,50 +593,50 @@ export default function SettingsScreen() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
-                <MaterialCommunityIcons name="emoticon-outline" size={20} color="#C16046" />
+                <MaterialCommunityIcons name="emoticon-outline" size={20} color={designSystem.colors.primary[500]} />
                 <AppText variant="bodyMedium" style={styles.settingLabel}>Humeur</AppText>
               </View>
               <Switch
                 value={wellbeingSettings.moodEnabled}
                 onValueChange={handleToggleWellbeing('moodEnabled')}
-                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                thumbColor={wellbeingSettings.moodEnabled ? '#C16046' : '#FFF3EE'}
+                trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                thumbColor={wellbeingSettings.moodEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
               />
             </View>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
-                <MaterialCommunityIcons name="sleep" size={20} color="#C16046" />
+                <MaterialCommunityIcons name="sleep" size={20} color={designSystem.colors.primary[500]} />
                 <AppText variant="bodyMedium" style={styles.settingLabel}>Sommeil</AppText>
               </View>
               <Switch
                 value={wellbeingSettings.sleepEnabled}
                 onValueChange={handleToggleWellbeing('sleepEnabled')}
-                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                thumbColor={wellbeingSettings.sleepEnabled ? '#C16046' : '#FFF3EE'}
+                trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                thumbColor={wellbeingSettings.sleepEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
               />
             </View>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
-                <MaterialCommunityIcons name="lightning-bolt-outline" size={20} color="#C16046" />
+                <MaterialCommunityIcons name="lightning-bolt-outline" size={20} color={designSystem.colors.primary[500]} />
                 <AppText variant="bodyMedium" style={styles.settingLabel}>Fatigue</AppText>
               </View>
               <Switch
                 value={wellbeingSettings.fatigueEnabled}
                 onValueChange={handleToggleWellbeing('fatigueEnabled')}
-                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                thumbColor={wellbeingSettings.fatigueEnabled ? '#C16046' : '#FFF3EE'}
+                trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                thumbColor={wellbeingSettings.fatigueEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
               />
             </View>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
-                <MaterialCommunityIcons name="tag-multiple-outline" size={20} color="#C16046" />
+                <MaterialCommunityIcons name="tag-multiple-outline" size={20} color={designSystem.colors.primary[500]} />
                 <AppText variant="bodyMedium" style={styles.settingLabel}>Facteurs (chips)</AppText>
               </View>
               <Switch
                 value={wellbeingSettings.chipsEnabled}
                 onValueChange={handleToggleWellbeing('chipsEnabled')}
-                trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                thumbColor={wellbeingSettings.chipsEnabled ? '#C16046' : '#FFF3EE'}
+                trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                thumbColor={wellbeingSettings.chipsEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
               />
             </View>
 
@@ -658,7 +658,7 @@ export default function SettingsScreen() {
       {/* Mode Développeur — visible uniquement si activé */}
       {devModeEnabled && <AppCard style={styles.devCard}>
         <View style={styles.devHeader}>
-          <MaterialCommunityIcons name="dice-multiple" size={24} color="#C16046" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="dice-multiple" size={24} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.devTitle}>
             Mode Développeur
           </AppText>
@@ -756,7 +756,7 @@ export default function SettingsScreen() {
       {/* Notifications */}
       <AppCard style={styles.notificationCard}>
         <View style={styles.notificationHeader}>
-          <MaterialCommunityIcons name="bell-outline" size={24} color="#C16046" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="bell-outline" size={24} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.notificationTitle}>
             Notifications
           </AppText>
@@ -768,7 +768,7 @@ export default function SettingsScreen() {
         {/* Activation des notifications */}
         <View style={styles.settingRow}>
           <View style={styles.settingLabelContainer}>
-            <MaterialCommunityIcons name="bell-check" size={20} color="#C16046" />
+            <MaterialCommunityIcons name="bell-check" size={20} color={designSystem.colors.primary[500]} />
             <AppText variant="bodyMedium" style={styles.settingLabel}>
               Activer les notifications
             </AppText>
@@ -776,8 +776,8 @@ export default function SettingsScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
-            trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-            thumbColor={notificationsEnabled ? '#C16046' : '#FFF3EE'}
+            trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+            thumbColor={notificationsEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
           />
         </View>
         
@@ -797,7 +797,7 @@ export default function SettingsScreen() {
             {/* Rappel selles soir */}
             <View style={[styles.reminderSection, isRemission && styles.reminderSectionDisabled]}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="toilet" size={20} color={isRemission ? designSystem.colors.text.tertiary : '#C16046'} />
+                <MaterialCommunityIcons name="toilet" size={20} color={isRemission ? designSystem.colors.text.tertiary : designSystem.colors.primary[500]} />
                 <AppText variant="bodyLarge" style={[styles.reminderTitle, isRemission && styles.reminderTitleDisabled]}>
                   Rappel selles (soir)
                 </AppText>
@@ -817,7 +817,7 @@ export default function SettingsScreen() {
             {/* Rappels traitement matin/midi/soir */}
             <View style={styles.reminderSection}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="pill" size={20} color="#C16046" />
+                <MaterialCommunityIcons name="pill" size={20} color={designSystem.colors.primary[500]} />
                 <AppText variant="bodyLarge" style={styles.reminderTitle}>
                   Rappels traitement
                 </AppText>
@@ -827,7 +827,7 @@ export default function SettingsScreen() {
               </AppText>
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
-                  <MaterialCommunityIcons name="bell-ring-outline" size={20} color="#C16046" />
+                  <MaterialCommunityIcons name="bell-ring-outline" size={20} color={designSystem.colors.primary[500]} />
                   <AppText variant="bodyMedium" style={styles.settingLabel}>
                     Activer les rappels traitement
                   </AppText>
@@ -835,8 +835,8 @@ export default function SettingsScreen() {
                 <Switch
                   value={treatmentRemindersEnabled}
                   onValueChange={handleToggleTreatmentReminders}
-                  trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                  thumbColor={treatmentRemindersEnabled ? '#C16046' : '#FFF3EE'}
+                  trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                  thumbColor={treatmentRemindersEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
                 />
               </View>
               {treatmentRemindersEnabled && (
@@ -873,7 +873,7 @@ export default function SettingsScreen() {
 
                   <View style={[styles.settingRow, { marginTop: 8 }]}>
                     <View style={styles.settingLabelContainer}>
-                      <MaterialCommunityIcons name="package-variant" size={20} color="#C16046" />
+                      <MaterialCommunityIcons name="package-variant" size={20} color={designSystem.colors.primary[500]} />
                       <AppText variant="bodyMedium" style={styles.settingLabel}>
                         Rappel de stock
                       </AppText>
@@ -881,8 +881,8 @@ export default function SettingsScreen() {
                     <Switch
                       value={stockReminderEnabled}
                       onValueChange={handleToggleStockReminder}
-                      trackColor={{ false: '#D4D4D8', true: '#E6E0DA' }}
-                      thumbColor={stockReminderEnabled ? '#C16046' : '#FFF3EE'}
+                      trackColor={{ false: designSystem.colors.neutral[300], true: designSystem.colors.border.light }}
+                      thumbColor={stockReminderEnabled ? designSystem.colors.primary[500] : designSystem.colors.primary[50]}
                     />
                   </View>
                   {stockReminderEnabled && (
@@ -912,7 +912,7 @@ export default function SettingsScreen() {
       {/* Sauvegarde des données */}
       <AppCard style={styles.backupCard}>
         <View style={styles.backupHeader}>
-          <MaterialCommunityIcons name="cloud-upload" size={24} color="#C16046" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="cloud-upload" size={24} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.backupTitle}>
             Sauvegarde des données
           </AppText>
@@ -983,7 +983,7 @@ export default function SettingsScreen() {
       {/* Zone de danger */}
       <AppCard style={styles.dangerCard}>
         <View style={styles.dangerHeader}>
-          <MaterialCommunityIcons name="alert" size={28} color="#312620" style={{ marginRight: 16 }} />
+          <MaterialCommunityIcons name="alert" size={28} color={designSystem.colors.text.primary} style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.dangerTitle}>
             Zone de danger
           </AppText>
@@ -1048,22 +1048,22 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   subtitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '400',
   },
   menuIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1074,10 +1074,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderWidth: 1,
-    borderColor: '#C16046', // Color 01
-    shadowColor: '#C16046',
+    borderColor: designSystem.colors.primary[500], // Color 01
+    shadowColor: designSystem.colors.primary[500],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1089,11 +1089,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   infoTitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '600',
   },
   infoDescription: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '400',
   },
   modeToggle: {
@@ -1127,16 +1127,16 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.secondary,
   },
   modeBtnTextActive: {
-    color: '#fff',
+    color: designSystem.colors.text.inverse,
   },
   devCard: {
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderWidth: 1,
-    borderColor: '#C16046', // Color 01
-    shadowColor: '#C16046',
+    borderColor: designSystem.colors.primary[500], // Color 01
+    shadowColor: designSystem.colors.primary[500],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1148,11 +1148,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   devTitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   devDescription: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -1167,10 +1167,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 32,
     padding: 24,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderWidth: 1,
-    borderColor: '#312620', // Color 03 - Noir pour alertes
-    shadowColor: '#312620',
+    borderColor: designSystem.colors.text.primary, // Color 03 - Noir pour alertes
+    shadowColor: designSystem.colors.text.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1182,11 +1182,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dangerTitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '600',
   },
   dangerDescription: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 24,
     fontWeight: '400',
   },
@@ -1203,9 +1203,9 @@ const styles = StyleSheet.create({
   backupCard: {
     marginHorizontal: 16,
     marginBottom: 20,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   backupHeader: {
     flexDirection: 'row',
@@ -1213,11 +1213,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backupTitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   backupDescription: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 16,
   },
   backupButtons: {
@@ -1231,20 +1231,20 @@ const styles = StyleSheet.create({
   manualImportContainer: {
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   manualImportLabel: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 8,
     fontWeight: '600',
   },
   jsonInput: {
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
     borderRadius: 6,
     padding: 12,
     fontSize: 12,
@@ -1267,10 +1267,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
-    shadowColor: '#C16046',
+    borderColor: designSystem.colors.border.light, // Color 04
+    shadowColor: designSystem.colors.primary[500],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1282,11 +1282,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   notificationTitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   notificationDescription: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -1303,12 +1303,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingLabel: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#E6E0DA', // Color 04
+    backgroundColor: designSystem.colors.border.light, // Color 04
     marginVertical: 16,
   },
   remissionNote: {
@@ -1338,14 +1338,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reminderTitle: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '600',
   },
   reminderTitleDisabled: {
     color: designSystem.colors.text.tertiary,
   },
   reminderDescription: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontStyle: 'italic',
     marginBottom: 12,
     marginLeft: 28,
@@ -1353,7 +1353,7 @@ const styles = StyleSheet.create({
   stockDaysInput: {
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
     borderRadius: designSystem.borderRadius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,

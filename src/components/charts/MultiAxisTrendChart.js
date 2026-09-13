@@ -27,9 +27,9 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
       const x = padding.left + (index / Math.max(scoreData.length - 1, 1)) * innerWidth;
       const y = padding.top + innerHeight - ((value - minScore) / (maxScore - minScore)) * innerHeight;
 
-      let color = '#10B981'; // Vert pour bon score (0-1)
-      if (value >= 4) color = '#C0392B'; // Rouge pour score élevé (4-6)
-      else if (value >= 2) color = '#AD7130'; // Orange pour score moyen (2-3)
+      let color = designSystem.colors.health.excellent.main; // Vert pour bon score (0-1)
+      if (value >= 4) color = designSystem.colors.health.danger.main; // Rouge pour score élevé (4-6)
+      else if (value >= 2) color = designSystem.colors.accent[500]; // Orange pour score moyen (2-3)
 
       return { x, y, value, color, index };
     }).filter(p => p !== null);
@@ -118,8 +118,8 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
         <svg width={chartWidth} height={chartHeight} style={styles.svg}>
           <defs>
             <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#C16046" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#C16046" stopOpacity="0.02" />
+              <stop offset="0%" stopColor={designSystem.colors.primary[500]} stopOpacity="0.15" />
+              <stop offset="100%" stopColor={designSystem.colors.primary[500]} stopOpacity="0.02" />
             </linearGradient>
           </defs>
 
@@ -131,7 +131,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 y1={line.y}
                 x2={chartWidth - padding.right}
                 y2={line.y}
-                stroke="#E5E7EB"
+                stroke={designSystem.colors.border.light}
                 strokeWidth="1"
                 strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
@@ -139,7 +139,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 x={padding.left - 8}
                 y={line.y + 4}
                 fontSize="10"
-                fill="#6B7280"
+                fill={designSystem.colors.text.tertiary}
                 textAnchor="end"
                 fontWeight="500"
               >
@@ -163,7 +163,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
           {scoreLinePath && (
             <path
               d={scoreLinePath}
-              stroke="#C16046"
+              stroke={designSystem.colors.primary[500]}
               strokeWidth="3"
               fill="none"
               strokeLinecap="round"
@@ -174,7 +174,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
           {/* Points */}
           {scorePoints.map((point, index) => (
             <g key={`score-point-${index}`}>
-              <circle cx={point.x} cy={point.y} r="6" fill="#FFFFFF" stroke={point.color} strokeWidth="2.5" />
+              <circle cx={point.x} cy={point.y} r="6" fill={designSystem.colors.text.inverse} stroke={point.color} strokeWidth="2.5" />
               <circle cx={point.x} cy={point.y} r="3" fill={point.color} />
             </g>
           ))}
@@ -185,7 +185,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
             y1={chartHeight - padding.bottom}
             x2={chartWidth - padding.right}
             y2={chartHeight - padding.bottom}
-            stroke="#9CA3AF"
+            stroke={designSystem.colors.text.tertiary}
             strokeWidth="2"
           />
 
@@ -195,7 +195,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
             y1={padding.top}
             x2={padding.left}
             y2={chartHeight - padding.bottom}
-            stroke="#9CA3AF"
+            stroke={designSystem.colors.text.tertiary}
             strokeWidth="2"
           />
 
@@ -206,7 +206,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
               x={label.x}
               y={chartHeight - padding.bottom + 25}
               fontSize="11"
-              fill="#6B7280"
+              fill={designSystem.colors.text.tertiary}
               textAnchor="middle"
               fontWeight="500"
             >
@@ -228,8 +228,8 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
         <svg width={chartWidth} height={chartHeight} style={styles.svg}>
           <defs>
             <linearGradient id="bloodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#C0392B" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#C0392B" stopOpacity="0.02" />
+              <stop offset="0%" stopColor={designSystem.colors.health.danger.main} stopOpacity="0.12" />
+              <stop offset="100%" stopColor={designSystem.colors.health.danger.main} stopOpacity="0.02" />
             </linearGradient>
           </defs>
 
@@ -241,7 +241,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 y1={line.y}
                 x2={chartWidth - padding.right}
                 y2={line.y}
-                stroke="#FBE3DF"
+                stroke={designSystem.colors.health.danger.light}
                 strokeWidth="1"
                 strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
@@ -249,7 +249,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 x={padding.left - 8}
                 y={line.y + 4}
                 fontSize="10"
-                fill="#C0392B"
+                fill={designSystem.colors.health.danger.main}
                 textAnchor="end"
                 fontWeight="500"
               >
@@ -273,7 +273,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
           {bloodLinePath && (
             <path
               d={bloodLinePath}
-              stroke="#C0392B"
+              stroke={designSystem.colors.health.danger.main}
               strokeWidth="3"
               fill="none"
               strokeLinecap="round"
@@ -284,8 +284,8 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
           {/* Points */}
           {bloodPoints.map((point, index) => (
             <g key={`blood-point-${index}`}>
-              <circle cx={point.x} cy={point.y} r="6" fill="#FFFFFF" stroke="#C0392B" strokeWidth="2.5" />
-              <circle cx={point.x} cy={point.y} r="3" fill="#C0392B" />
+              <circle cx={point.x} cy={point.y} r="6" fill={designSystem.colors.text.inverse} stroke={designSystem.colors.health.danger.main} strokeWidth="2.5" />
+              <circle cx={point.x} cy={point.y} r="3" fill={designSystem.colors.health.danger.main} />
             </g>
           ))}
 
@@ -295,7 +295,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
             y1={chartHeight - padding.bottom}
             x2={chartWidth - padding.right}
             y2={chartHeight - padding.bottom}
-            stroke="#F87171"
+            stroke={designSystem.colors.health.danger.main}
             strokeWidth="2"
           />
 
@@ -305,7 +305,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
             y1={padding.top}
             x2={padding.left}
             y2={chartHeight - padding.bottom}
-            stroke="#F87171"
+            stroke={designSystem.colors.health.danger.main}
             strokeWidth="2"
           />
 
@@ -316,7 +316,7 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
               x={label.x}
               y={chartHeight - padding.bottom + 25}
               fontSize="11"
-              fill="#6B7280"
+              fill={designSystem.colors.text.tertiary}
               textAnchor="middle"
               fontWeight="500"
             >
@@ -354,11 +354,11 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#C16046',
+    backgroundColor: designSystem.colors.primary[500],
     marginRight: designSystem.spacing[2],
   },
   legendDotRed: {
-    backgroundColor: '#C0392B',
+    backgroundColor: designSystem.colors.health.danger.main,
   },
   chartLabel: {
     color: designSystem.colors.text.primary,

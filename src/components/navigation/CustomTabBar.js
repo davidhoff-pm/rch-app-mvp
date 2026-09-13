@@ -288,7 +288,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                   onPress={handleStoolPress}
                   activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons name="toilet" size={24} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="toilet" size={24} color={colors.text.inverse} />
                 </TouchableOpacity>
                 <View style={styles.labelContainer}>
                   <AppText variant="caption" style={styles.secondaryLabel}>
@@ -305,11 +305,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#C0392B' }]}
+                  style={[styles.secondaryButton, { backgroundColor: colors.health.danger.main }]}
                   onPress={handleSymptomPress}
                   activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color={colors.text.inverse} />
                 </TouchableOpacity>
                 <View style={styles.labelContainer}>
                   <AppText variant="caption" style={styles.secondaryLabel}>
@@ -330,7 +330,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                   onPress={handleNotePress}
                   activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons name="note-text-outline" size={24} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="note-text-outline" size={24} color={colors.text.inverse} />
                 </TouchableOpacity>
                 <View style={styles.labelContainer}>
                   <AppText variant="caption" style={styles.secondaryLabel}>
@@ -353,7 +353,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
               <MaterialCommunityIcons
                 name="plus"
                 size={32}
-                color="#FFFFFF"
+                color={colors.text.inverse}
               />
             </Animated.View>
           </TouchableOpacity>
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderTopWidth: 1,
     borderTopColor: designSystem.colors.border.light,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background.tertiary,
     alignItems: 'flex-start',
     justifyContent: 'space-around',
     zIndex: 2,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   secondaryLabel: {
-    color: '#FFFFFF',
+    color: colors.text.inverse,
     fontWeight: '600',
     fontSize: 11,
   },

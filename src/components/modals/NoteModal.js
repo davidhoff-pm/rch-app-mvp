@@ -173,7 +173,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
           <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name="note-text-outline" size={32} color="#AD7130" />
+              <MaterialCommunityIcons name="note-text-outline" size={32} color={designSystem.colors.accent[500]} />
               <AppText variant="h2" style={styles.modalTitle}>
                 {initialData ? 'Modifier la note' : 'Nouvelle note'}
               </AppText>
@@ -201,7 +201,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                       <MaterialCommunityIcons
                         name={isRecording ? 'microphone' : 'microphone-outline'}
                         size={24}
-                        color={isRecording ? '#FFFFFF' : designSystem.colors.primary[500]}
+                        color={isRecording ? designSystem.colors.text.inverse : designSystem.colors.primary[500]}
                       />
                     </Animated.View>
                   </TouchableOpacity>
@@ -214,7 +214,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                   <MaterialCommunityIcons
                     name="information-outline"
                     size={16}
-                    color="#0369A1"
+                    color={designSystem.colors.secondary[600]}
                   />
                   <AppText variant="labelSmall" style={styles.vercelWarningText}>
                     La dictée vocale peut ne pas fonctionner sur Vercel preview. Utilisez localhost pour la tester.
@@ -241,7 +241,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                   <MaterialCommunityIcons
                     name="record-circle"
                     size={16}
-                    color="#EF4444"
+                    color={designSystem.colors.health.danger.main}
                   />
                   <AppText variant="bodySmall" style={styles.interimText}>
                     {interimTranscript}
@@ -492,8 +492,8 @@ const styles = StyleSheet.create({
     ...designSystem.shadows.sm,
   },
   micButtonRecording: {
-    backgroundColor: '#EF4444',
-    borderColor: '#C0392B',
+    backgroundColor: designSystem.colors.health.danger.main,
+    borderColor: designSystem.colors.health.danger.main,
     ...designSystem.shadows.lg,
   },
   interimContainer: {
@@ -502,14 +502,14 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[2],
     paddingHorizontal: designSystem.spacing[3],
     paddingVertical: designSystem.spacing[2],
-    backgroundColor: '#FFF0DA',
+    backgroundColor: designSystem.colors.accent[100],
     borderRadius: designSystem.borderRadius.md,
     marginTop: designSystem.spacing[2],
     borderWidth: 1,
-    borderColor: '#FCD34D',
+    borderColor: designSystem.colors.accent[300],
   },
   interimText: {
-    color: '#78350F',
+    color: designSystem.colors.accent[700],
     fontStyle: 'italic',
     flex: 1,
   },
@@ -519,14 +519,14 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[2],
     paddingHorizontal: designSystem.spacing[3],
     paddingVertical: designSystem.spacing[2],
-    backgroundColor: '#E0F2FE',
+    backgroundColor: designSystem.colors.secondary[50],
     borderRadius: designSystem.borderRadius.md,
     marginBottom: designSystem.spacing[2],
     borderWidth: 1,
-    borderColor: '#7DD3FC',
+    borderColor: designSystem.colors.secondary[200],
   },
   vercelWarningText: {
-    color: '#0369A1',
+    color: designSystem.colors.secondary[600],
     flex: 1,
     lineHeight: 16,
   },

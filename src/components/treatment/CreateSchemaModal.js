@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border.light,
     marginBottom: spacing[3],
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background.tertiary,
   },
   radioOptionSelected: {
     borderColor: colors.primary[500],

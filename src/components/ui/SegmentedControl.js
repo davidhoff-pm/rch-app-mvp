@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import AppText from './AppText';
+import designSystem from '../../theme/designSystem';
 
 export default function SegmentedControl({ 
   options, 
@@ -42,11 +43,11 @@ export default function SegmentedControl({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderRadius: 16,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   segment: {
     flex: 1,
@@ -65,22 +66,22 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 12,
   },
   selectedSegment: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   segmentText: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '500',
     fontSize: 14,
   },
   selectedText: {
-    color: '#C16046', // Color 01
+    color: designSystem.colors.primary[500], // Color 01
     fontWeight: '600',
   },
 });

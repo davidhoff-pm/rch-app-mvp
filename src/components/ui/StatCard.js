@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Card, useTheme } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from './AppText';
+import designSystem from '../../theme/designSystem';
 
 export default function StatCard({ 
   title, 
@@ -18,12 +19,12 @@ export default function StatCard({
   
   const getColor = () => {
     switch (color) {
-      case 'success': return '#397852'; // Vert pastel pour amélioration/minimum
+      case 'success': return designSystem.colors.secondary[600]; // Vert pastel pour amélioration/minimum
       case 'warning': return theme.colors.warning;
-      case 'error': return '#C0392B'; // Rouge pastel pour dégradation/maximum
+      case 'error': return designSystem.colors.health.danger.main; // Rouge pastel pour dégradation/maximum
       case 'info': return theme.colors.info;
-      case 'improvement': return '#397852'; // Vert pastel
-      case 'decline': return '#C0392B'; // Rouge pastel
+      case 'improvement': return designSystem.colors.secondary[600]; // Vert pastel
+      case 'decline': return designSystem.colors.health.danger.main; // Rouge pastel
       default: return theme.colors.primary;
     }
   };
@@ -53,8 +54,8 @@ export default function StatCard({
       <Card.Content style={styles.content}>
         <View style={styles.header}>
           <View style={[styles.iconContainer, { 
-            backgroundColor: (color === 'success' || color === 'improvement') ? '#D7F4E0' : 
-                            (color === 'error' || color === 'decline') ? '#FBE3DF' : 
+            backgroundColor: (color === 'success' || color === 'improvement') ? designSystem.colors.secondary[100] : 
+                            (color === 'error' || color === 'decline') ? designSystem.colors.health.danger.light : 
                             getColor() + '15' 
           }]}>
             <MaterialCommunityIcons name={icon} size={28} color={getColor()} />
@@ -95,10 +96,10 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // bordure beige chaude
-    shadowColor: '#5E402F', // ombre douce chaude
+    borderColor: designSystem.colors.border.light, // bordure beige chaude
+    shadowColor: designSystem.colors.neutral[700], // ombre douce chaude
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.07,
     shadowRadius: 12,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 6,
     fontWeight: '500',
   },
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     lineHeight: 44,
   },
   subtitle: {
-    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Color 03 - Noir pour meilleure lisibilité
     fontWeight: '400',
   },
 });

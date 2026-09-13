@@ -114,10 +114,10 @@ export default function HistoryOverview({ onDataChange }) {
   };
 
   const getBristolColor = (bristol) => {
-    if (bristol <= 2) return '#C16046';
-    if (bristol <= 4) return '#C16046';
-    if (bristol <= 5) return '#E6E0DA';
-    return '#312620';
+    if (bristol <= 2) return designSystem.colors.primary[500];
+    if (bristol <= 4) return designSystem.colors.primary[500];
+    if (bristol <= 5) return designSystem.colors.border.light;
+    return designSystem.colors.text.primary;
   };
 
   const handlePreviousIbdisk = () => {
@@ -194,9 +194,9 @@ export default function HistoryOverview({ onDataChange }) {
                   {item.entryType === 'stool' && (
                     <View style={styles.stoolItem}>
                       <View style={[styles.stoolMain, item.hasBlood && styles.stoolMainWithBlood]}>
-                        <View style={[styles.bristolBadge, { backgroundColor: item.bloodOnly ? '#C0392B' : getBristolColor(item.bristolScale) }]}>
+                        <View style={[styles.bristolBadge, { backgroundColor: item.bloodOnly ? designSystem.colors.health.danger.main : getBristolColor(item.bristolScale) }]}>
                           {item.bloodOnly ? (
-                            <MaterialCommunityIcons name="water" size={20} color="#FFFFFF" />
+                            <MaterialCommunityIcons name="water" size={20} color={designSystem.colors.text.inverse} />
                           ) : (
                             <AppText variant="bodyLarge" style={styles.bristolNumber}>
                               {item.bristolScale}
@@ -218,10 +218,10 @@ export default function HistoryOverview({ onDataChange }) {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => stoolManagement.handleEditStool(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
+                            <MaterialCommunityIcons name="pencil" size={20} color={designSystem.colors.primary[500]} />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => stoolManagement.handleDeleteStool(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
+                            <MaterialCommunityIcons name="delete" size={20} color={designSystem.colors.health.danger.main} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -231,8 +231,8 @@ export default function HistoryOverview({ onDataChange }) {
                   {item.entryType === 'symptom' && (
                     <View style={styles.symptomItem}>
                       <View style={styles.symptomMain}>
-                        <View style={[styles.symptomIcon, { backgroundColor: '#FBE3DF' }]}>
-                          <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#C0392B" />
+                        <View style={[styles.symptomIcon, { backgroundColor: designSystem.colors.health.danger.light }]}>
+                          <MaterialCommunityIcons name="alert-circle-outline" size={24} color={designSystem.colors.health.danger.main} />
                         </View>
                         <View style={styles.symptomInfo}>
                           <AppText variant="bodyMedium" style={styles.symptomType}>
@@ -256,10 +256,10 @@ export default function HistoryOverview({ onDataChange }) {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => symptomManagement.handleEditSymptom(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
+                            <MaterialCommunityIcons name="pencil" size={20} color={designSystem.colors.primary[500]} />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => symptomManagement.handleDeleteSymptom(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
+                            <MaterialCommunityIcons name="delete" size={20} color={designSystem.colors.health.danger.main} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -269,11 +269,11 @@ export default function HistoryOverview({ onDataChange }) {
                   {item.entryType === 'note' && (
                     <View style={styles.noteItem}>
                       <View style={styles.noteMain}>
-                        <View style={[styles.noteIcon, { backgroundColor: '#FFF0DA' }]}>
+                        <View style={[styles.noteIcon, { backgroundColor: designSystem.colors.accent[100] }]}>
                           <MaterialCommunityIcons
                             name={item.sharedWithDoctor ? 'share-variant' : 'note-text-outline'}
                             size={24}
-                            color="#AD7130"
+                            color={designSystem.colors.accent[500]}
                           />
                         </View>
                         <View style={styles.noteInfo}>
@@ -295,7 +295,7 @@ export default function HistoryOverview({ onDataChange }) {
                             )}
                             {item.sharedWithDoctor && (
                               <View style={styles.noteShared}>
-                                <MaterialCommunityIcons name="share-variant" size={12} color="#C16046" />
+                                <MaterialCommunityIcons name="share-variant" size={12} color={designSystem.colors.primary[500]} />
                                 <AppText variant="labelSmall" style={styles.noteSharedText}>
                                   Partagé
                                 </AppText>
@@ -305,10 +305,10 @@ export default function HistoryOverview({ onDataChange }) {
                         </View>
                         <View style={styles.stoolActions}>
                           <TouchableOpacity onPress={() => noteManagement.handleEditNote(item)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="pencil" size={20} color="#C16046" />
+                            <MaterialCommunityIcons name="pencil" size={20} color={designSystem.colors.primary[500]} />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => noteManagement.handleDeleteNote(item.id)} style={styles.actionButton}>
-                            <MaterialCommunityIcons name="delete" size={20} color="#C0392B" />
+                            <MaterialCommunityIcons name="delete" size={20} color={designSystem.colors.health.danger.main} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -345,15 +345,15 @@ export default function HistoryOverview({ onDataChange }) {
           {calendarMode === 'score' ? (
             <>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#397852' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: designSystem.colors.secondary[600] }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#AD7130' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: designSystem.colors.accent[500] }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendSquare, { backgroundColor: '#C0392B' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: designSystem.colors.health.danger.main }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
               </View>
             </>
@@ -385,7 +385,7 @@ export default function HistoryOverview({ onDataChange }) {
                   <MaterialCommunityIcons
                     name="chevron-left"
                     size={24}
-                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#312620'}
+                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? designSystem.colors.text.tertiary : designSystem.colors.text.primary}
                   />
                 </TouchableOpacity>
 
@@ -401,7 +401,7 @@ export default function HistoryOverview({ onDataChange }) {
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={24}
-                    color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#312620'}
+                    color={currentIbdiskIndex <= 0 ? designSystem.colors.text.tertiary : designSystem.colors.text.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -561,14 +561,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   stoolMainWithBlood: {
-    borderColor: '#C0392B',
+    borderColor: designSystem.colors.health.danger.main,
     borderWidth: 2,
   },
   bristolBadge: {
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     marginRight: designSystem.spacing[3],
   },
   bristolNumber: {
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
     fontWeight: '700',
   },
   stoolInfo: {
@@ -618,11 +618,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: designSystem.borderRadius.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   calendarCard: {
     marginHorizontal: designSystem.spacing[4],
@@ -655,11 +655,11 @@ const styles = StyleSheet.create({
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   legendTextCentered: {
     color: designSystem.colors.text.primary,
@@ -689,11 +689,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   navButtonDisabled: {
     opacity: 0.5,
@@ -712,11 +712,11 @@ const styles = StyleSheet.create({
   symptomMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FBF1EE',
+    backgroundColor: designSystem.colors.primary[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#F3C9BC',
+    borderColor: designSystem.colors.primary[200],
   },
   symptomIcon: {
     width: 40,
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.tertiary,
   },
   symptomIntensity: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
@@ -764,11 +764,11 @@ const styles = StyleSheet.create({
   noteMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF9F0',
+    backgroundColor: designSystem.colors.accent[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#F0D9A8',
+    borderColor: designSystem.colors.accent[200],
   },
   noteIcon: {
     width: 40,
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.tertiary,
   },
   noteCategory: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
@@ -814,27 +814,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
   },
   noteSharedText: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '500',
   },
   aiProcessingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiProcessingText: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '600',
     fontSize: 10,
   },
@@ -842,14 +842,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D7F4E0',
+    backgroundColor: designSystem.colors.secondary[100],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiCompleteText: {
-    color: '#397852',
+    color: designSystem.colors.secondary[600],
     fontWeight: '600',
     fontSize: 10,
   },

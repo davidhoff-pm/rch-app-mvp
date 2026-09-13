@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Animated, Platform } from 'react-native';
 import AppText from './AppText';
+import designSystem from '../../theme/designSystem';
 
 const Toast = ({ visible, message, duration = 3000, onHide, type = 'success' }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -53,15 +54,15 @@ const Toast = ({ visible, message, duration = 3000, onHide, type = 'success' }) 
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#10B981';
+        return designSystem.colors.health.excellent.main;
       case 'error':
-        return '#EF4444';
+        return designSystem.colors.health.danger.main;
       case 'warning':
-        return '#AD7130';
+        return designSystem.colors.accent[500];
       case 'info':
-        return '#4A90E2';
+        return designSystem.colors.secondary[500];
       default:
-        return '#10B981';
+        return designSystem.colors.health.excellent.main;
     }
   };
 
@@ -130,11 +131,11 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 18,
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
     fontWeight: '700',
   },
   message: {
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
     fontWeight: '600',
     flex: 1,
   },

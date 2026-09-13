@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
+import designSystem from '../../theme/designSystem';
 
 // Heatmap horaire (24h) : visualise la moyenne de selles par heure sur la période
 // Hypothèses de données stools: { id, timestamp (ms), hasBlood, ... }
@@ -45,7 +46,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
 
   // Palette bleue (clair -> foncé)
   const colorForValue = (v) => {
-    if (maxAvg <= 0) return '#FFF3EE';
+    if (maxAvg <= 0) return designSystem.colors.primary[50];
     const t = Math.min(1, v / maxAvg);
     // Interpolation simple entre #FFF3EE (clair) et #C16046 (foncé)
     // t^0.6 pour un peu plus de contraste dans les faibles valeurs
@@ -99,7 +100,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
-        <MaterialCommunityIcons name="clock-outline" size={28} color="#C16046" style={{ marginRight: 12 }} />
+        <MaterialCommunityIcons name="clock-outline" size={28} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
           Répartition horaire des Selles
         </AppText>
@@ -139,7 +140,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                       width={segmentWidth}
                       height={barHeight}
                       fill={fill}
-                      stroke={hover && hover.hour === hour ? '#312620' : 'transparent'}
+                      stroke={hover && hover.hour === hour ? designSystem.colors.text.primary : 'transparent'}
                       strokeWidth={hover && hover.hour === hour ? 2 : 0}
                       onMouseMove={(e) => handleMouseMove(e, hour, avg)}
                       onMouseLeave={handleMouseLeave}
@@ -154,8 +155,8 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                 const x = (t / 24) * chartWidth;
                 return (
                   <g key={idx}>
-                    <line x1={x} y1={barHeight} x2={x} y2={barHeight + 4} stroke="#E6E0DA" strokeWidth="1" />
-                    <text x={x} y={barHeight + 18} fontSize="11" fill="#312620" textAnchor="middle" fontWeight="600">
+                    <line x1={x} y1={barHeight} x2={x} y2={barHeight + 4} stroke={designSystem.colors.border.light} strokeWidth="1" />
+                    <text x={x} y={barHeight + 18} fontSize="11" fill={designSystem.colors.text.primary} textAnchor="middle" fontWeight="600">
                       {t}
                     </text>
                   </g>
@@ -178,7 +179,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                   pointerEvents="none"
                 >
                   <View style={styles.tooltipHeader}>
-                    <MaterialCommunityIcons name="clock-outline" size={14} color="#C16046" />
+                    <MaterialCommunityIcons name="clock-outline" size={14} color={designSystem.colors.primary[500]} />
                     <AppText variant="labelSmall" style={styles.tooltipHour}>
                       {String(hover.hour).padStart(2, '0')}h - {String((hover.hour + 1) % 24).padStart(2, '0')}h
                     </AppText>
@@ -222,9 +223,9 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
       <View style={styles.legendRow}>
         <AppText variant="labelSmall" style={styles.legendLabel}>Intensité moyenne (selles/heure)</AppText>
         <View style={styles.legendScale}>
-          <View style={[styles.legendSwatch, { backgroundColor: '#FFF3EE' }]} />
-          <View style={[styles.legendSwatch, { backgroundColor: '#B4B6EF' }]} />
-          <View style={[styles.legendSwatch, { backgroundColor: '#C16046' }]} />
+          <View style={[styles.legendSwatch, { backgroundColor: designSystem.colors.primary[50] }]} />
+          <View style={[styles.legendSwatch, { backgroundColor: designSystem.colors.primary[300] }]} />
+          <View style={[styles.legendSwatch, { backgroundColor: designSystem.colors.primary[500] }]} />
         </View>
       </View>
     </AppCard>
@@ -236,10 +237,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   titleContainer: {
     flexDirection: 'row',
@@ -247,11 +248,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
   },
   subtitle: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     marginBottom: 12,
   },
   chartWrapper: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
   },
   legendRow: {
     marginTop: 8,
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legendLabel: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
   },
   legendScale: {
     flexDirection: 'row',
@@ -330,15 +331,15 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   tooltipHour: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
   },
   tooltipValue: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '600',
   },
   tooltipSub: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     opacity: 0.8,
     marginTop: 2,
   },

@@ -110,9 +110,9 @@ const CalendarSection = ({
             const score = calculatePRO2Score(dateStr, storage);
             if (score !== null) {
               hasData = true;
-              let scoreColor = '#397852'; // Faible (0-1)
-              if (score >= 4) scoreColor = '#C0392B'; // Élevé (4-6)
-              else if (score >= 2) scoreColor = '#AD7130'; // Modéré (2-3)
+              let scoreColor = designSystem.colors.secondary[600]; // Faible (0-1)
+              if (score >= 4) scoreColor = designSystem.colors.health.danger.main; // Élevé (4-6)
+              else if (score >= 2) scoreColor = designSystem.colors.accent[500]; // Modéré (2-3)
 
               cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
               cellContent = (
@@ -165,7 +165,7 @@ const CalendarSection = ({
 const styles = StyleSheet.create({
   calendarContainer: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderRadius: designSystem.borderRadius.lg,
     padding: designSystem.spacing[4],
     marginBottom: designSystem.spacing[4],
@@ -184,18 +184,18 @@ const styles = StyleSheet.create({
   calendarMonth: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     textAlign: 'center',
   },
   currentMonthBadge: {
-    backgroundColor: '#FFE9DE',
+    backgroundColor: designSystem.colors.primary[100],
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 4,
     borderRadius: designSystem.borderRadius.full,
     marginBottom: designSystem.spacing[1],
   },
   currentMonthText: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '600',
   },
   monthNavButton: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   monthNavIcon: {
     fontSize: 24,
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
   },
   calendarHeader: {
     flexDirection: 'row',
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: designSystem.spacing[2],
   },
   dayName: {
-    color: '#84776F',
+    color: designSystem.colors.text.tertiary,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.md,
   },
   dayCellWithStools: {
-    backgroundColor: '#FFE9DE',
+    backgroundColor: designSystem.colors.primary[100],
     borderRadius: designSystem.borderRadius.md,
   },
   dayCellEmpty: {
@@ -246,15 +246,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scoreInCell: {
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
     fontWeight: '700',
   },
   stoolCountLarge: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '700',
   },
   dayNumberEmpty: {
-    color: '#CBD5E1',
+    color: designSystem.colors.border.light,
   },
 });
 

@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: designSystem.colors.border.light,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
   },
   suggestionItem: {
     padding: designSystem.spacing[3],

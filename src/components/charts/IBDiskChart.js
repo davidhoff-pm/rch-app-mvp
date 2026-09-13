@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Circle, Line, Polygon, Text as SvgText, G } from 'react-native-svg';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
+import designSystem from '../../theme/designSystem';
 
 const IBDiskChart = ({ data, date }) => {
   const { width } = Dimensions.get('window');
@@ -33,9 +34,9 @@ const IBDiskChart = ({ data, date }) => {
 
   // Fonction pour obtenir la couleur selon le score
   const getScoreColor = (value) => {
-    if (value <= 3) return '#10B981'; // Vert pour les bons scores (0-3)
-    if (value <= 6) return '#AD7130'; // Orange pour les scores moyens (4-6)
-    return '#EF4444'; // Rouge pour les mauvais scores (7-10)
+    if (value <= 3) return designSystem.colors.health.excellent.main; // Vert pour les bons scores (0-3)
+    if (value <= 6) return designSystem.colors.accent[500]; // Orange pour les scores moyens (4-6)
+    return designSystem.colors.health.danger.main; // Rouge pour les mauvais scores (7-10)
   };
 
   // Calculer les points du polygone
@@ -86,7 +87,7 @@ const IBDiskChart = ({ data, date }) => {
               cx={center}
               cy={center}
               r={radius * ratio}
-              stroke="#E2E8F0"
+              stroke={designSystem.colors.border.light}
               strokeWidth="1"
               fill="none"
             />
@@ -104,7 +105,7 @@ const IBDiskChart = ({ data, date }) => {
                 y1={center}
                 x2={x2}
                 y2={y2}
-                stroke="#E2E8F0"
+                stroke={designSystem.colors.border.light}
                 strokeWidth="1"
               />
             );
@@ -114,7 +115,7 @@ const IBDiskChart = ({ data, date }) => {
           <Polygon
             points={polygonPoints}
             fill="rgba(100, 116, 139, 0.1)"
-            stroke="#84776F"
+            stroke={designSystem.colors.text.tertiary}
             strokeWidth="1"
           />
 
@@ -126,7 +127,7 @@ const IBDiskChart = ({ data, date }) => {
               cy={point.y}
               r="5"
               fill={point.color}
-              stroke="#FFFFFF"
+              stroke={designSystem.colors.text.inverse}
               strokeWidth="2"
             />
           ))}
@@ -141,7 +142,7 @@ const IBDiskChart = ({ data, date }) => {
                 y={pos.y}
                 fontSize="10"
                 fontWeight="600"
-                fill="#84776F"
+                fill={designSystem.colors.text.tertiary}
                 textAnchor="middle"
               >
                 {question.shortLabel}
@@ -177,19 +178,19 @@ const IBDiskChart = ({ data, date }) => {
         </AppText>
         <View style={styles.colorLegendItems}>
           <View style={styles.colorLegendItem}>
-            <View style={[styles.colorLegendDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.colorLegendDot, { backgroundColor: designSystem.colors.health.excellent.main }]} />
             <AppText variant="labelSmall" style={styles.colorLegendText}>
               0-3 : Très satisfaisant
             </AppText>
           </View>
           <View style={styles.colorLegendItem}>
-            <View style={[styles.colorLegendDot, { backgroundColor: '#AD7130' }]} />
+            <View style={[styles.colorLegendDot, { backgroundColor: designSystem.colors.accent[500] }]} />
             <AppText variant="labelSmall" style={styles.colorLegendText}>
               4-6 : Modérément satisfaisant
             </AppText>
           </View>
           <View style={styles.colorLegendItem}>
-            <View style={[styles.colorLegendDot, { backgroundColor: '#EF4444' }]} />
+            <View style={[styles.colorLegendDot, { backgroundColor: designSystem.colors.health.danger.main }]} />
             <AppText variant="labelSmall" style={styles.colorLegendText}>
               7-10 : Peu satisfaisant
             </AppText>
@@ -214,20 +215,20 @@ const IBDiskChart = ({ data, date }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
   },
   header: {
     marginBottom: 20,
     alignItems: 'center',
   },
   title: {
-    color: '#2D3748',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Noir pour meilleure lisibilité
     fontWeight: '600',
   },
   chartContainer: {
@@ -254,22 +255,22 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendLabel: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Noir pour meilleure lisibilité
     flex: 1,
   },
   legendValue: {
     fontWeight: '700',
   },
   colorLegendContainer: {
-    backgroundColor: '#F5EFE8',
+    backgroundColor: designSystem.colors.background.secondary,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: designSystem.colors.border.light,
   },
   colorLegendTitle: {
-    color: '#374151',
+    color: designSystem.colors.text.primary,
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -291,23 +292,23 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   colorLegendText: {
-    color: '#312620', // Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Noir pour meilleure lisibilité
     fontSize: 11,
   },
   interpretationContainer: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: designSystem.colors.secondary[50],
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: designSystem.colors.secondary[200],
   },
   interpretationTitle: {
-    color: '#059669',
+    color: designSystem.colors.secondary[600],
     fontWeight: '700',
     marginBottom: 8,
   },
   interpretationText: {
-    color: '#047857',
+    color: designSystem.colors.secondary[700],
     lineHeight: 18,
   },
 });
