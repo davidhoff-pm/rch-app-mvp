@@ -99,6 +99,9 @@ Tenir un `CHANGELOG.md` : une ligne par release, ce qui a changé.
 
 - `npm test` doit rester **vert** avant tout merge dans `main`.
 - Ajouter des tests sur la logique métier sensible (calcul du score, observance).
+- Avant chaque build natif : `npx expo-doctor` doit afficher 18/18 checks OK. S'il signale
+  des versions à corriger, lancer `npx expo install --fix` (aligne les paquets Expo/React Native
+  sur le SDK installé), puis `npm test`.
 - (Optionnel mais recommandé) CI GitHub Actions qui lance `npm test` + `expo export` à
   chaque PR : bloque le merge si quelque chose casse. Voir `.github/workflows/ci.yml`.
 
