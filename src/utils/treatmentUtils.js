@@ -562,23 +562,19 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
   const schemas = getTherapeuticSchemas();
   const dateStr = formatLocalDate(dateTaken);
 
-  console.log('[recordIntake] medicationId:', medicationId, 'doses:', doses, 'dateStr:', dateStr);
 
   // Trouver le schéma actif pour ce médicament
   const activeSchema = schemas.find(s =>
     s.medicationId === medicationId && !s.endDate
   );
 
-  console.log('[recordIntake] activeSchema found:', !!activeSchema, 'schemaId:', activeSchema?.id);
 
   // Chercher si une entrée existe déjà pour ce médicament ce jour (dans LE MÊME tableau!)
   const existingIntake = intakes.find(i => i.medicationId === medicationId && i.dateTaken === dateStr);
 
   if (existingIntake) {
-    console.log('[recordIntake] Found existing intake, current doses:', existingIntake.doses, 'schemaId:', existingIntake.schemaId);
     // Incrémenter les doses
     existingIntake.doses += doses;
-    console.log('[recordIntake] After increment, doses:', existingIntake.doses);
     existingIntake.timestamp = dateTaken.getTime(); // Mettre à jour timestamp
 
     // Mettre à jour le schemaId si c'est une prise via schéma
@@ -587,7 +583,6 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
     }
 
     saveIntakes(intakes);
-    console.log('[recordIntake] Saved to storage, intakes array:', intakes);
 
     // Mettre à jour l'observance
     if (activeSchema) {

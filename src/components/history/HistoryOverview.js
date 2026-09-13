@@ -44,7 +44,7 @@ const bristolDescriptions = {
  * Historique + calendrier + IBDisk, rendus dans l'écran Statistiques.
  * Composant autonome : gère son propre chargement de données et ses modales d'édition.
  */
-export default function HistoryOverview() {
+export default function HistoryOverview({ onDataChange }) {
   const theme = useTheme();
 
   const [historyFilter, setHistoryFilter] = useState('stools'); // 'stools' | 'symptoms' | 'notes'
@@ -65,9 +65,17 @@ export default function HistoryOverview() {
   const historyData = useHistoryData();
   const { stools, ibdiskHistory, symptoms, notes, loadHistoryData } = historyData;
 
-  const stoolManagement = useStoolManagement({ onDataChange: loadHistoryData });
-  const symptomManagement = useSymptomManagement({ onDataChange: loadHistoryData, showToast });
-  const noteManagement = useNoteManagement({ onDataChange: loadHistoryData, showToast });
+  // Après une édition/suppression ici, on recharge la liste locale ET on prévient
+  // l'écran parent (StatsScreen) pour qu'il recalcule ses graphiques, à la place
+  // de l'ancien polling toutes les 2 secondes.
+  const handleDataChange = React.useCallback(() => {
+    loadHistoryData();
+    onDataChange?.();
+  }, [loadHistoryData, onDataChange]);
+
+  const stoolManagement = useStoolManagement({ onDataChange: handleDataChange });
+  const symptomManagement = useSymptomManagement({ onDataChange: handleDataChange, showToast });
+  const noteManagement = useNoteManagement({ onDataChange: handleDataChange, showToast });
 
   useFocusEffect(
     React.useCallback(() => {

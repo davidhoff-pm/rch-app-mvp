@@ -7,7 +7,6 @@ import storage from './storage';
  * @param {string} scenario - Type de scénario : 'improvement', 'stable', 'decline', 'realistic'
  */
 export const generateTestData = (days = 30, scenario = 'realistic') => {
-  console.log(`🎲 Génération de ${days} jours de données (scénario: ${scenario})...`);
   
   const now = new Date();
   const scores = [];
@@ -214,12 +213,6 @@ export const injectTestData = (days = 30, scenario = 'realistic') => {
   storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
   storage.set('psccaiHistory', JSON.stringify(psccaiHistory));
 
-  console.log('✅ Données de test générées et sauvegardées :');
-  console.log(`  - ${scores.length} scores`);
-  console.log(`  - ${stools.length} selles`);
-  console.log(`  - ${Object.keys(surveys).length} bilans quotidiens`);
-  console.log(`  - ${ibdiskHistory.length} questionnaires IBDisk`);
-  console.log(`  - ${psccaiHistory.length} questionnaires P-SCCAI`);
 
   return { scores, stools, surveys, ibdiskHistory, psccaiHistory };
 };
@@ -235,7 +228,6 @@ export const clearTestData = () => {
   storage.set('psccaiHistory', '[]');
   storage.delete('psccaiLastUsed');
 
-  console.log('🗑️ Toutes les données de test ont été effacées');
 };
 
 /**
@@ -258,7 +250,6 @@ export const generateScenarioData = (scenarioName) => {
  * @param {number} count - Nombre de questionnaires à générer
  */
 export const generateIBDiskTestData = (count = 3) => {
-  console.log(`🎲 Génération de ${count} questionnaires IBDisk de test...`);
   
   const now = new Date();
   const ibdiskHistory = [];
@@ -278,7 +269,6 @@ export const generateIBDiskTestData = (count = 3) => {
       default: baseScore = Math.floor(Math.random() * 8) + 1;
     }
     
-    console.log(`📊 Génération questionnaire ${i + 1} pour ${dateStr} (baseScore: ${baseScore})`);
     
     const ibdiskAnswers = generateIBDiskAnswers(baseScore);
     
@@ -290,11 +280,9 @@ export const generateIBDiskTestData = (count = 3) => {
     });
   }
   
-  console.log('💾 Sauvegarde des questionnaires IBDisk...');
   // Sauvegarder les questionnaires IBDisk
   storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
   
-  console.log(`✅ ${ibdiskHistory.length} questionnaires IBDisk générés et sauvegardés`);
   
   return ibdiskHistory;
 };

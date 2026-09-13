@@ -136,7 +136,6 @@ const extractText = (field) => {
  */
 export const parseRSSFeed = (xmlText) => {
   try {
-    console.log('📰 Parsing du flux RSS avec fast-xml-parser...');
 
     const parser = new XMLParser(parserOptions);
     const result = parser.parse(xmlText);
@@ -145,7 +144,6 @@ export const parseRSSFeed = (xmlText) => {
     const items = result?.rss?.channel?.item || [];
     const itemsArray = Array.isArray(items) ? items : [items];
 
-    console.log(`📚 ${itemsArray.length} article(s) trouvé(s) dans le flux RSS`);
 
     // Transformer les items en format utilisable
     const articles = itemsArray.slice(0, 3).map((item) => {
@@ -163,7 +161,6 @@ export const parseRSSFeed = (xmlText) => {
       };
     });
 
-    console.log(`✅ ${articles.length} article(s) parsé(s) avec succès`);
     return articles.filter((article) => article.title && article.link);
   } catch (error) {
     console.error('❌ Erreur lors du parsing RSS:', error);
@@ -181,12 +178,10 @@ const getRawXML = (responseText) => {
 
   // Vérifier si c'est une réponse encodée en Base64
   if (responseText.trim().startsWith(base64Prefix)) {
-    console.log('🔓 Décodage Base64 détecté...');
 
     try {
       const base64Data = responseText.trim().substring(base64Prefix.length);
       const decodedXML = atob(base64Data);
-      console.log('✅ Décodage Base64 réussi');
       return decodedXML;
     } catch (e) {
       console.error('❌ Erreur lors du décodage Base64:', e);
@@ -204,7 +199,6 @@ const getRawXML = (responseText) => {
  */
 export const fetchRSSFeed = async () => {
   try {
-    console.log('🔍 Tentative de récupération du flux RSS AFA...');
 
     // Mode web : utiliser des proxies CORS
     if (typeof window !== 'undefined') {
@@ -218,7 +212,6 @@ export const fetchRSSFeed = async () => {
 
       for (let i = 0; i < proxies.length; i++) {
         try {
-          console.log(`🔄 Tentative avec proxy ${i + 1}/${proxies.length}...`);
 
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
@@ -245,7 +238,6 @@ export const fetchRSSFeed = async () => {
             const articles = parseRSSFeed(rawXML);
 
             if (articles.length > 0) {
-              console.log(`✅ ${articles.length} article(s) récupéré(s) avec proxy ${i + 1}`);
               return articles;
             } else {
               console.warn(`⚠️ Proxy ${i + 1} : aucun article trouvé, essai du suivant...`);
@@ -267,7 +259,6 @@ export const fetchRSSFeed = async () => {
     }
 
     // Mode React Native : retourner des données de test
-    console.log('📱 Mode React Native : utilisation des données de test');
     return getMockRSSData();
   } catch (error) {
     console.error('❌ Erreur lors de la récupération du RSS:', error);

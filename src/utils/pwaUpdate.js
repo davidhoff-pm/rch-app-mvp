@@ -2,7 +2,6 @@
 (function() {
   // Vérifier si c'est une PWA installée
   if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('PWA détectée - Activation du mode mise à jour forcée');
     
     // Forcer le rechargement sans cache toutes les 30 secondes si nécessaire
     let lastCheck = localStorage.getItem('lastVersionCheck') || 0;
@@ -22,10 +21,8 @@
         }
       }).then(() => {
         // Si la requête réussit, recharger sans cache
-        console.log('Nouvelle version détectée - Rechargement...');
         window.location.reload(true);
       }).catch(() => {
-        console.log('Pas de nouvelle version');
       });
     }
   }

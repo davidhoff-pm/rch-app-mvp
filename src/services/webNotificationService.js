@@ -26,13 +26,11 @@ export function areNotificationsSupported() {
  */
 export async function requestNotificationPermissions() {
   if (!areNotificationsSupported()) {
-    console.log('❌ Notifications non supportées par ce navigateur');
     return false;
   }
 
   try {
     const permission = await Notification.requestPermission();
-    console.log('🔐 Permission de notification:', permission);
     return permission === 'granted';
   } catch (error) {
     console.error('❌ Erreur lors de la demande de permission:', error);
@@ -77,12 +75,10 @@ function isEveningCheckinComplete() {
  */
 export function showWebNotification(title, body, data = {}) {
   if (!areNotificationsSupported()) {
-    console.log('❌ Notifications non supportées');
     return;
   }
 
   if (Notification.permission !== 'granted') {
-    console.log('❌ Permission de notification non accordée');
     return;
   }
 
@@ -106,7 +102,6 @@ export function showWebNotification(title, body, data = {}) {
       }
     };
 
-    console.log('✅ Notification web affichée');
   } catch (error) {
     console.error('❌ Erreur lors de l\'affichage de la notification:', error);
   }
@@ -142,7 +137,6 @@ export async function sendTestBilanNotification() {
  * Envoyer une notification de test
  */
 export async function sendTestNotification() {
-  console.log('🧪 Test de notification web...');
   
   const hasPermission = await requestNotificationPermissions();
   
@@ -193,7 +187,6 @@ export function getNotificationSettings() {
 export function saveNotificationSettings(settings) {
   try {
     storage.set('notificationSettings', JSON.stringify(settings));
-    console.log('💾 Paramètres de notification sauvegardés');
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des paramètres:', error);
   }
@@ -203,7 +196,6 @@ export function saveNotificationSettings(settings) {
  * Activer les notifications
  */
 export async function enableNotifications() {
-  console.log('🔔 Activation des notifications web...');
   
   const hasPermission = await requestNotificationPermissions();
   
@@ -225,7 +217,6 @@ export async function enableNotifications() {
  * Désactiver les notifications
  */
 export function disableNotifications() {
-  console.log('🔕 Désactivation des notifications web...');
   
   const settings = getNotificationSettings();
   settings.enabled = false;
@@ -402,7 +393,6 @@ if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
     const settings = getNotificationSettings();
     if (settings.enabled) {
-      console.log('🔄 Initialisation des rappels de notification...');
       scheduleAllReminders();
     }
   });

@@ -32,7 +32,6 @@ export const requestNotificationPermission = async () => {
 
   try {
     const permission = await Notification.requestPermission();
-    console.log('Permission de notification:', permission);
     return permission;
   } catch (error) {
     console.error('Erreur lors de la demande de permission:', error);
@@ -45,27 +44,22 @@ export const requestNotificationPermission = async () => {
  */
 export const registerServiceWorker = async () => {
   if (!isServiceWorkerSupported()) {
-    console.log('Service Workers non supportés dans ce navigateur');
     return null;
   }
 
   try {
-    console.log('🔄 Enregistrement du Service Worker...');
 
     const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, {
       scope: '/',
     });
 
-    console.log('✅ Service Worker enregistré avec succès');
 
     // Vérifier s'il y a une mise à jour
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
-      console.log('🔄 Nouvelle version du Service Worker détectée');
 
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('✨ Nouvelle version disponible ! Rechargez pour mettre à jour.');
 
           // Notifier l'utilisateur qu'une mise à jour est disponible
           if (window.confirm('Une nouvelle version de l\'application est disponible. Voulez-vous recharger ?')) {
@@ -74,11 +68,6 @@ export const registerServiceWorker = async () => {
           }
         }
       });
-    });
-
-    // Écouter les changements de contrôleur
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('🔄 Service Worker mis à jour');
     });
 
     return registration;
@@ -101,7 +90,6 @@ export const unregisterServiceWorker = async () => {
 
     if (registration) {
       const success = await registration.unregister();
-      console.log('Service Worker désenregistré:', success);
       return success;
     }
 
@@ -143,7 +131,6 @@ export const canInstallPWA = () => {
  */
 export const showInstallPrompt = async () => {
   if (!deferredPrompt) {
-    console.log('Prompt d\'installation non disponible');
     return false;
   }
 
@@ -153,7 +140,6 @@ export const showInstallPrompt = async () => {
 
     // Attendre la réponse de l'utilisateur
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`Choix de l'utilisateur: ${outcome}`);
 
     // Réinitialiser le prompt
     deferredPrompt = null;
@@ -170,7 +156,6 @@ export const showInstallPrompt = async () => {
  */
 export const initInstallPromptListener = () => {
   window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('📥 Prompt d\'installation PWA disponible');
 
     // Empêcher le prompt automatique
     e.preventDefault();
@@ -183,7 +168,6 @@ export const initInstallPromptListener = () => {
   });
 
   window.addEventListener('appinstalled', () => {
-    console.log('✅ PWA installée avec succès !');
     deferredPrompt = null;
 
     // Déclencher un événement personnalisé
@@ -219,7 +203,6 @@ export const sendTestNotification = async () => {
       requireInteraction: false,
     });
 
-    console.log('✅ Notification de test envoyée');
     return true;
   } catch (error) {
     console.error('❌ Erreur lors de l\'envoi de la notification:', error);
@@ -231,7 +214,6 @@ export const sendTestNotification = async () => {
  * Initialise le service worker et les fonctionnalités PWA
  */
 export const initPWA = async () => {
-  console.log('🚀 Initialisation PWA...');
 
   // Initialiser l'écouteur pour le prompt d'installation
   initInstallPromptListener();
@@ -241,7 +223,6 @@ export const initPWA = async () => {
 
   // Vérifier le statut standalone
   const standalone = isStandalone();
-  console.log('Mode standalone:', standalone);
 
   return {
     registration,
