@@ -126,6 +126,19 @@ export async function sendTestStoolNotification() {
 }
 
 /**
+ * Envoyer une notification de test bilan du jour (pour dev)
+ */
+export async function sendTestBilanNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+  showWebNotification(
+    '📝 Bilan du jour [TEST]',
+    "N'oubliez pas de saisir vos selles et votre bilan du jour.",
+    { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' }
+  );
+}
+
+/**
  * Envoyer une notification de test
  */
 export async function sendTestNotification() {
