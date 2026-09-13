@@ -6,14 +6,14 @@ import {
   getMedications,
   getDoses,
   getNextIntake,
-  isIntervalIntakeDone,
   getTreatmentReminderTimes,
 } from '../utils/treatmentUtils';
 import { isTodayCheckinComplete } from '../utils/wellbeingUtils';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -22,6 +22,44 @@ Notifications.setNotificationHandler({
 const NOTIFICATION_IDS = {
   STOOL_REMINDER: 'stool-reminder-evening',
 };
+
+// Canal Android obligatoire (Android 8+) : sans canal, les notifications planifiées
+// sont livrées avec une importance par défaut ou pas du tout. Créé une seule fois.
+export const ANDROID_CHANNEL_ID = 'rappels';
+let channelReady = false;
+
+export async function ensureNotificationChannel() {
+  if (Platform.OS !== 'android' || channelReady) return;
+  try {
+    await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+      name: 'Rappels',
+      description: 'Rappels de traitement et de bilan du jour',
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+    });
+    channelReady = true;
+  } catch (error) {
+    console.error('❌ Erreur création du canal de notification:', error);
+  }
+}
+
+// Constructeurs de triggers. Depuis le SDK 52, expo-notifications exige un champ
+// `type` explicite : sans lui, le trigger est ignoré et la notification part
+// immédiatement au lieu de l'heure demandée.
+const { SchedulableTriggerInputTypes } = Notifications;
+
+export function dailyTrigger(hour, minute) {
+  return { type: SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: ANDROID_CHANNEL_ID };
+}
+
+export function dateTrigger(date) {
+  return { type: SchedulableTriggerInputTypes.DATE, date, channelId: ANDROID_CHANNEL_ID };
+}
+
+export function secondsTrigger(seconds) {
+  return { type: SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, channelId: ANDROID_CHANNEL_ID };
+}
 
 /**
  * Demander les permissions pour les notifications
@@ -90,6 +128,7 @@ export async function scheduleStoolReminder(hour, minute) {
     const settings = getNotificationSettings();
     if (!settings.enabled || !settings.stoolReminder.enabled) return null;
 
+    await ensureNotificationChannel();
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: '📝 Bilan du jour',
@@ -97,7 +136,7 @@ export async function scheduleStoolReminder(hour, minute) {
         data: { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' },
         sound: true,
       },
-      trigger: { hour, minute, repeats: true },
+      trigger: dailyTrigger(hour, minute),
       identifier: NOTIFICATION_IDS.STOOL_REMINDER,
     });
     return notificationId;
@@ -162,6 +201,7 @@ export async function scheduleTreatmentReminders() {
   if (!settings.enabled || settings.treatmentRemindersEnabled === false) return;
 
   await cancelTreatmentReminders();
+  await ensureNotificationChannel();
 
   const schemas = getActiveTherapeuticSchemas();
   const medications = getMedications();
@@ -197,7 +237,7 @@ export async function scheduleTreatmentReminders() {
               data: { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
               sound: true,
             },
-            trigger: { hour, minute, repeats: true },
+            trigger: dailyTrigger(hour, minute),
             identifier: id,
           });
         } catch (e) {
@@ -205,14 +245,16 @@ export async function scheduleTreatmentReminders() {
         }
       }
     } else if (schema.frequency.type === 'interval') {
-      if (isIntervalIntakeDone(schema)) continue;
+      // NB : ne pas filtrer sur isIntervalIntakeDone() ici. Cette fonction renvoie
+      // true dès que la prochaine prise est dans le futur, c'est-à-dire exactement
+      // le cas où il faut planifier le rappel du jour J et le rappel de stock.
       const { nextDate } = getNextIntake(schema);
       const now = new Date();
 
       const { hour, minute } = parseTime(times.interval || '08:00');
 
-      // Rappel le jour de la prise
-      if (nextDate >= now) {
+      // Rappel le jour de la prise (si l'heure du rappel n'est pas déjà passée)
+      {
         const triggerDate = new Date(nextDate);
         triggerDate.setHours(hour, minute, 0, 0);
         if (triggerDate > now) {
@@ -225,7 +267,7 @@ export async function scheduleTreatmentReminders() {
                 data: { type: 'TREATMENT_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
                 sound: true,
               },
-              trigger: { date: triggerDate },
+              trigger: dateTrigger(triggerDate),
               identifier: id,
             });
           } catch (e) {
@@ -251,7 +293,7 @@ export async function scheduleTreatmentReminders() {
                 data: { type: 'STOCK_REMINDER', action: 'OPEN_TREATMENT', schemaId: schema.id },
                 sound: true,
               },
-              trigger: { date: stockDate },
+              trigger: dateTrigger(stockDate),
               identifier: stockId,
             });
           } catch (e) {
@@ -371,6 +413,7 @@ export async function sendTestStoolNotification() {
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) throw new Error('Permission refusée.');
 
+  await ensureNotificationChannel();
   await Notifications.scheduleNotificationAsync({
     content: {
       title: '📝 Selles du jour [TEST]',
@@ -378,7 +421,26 @@ export async function sendTestStoolNotification() {
       data: { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' },
       sound: true,
     },
-    trigger: { seconds: 5 },
+    trigger: secondsTrigger(5),
+  });
+}
+
+/**
+ * Envoyer une notification de test "bilan du jour" (dans 5s, pour dev)
+ */
+export async function sendTestBilanNotification() {
+  const hasPermission = await requestNotificationPermissions();
+  if (!hasPermission) throw new Error('Permission refusée.');
+
+  await ensureNotificationChannel();
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📝 Bilan du jour [TEST]',
+      body: "N'oubliez pas de saisir vos selles et votre bilan du jour.",
+      data: { type: 'STOOL_REMINDER', action: 'OPEN_STOOL_BATCH' },
+      sound: true,
+    },
+    trigger: secondsTrigger(5),
   });
 }
 
@@ -414,6 +476,7 @@ export async function sendTestNotification() {
       }
     }
     
+    await ensureNotificationChannel();
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: '🧪 Notification de test',
@@ -421,9 +484,7 @@ export async function sendTestNotification() {
         data: { type: 'TEST' },
         sound: true,
       },
-      trigger: {
-        seconds: 2,
-      },
+      trigger: secondsTrigger(2),
     });
     
     console.log('✅ Notification de test planifiée avec ID:', notificationId);

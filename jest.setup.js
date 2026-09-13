@@ -35,10 +35,25 @@ jest.mock('expo-haptics', () => ({
 // Mock expo-notifications
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
-  scheduleNotificationAsync: jest.fn(),
-  cancelAllScheduledNotificationsAsync: jest.fn(),
-  getPermissionsAsync: jest.fn(),
-  requestPermissionsAsync: jest.fn(),
+  scheduleNotificationAsync: jest.fn(async () => 'mock-id'),
+  cancelScheduledNotificationAsync: jest.fn(async () => {}),
+  cancelAllScheduledNotificationsAsync: jest.fn(async () => {}),
+  getAllScheduledNotificationsAsync: jest.fn(async () => []),
+  setNotificationChannelAsync: jest.fn(async () => {}),
+  getPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  SchedulableTriggerInputTypes: {
+    CALENDAR: 'calendar',
+    DAILY: 'daily',
+    WEEKLY: 'weekly',
+    MONTHLY: 'monthly',
+    YEARLY: 'yearly',
+    DATE: 'date',
+    TIME_INTERVAL: 'timeInterval',
+  },
+  AndroidImportance: { MAX: 5, HIGH: 4, DEFAULT: 3, LOW: 2, MIN: 1 },
 }));
 
 // Suppress console warnings during tests
