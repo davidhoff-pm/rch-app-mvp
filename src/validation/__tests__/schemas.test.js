@@ -305,11 +305,11 @@ describe('Schemas de validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('devrait rejeter une valeur de mood hors échelle (0-5)', () => {
+    it('devrait rejeter une valeur de mood hors échelle (0-3)', () => {
       const invalidCheckin = {
         date: '2025-11-07',
         timestamp: 1699999999999,
-        mood: 6,
+        mood: 4,
         sleep: 2,
         fatigue: 1,
       };

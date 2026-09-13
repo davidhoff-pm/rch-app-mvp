@@ -165,3 +165,23 @@ export function savePSCCAIResult(result, { isEdit = false } = {}) {
     storage.set('psccaiLastUsed', String(Date.now()));
   }
 }
+
+/**
+ * Supprime un résultat P-SCCAI par date (YYYY-MM-DD). Recalcule le cooldown
+ * hebdomadaire (psccaiLastUsed) à partir du bilan restant le plus récent, pour
+ * que le questionnaire redevienne disponible si le bilan supprimé était le
+ * dernier en date (sinon le cooldown du bilan restant continue de s'appliquer).
+ */
+export function deletePSCCAIResult(date) {
+  const historyJson = storage.getString('psccaiHistory');
+  const history = historyJson ? JSON.parse(historyJson) : [];
+  const remaining = history.filter(h => h.date !== date);
+  storage.set('psccaiHistory', JSON.stringify(remaining));
+
+  if (remaining.length > 0) {
+    const mostRecentTimestamp = Math.max(...remaining.map(h => h.timestamp || 0));
+    storage.set('psccaiLastUsed', String(mostRecentTimestamp));
+  } else {
+    storage.delete('psccaiLastUsed');
+  }
+}

@@ -36,9 +36,9 @@ export const DailySurveySchema = z.object({
 export const WellbeingCheckinSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
   timestamp: z.number().int().positive('Timestamp doit être positif'),
-  mood: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
-  sleep: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
-  fatigue: z.union([z.number().int().min(0).max(5, 'Score doit être entre 0 et 5'), z.null()]),
+  mood: z.union([z.number().int().min(0).max(3, 'Score doit être entre 0 et 3'), z.null()]),
+  sleep: z.union([z.number().int().min(0).max(3, 'Score doit être entre 0 et 3'), z.null()]),
+  fatigue: z.union([z.number().int().min(0).max(3, 'Score doit être entre 0 et 3'), z.null()]),
 }).strict();
 
 /**

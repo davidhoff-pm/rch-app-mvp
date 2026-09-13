@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
+import { Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import storage from '../utils/storage';
+import { refreshDailyNotifications } from '../services/notificationService';
 
 const STORAGE_KEY = 'trackingMode';
 const SCORE_THRESHOLD = 1;
@@ -21,6 +23,12 @@ export function useTrackingMode() {
   const setMode = useCallback((newMode) => {
     storage.set(STORAGE_KEY, newMode);
     setModeState(newMode);
+    // Le passage en rémission doit annuler immédiatement le rappel du soir
+    // (selles + bilan léger) déjà planifié côté OS, sans attendre le prochain
+    // focus de l'app.
+    if (Platform.OS !== 'web') {
+      refreshDailyNotifications();
+    }
   }, []);
 
   const isRemission = mode === 'remission';

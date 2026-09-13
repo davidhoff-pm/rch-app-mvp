@@ -14,14 +14,14 @@ et leur possible implication sur les symptômes.
 - **IBD-Disk** (`src/screens/IBDiskQuestionnaireScreen.js`) couvre déjà sommeil/énergie/stress,
   mais en questionnaire complet (10 dimensions, échelle 0-10) avec un cooldown de 30 jours.
   Cette nouvelle feature est **complémentaire**, pas un remplacement : granularité quotidienne
-  très légère (échelle 0-5) vs bilan mensuel approfondi.
+  très légère (échelle 0-3) vs bilan mensuel approfondi.
 - **`src/utils/tagDefinitions.js`** contient déjà 39 tags (25 aggravants / 14 protecteurs,
   catégories alimentation/comportement) avec un `getTagsForPrompt()` qui suggère un usage IA
   externe désormais retiré (branche `feat/retrait-ia-externe`). **Ce fichier n'est importé
   nulle part dans l'app actuellement (code mort)**. Il sert de **base de contenu par défaut**
   pour les suggestions de chips, pas de système à réactiver tel quel.
 - Le suivi symptômes existant a déjà une entrée prédéfinie "Fatigue" (intensité 0-5) —
-  distincte du nouvel indicateur "fatigue" 0-5 du questionnaire léger. Pas de fusion prévue,
+  distincte du nouvel indicateur "fatigue" 0-3 du questionnaire léger. Pas de fusion prévue,
   mais à garder en tête pour ne pas confondre l'utilisateur dans l'UI/les graphiques.
 
 ## 3. Décisions actées
@@ -34,7 +34,7 @@ et leur possible implication sur les symptômes.
 | Intensité | Pas de compteur/quantité — un tap = présent, un re-tap = absent. |
 | Nombre de chips | Suggestions pré-remplies (≈10-15 issues des tags existants) activables/désactivables, création libre illimitée par l'utilisateur, mais **affichage simultané limité (~8)** avec écran de gestion pour réordonner/archiver. |
 | Rattrapage | Aucun — le questionnaire ne concerne que le jour courant, pas de saisie rétroactive (anti-biais mémoire). Contrairement aux selles/scores existants qui sont éditables dans l'historique. |
-| Emplacement UI | Carte d'entrée sur `HomeScreen` et l'onglet `Bilan` (même pattern que P-SCCAI/IBDisk : carte → tap → formulaire dédié `WellbeingCheckinScreen`), avec un slider 0-5 par sous-partie. |
+| Emplacement UI | Carte d'entrée sur `HomeScreen` et l'onglet `Bilan` (même pattern que P-SCCAI/IBDisk : carte → tap → formulaire dédié `WellbeingCheckinScreen`), avec un sélecteur au tap (0-3) par sous-partie. |
 | Notification | **Fusionnée** avec le rappel de selles existant (`stoolReminder`, 20h par défaut) — un seul rappel du soir qui renvoie vers un flow regroupant selles + questionnaire léger. |
 | Configuration | Toggle global (désactiver toute la feature) + toggles indépendants par sous-partie : humeur / sommeil / fatigue / chips, dans `SettingsScreen`. |
 | Export PDF | Inclus dès la V1 dans `ExportScreen.js`, avec disclaimer explicite pour les chips (cf. §6). |
@@ -50,9 +50,9 @@ Nouvelle clé de storage : `wellbeingCheckins` (array), cohérente avec le patte
 {
   date: "YYYY-MM-DD",       // jour concerné, = jour de saisie (pas de rattrapage)
   timestamp: 1234567890,    // horodatage de la saisie
-  mood: 0-5 | null,   // null si sous-partie désactivée par l'utilisateur
-  sleep: 0-5 | null,
-  fatigue: 0-5 | null,
+  mood: 0-3 | null,   // null si sous-partie désactivée par l'utilisateur
+  sleep: 0-3 | null,
+  fatigue: 0-3 | null,
 }
 ```
 
