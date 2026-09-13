@@ -111,7 +111,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
           <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#C0392B" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={designSystem.colors.health.danger.main} />
               <AppText variant="h2" style={styles.modalTitle}>
                 {initialData ? 'Modifier le symptôme' : 'Nouveau symptôme'}
               </AppText>
@@ -173,7 +173,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 onValueChange={setIntensity}
                 style={styles.slider}
                 minimumTrackTintColor={getIntensityColorHex(intensity)}
-                maximumTrackTintColor="#E6E0DA"
+                maximumTrackTintColor={designSystem.colors.border.light}
                 thumbTintColor={getIntensityColorHex(intensity)}
               />
               <View style={styles.intensityLabels}>
@@ -243,17 +243,17 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
 
 // Helpers pour les couleurs d'intensité
 const getIntensityColor = (intensity) => {
-  if (intensity === 0) return { color: '#A3A3A3' };
-  if (intensity <= 2) return { color: '#397852' };
-  if (intensity <= 3) return { color: '#AD7130' };
-  return { color: '#C0392B' };
+  if (intensity === 0) return { color: designSystem.colors.text.tertiary };
+  if (intensity <= 2) return { color: designSystem.colors.secondary[600] };
+  if (intensity <= 3) return { color: designSystem.colors.accent[500] };
+  return { color: designSystem.colors.health.danger.main };
 };
 
 const getIntensityColorHex = (intensity) => {
-  if (intensity === 0) return '#A3A3A3';
-  if (intensity <= 2) return '#397852';
-  if (intensity <= 3) return '#AD7130';
-  return '#C0392B';
+  if (intensity === 0) return designSystem.colors.text.tertiary;
+  if (intensity <= 2) return designSystem.colors.secondary[600];
+  if (intensity <= 3) return designSystem.colors.accent[500];
+  return designSystem.colors.health.danger.main;
 };
 
 const styles = StyleSheet.create({
@@ -307,15 +307,15 @@ const styles = StyleSheet.create({
   suggestionsContainer: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E6E0DA',
-    backgroundColor: '#FFFFFF',
+    borderColor: designSystem.colors.border.light,
+    backgroundColor: designSystem.colors.background.tertiary,
     overflow: 'hidden',
     maxHeight: 200,
   },
   suggestionItem: {
     padding: designSystem.spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: '#E6E0DA',
+    borderBottomColor: designSystem.colors.border.light,
   },
   suggestionText: {
     color: designSystem.colors.text.primary,

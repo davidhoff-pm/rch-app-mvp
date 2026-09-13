@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import AppText from '../ui/AppText';
+import designSystem from '../../theme/designSystem';
 
 const TrendChart = ({ data, labels, period }) => {
   const { width } = Dimensions.get('window');
@@ -28,9 +29,9 @@ const TrendChart = ({ data, labels, period }) => {
       const y = padding.top + innerHeight - ((value - minScore) / range) * innerHeight;
 
       // Déterminer la couleur selon le score - Palette unifiée
-      let color = '#C16046'; // Color 01 - Principal
-      if (value >= 7) color = '#312620'; // Color 03 - Noir pour alertes
-      else if (value >= 4) color = '#C16046'; // Color 01 avec opacité différente
+      let color = designSystem.colors.primary[500]; // Color 01 - Principal
+      if (value >= 7) color = designSystem.colors.text.primary; // Color 03 - Noir pour alertes
+      else if (value >= 4) color = designSystem.colors.primary[500]; // Color 01 avec opacité différente
 
       return { x, y, value, color, index };
     }).filter(p => p !== null);
@@ -109,7 +110,7 @@ const TrendChart = ({ data, labels, period }) => {
                 y1={line.y}
                 x2={chartWidth - padding.right}
                 y2={line.y}
-                stroke="#E6E0DA"
+                stroke={designSystem.colors.border.light}
                 strokeWidth="1"
                 strokeDasharray="4 4"
               />
@@ -117,7 +118,7 @@ const TrendChart = ({ data, labels, period }) => {
                 x={padding.left - 10}
                 y={line.y + 4}
                 fontSize="10"
-                fill="#D4D4D8"
+                fill={designSystem.colors.neutral[300]}
                 textAnchor="end"
               >
                 {line.value}
@@ -129,8 +130,8 @@ const TrendChart = ({ data, labels, period }) => {
         {/* Zones colorées */}
         <defs>
           <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#C16046" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#C16046" stopOpacity="0.05" />
+            <stop offset="0%" stopColor={designSystem.colors.primary[500]} stopOpacity="0.2" />
+            <stop offset="100%" stopColor={designSystem.colors.primary[500]} stopOpacity="0.05" />
           </linearGradient>
         </defs>
 
@@ -143,7 +144,7 @@ const TrendChart = ({ data, labels, period }) => {
         {/* Ligne de données */}
         <path
           d={linePath}
-          stroke="#C16046"
+          stroke={designSystem.colors.primary[500]}
           strokeWidth="3"
           fill="none"
           strokeLinecap="round"
@@ -157,7 +158,7 @@ const TrendChart = ({ data, labels, period }) => {
               cx={point.x}
               cy={point.y}
               r="6"
-              fill="#FFFFFF"
+              fill={designSystem.colors.text.inverse}
               stroke={point.color}
               strokeWidth="3"
             />
@@ -176,7 +177,7 @@ const TrendChart = ({ data, labels, period }) => {
           y1={chartHeight - padding.bottom}
           x2={chartWidth - padding.right}
           y2={chartHeight - padding.bottom}
-          stroke="#E6E0DA"
+          stroke={designSystem.colors.border.light}
           strokeWidth="2"
         />
 
@@ -187,7 +188,7 @@ const TrendChart = ({ data, labels, period }) => {
             x={label.x}
             y={chartHeight - padding.bottom + 20}
             fontSize="10"
-            fill="#312620"
+            fill={designSystem.colors.text.primary}
             textAnchor="middle"
           >
             {label.label}
@@ -200,7 +201,7 @@ const TrendChart = ({ data, labels, period }) => {
           y1={padding.top}
           x2={padding.left}
           y2={chartHeight - padding.bottom}
-          stroke="#E6E0DA"
+          stroke={designSystem.colors.border.light}
           strokeWidth="2"
         />
       </svg>
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Color 03 - Noir pour meilleure lisibilité
   },
 });
 

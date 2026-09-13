@@ -546,7 +546,7 @@ export default function HomeScreen({ route }) {
             {showStoolsTask && (
               <TouchableOpacity style={styles.taskCompact} onPress={() => openBatchModal()} activeOpacity={0.9}>
                 <View style={styles.taskCompactIcon}>
-                  <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="plus" size={18} color={designSystem.colors.text.inverse} />
                 </View>
                 <AppText style={styles.taskCompactTitle} numberOfLines={1}>Renseigner mes selles du jour</AppText>
                 <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.85)" />
@@ -558,7 +558,7 @@ export default function HomeScreen({ route }) {
               <SwipeToDismiss onDismiss={handleDismissPsccai}>
                 <TouchableOpacity style={styles.taskPrimary} onPress={() => navigation.navigate('PSCCAIQuestionnaire')} activeOpacity={0.9}>
                   <View style={styles.taskPrimaryIcon}>
-                    <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color="#FFFFFF" />
+                    <MaterialCommunityIcons name="clipboard-pulse-outline" size={24} color={designSystem.colors.text.inverse} />
                   </View>
                   <View style={styles.taskTextWrap}>
                     <AppText style={styles.taskPrimaryTitle} numberOfLines={1}>Bilan hebdomadaire</AppText>
@@ -988,7 +988,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   suggestionBtnText: {
-    color: '#fff',
+    color: designSystem.colors.text.inverse,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1110,7 +1110,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.1,
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
   },
   taskPrimaryBadge: {
     backgroundColor: 'rgba(255,255,255,0.22)',
@@ -1121,7 +1121,7 @@ const styles = StyleSheet.create({
   taskPrimaryBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
   },
   taskPrimaryDesc: {
     fontSize: 12,
@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.primary[400],
     borderWidth: 1,
     borderColor: colors.border.light,
-    shadowColor: '#C16046',
+    shadowColor: designSystem.colors.primary[500],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -1223,7 +1223,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
   },
   allDoneCard: {
     flexDirection: 'row',
@@ -1239,7 +1239,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1557,11 +1557,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderRadius: designSystem.borderRadius.lg,
     padding: designSystem.spacing[4],
     borderWidth: 2,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
     gap: designSystem.spacing[3],
     // Sur mobile, ne pas étirer en hauteur
     ...(Platform.OS !== 'web' && {
@@ -1581,7 +1581,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     justifyContent: 'center',
     alignItems: 'center',
     // Sur mobile, icône plus petite
@@ -1634,29 +1634,29 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   scoreTooltipTitle: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontWeight: '700',
   },
   scoreTooltipText: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     marginBottom: 6,
   },
   scoreTooltipScale: {
     gap: 2,
   },
   scoreTooltipScaleItem: {
-    color: '#312620',
+    color: designSystem.colors.text.primary,
     fontSize: 11,
     lineHeight: 16,
   },
   scoreGood: {
-    color: '#397852',
+    color: designSystem.colors.secondary[600],
   },
   scoreWarning: {
-    color: '#AD7130',
+    color: designSystem.colors.accent[500],
   },
   scoreError: {
-    color: '#C0392B',
+    color: designSystem.colors.health.danger.main,
   },
   emptyTodayState: {
     paddingVertical: designSystem.spacing[6],
@@ -1682,14 +1682,14 @@ const styles = StyleSheet.create({
   stoolMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   stoolMainWithBlood: {
-    borderColor: '#C0392B',
+    borderColor: designSystem.colors.health.danger.main,
     borderWidth: 2,
   },
   bristolBadge: {
@@ -1701,7 +1701,7 @@ const styles = StyleSheet.create({
     marginRight: designSystem.spacing[3],
   },
   bristolNumber: {
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
     fontWeight: '700',
   },
   stoolInfo: {
@@ -1723,11 +1723,11 @@ const styles = StyleSheet.create({
     width: 44, // Augmenté de 36px à 44px (touch target minimum)
     height: 44,
     borderRadius: designSystem.borderRadius.lg, // Augmenté à lg
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   // Styles pour le calendrier
   calendarCard: {
@@ -1760,11 +1760,11 @@ const styles = StyleSheet.create({
   },
   legendFullWidth: {
     flex: 1,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     padding: designSystem.spacing[3],
     borderRadius: designSystem.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   legendTextCentered: {
     color: designSystem.colors.text.primary,
@@ -1794,11 +1794,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: designSystem.borderRadius.md,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA',
+    borderColor: designSystem.colors.border.light,
   },
   navButtonDisabled: {
     opacity: 0.5,
@@ -1822,11 +1822,11 @@ const styles = StyleSheet.create({
   symptomMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FBF1EE',
+    backgroundColor: designSystem.colors.primary[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#F3C9BC',
+    borderColor: designSystem.colors.primary[200],
   },
   symptomIcon: {
     width: 40,
@@ -1854,7 +1854,7 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.tertiary,
   },
   symptomIntensity: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
@@ -1875,11 +1875,11 @@ const styles = StyleSheet.create({
   noteMain: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF9F0',
+    backgroundColor: designSystem.colors.accent[50],
     borderRadius: designSystem.borderRadius.md,
     padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: '#F0D9A8',
+    borderColor: designSystem.colors.accent[200],
   },
   noteIcon: {
     width: 40,
@@ -1912,7 +1912,7 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.tertiary,
   },
   noteCategory: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
@@ -1925,13 +1925,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 2,
     borderRadius: designSystem.borderRadius.sm,
   },
   noteSharedText: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '500',
   },
   // Badges IA
@@ -1939,14 +1939,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF3EE',
+    backgroundColor: designSystem.colors.primary[50],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiProcessingText: {
-    color: '#C16046',
+    color: designSystem.colors.primary[500],
     fontWeight: '600',
     fontSize: 10,
   },
@@ -1954,14 +1954,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D7F4E0',
+    backgroundColor: designSystem.colors.secondary[100],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 12,
     marginLeft: 8,
   },
   aiCompleteText: {
-    color: '#397852',
+    color: designSystem.colors.secondary[600],
     fontWeight: '600',
     fontSize: 10,
   },

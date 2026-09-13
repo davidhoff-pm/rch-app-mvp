@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
+import designSystem from '../../theme/designSystem';
 
 const ScoreDistribution = ({ data, dataType = 'score' }) => {
   const { width } = Dimensions.get('window');
@@ -54,7 +55,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '0-1',
           count: excellent,
           percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
-          color: '#397852', // Vert
+          color: designSystem.colors.secondary[600], // Vert
           icon: 'circle'
         },
         {
@@ -62,7 +63,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '2-3',
           count: acceptable,
           percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
-          color: '#AD7130', // Orange
+          color: designSystem.colors.accent[500], // Orange
           icon: 'circle'
         },
         {
@@ -70,7 +71,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '4-6',
           count: preoccupant,
           percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
-          color: '#C0392B', // Rouge
+          color: designSystem.colors.health.danger.main, // Rouge
           icon: 'circle'
         }
       ];
@@ -87,7 +88,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '0-3',
           count: bon,
           percentage: total > 0 ? ((bon / total) * 100).toFixed(0) : 0,
-          color: '#C16046', // Color 01
+          color: designSystem.colors.primary[500], // Color 01
           icon: 'circle'
         },
         {
@@ -95,7 +96,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '4-6',
           count: moyen,
           percentage: total > 0 ? ((moyen / total) * 100).toFixed(0) : 0,
-          color: '#C16046', // Color 01
+          color: designSystem.colors.primary[500], // Color 01
           icon: 'circle'
         },
         {
@@ -103,7 +104,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
           range: '7+',
           count: eleve,
           percentage: total > 0 ? ((eleve / total) * 100).toFixed(0) : 0,
-          color: '#312620', // Color 03 - Noir pour alertes
+          color: designSystem.colors.text.primary, // Color 03 - Noir pour alertes
           icon: 'circle'
         }
       ];
@@ -113,7 +114,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
-        <MaterialCommunityIcons name="chart-bar" size={28} color="#C16046" style={{ marginRight: 12 }} />
+        <MaterialCommunityIcons name="chart-bar" size={28} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
           {dataType === 'score' ? 'Répartition des Scores' : 'Répartition des Selles'}
         </AppText>
@@ -129,13 +130,13 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
         {distribution.filter(d => d.count > 0).map((item) => {
           let barColor;
           if (dataType === 'score') {
-            barColor = '#397852'; // Vert (0-1)
-            if (item.score >= 4) barColor = '#C0392B'; // Rouge (4-6)
-            else if (item.score >= 2) barColor = '#AD7130'; // Orange (2-3)
+            barColor = designSystem.colors.secondary[600]; // Vert (0-1)
+            if (item.score >= 4) barColor = designSystem.colors.health.danger.main; // Rouge (4-6)
+            else if (item.score >= 2) barColor = designSystem.colors.accent[500]; // Orange (2-3)
           } else {
-            barColor = '#C16046'; // Color 01
-            if (item.score >= 10) barColor = '#312620'; // Color 03 - Noir pour alertes
-            else if (item.score >= 4) barColor = '#C16046'; // Color 01
+            barColor = designSystem.colors.primary[500]; // Color 01
+            if (item.score >= 10) barColor = designSystem.colors.text.primary; // Color 03 - Noir pour alertes
+            else if (item.score >= 4) barColor = designSystem.colors.primary[500]; // Color 01
           }
 
           return (
@@ -195,10 +196,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   titleContainer: {
     flexDirection: 'row',
@@ -206,11 +207,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   subtitle: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     marginBottom: 20,
   },
   chartContainer: {
@@ -240,12 +241,12 @@ const styles = StyleSheet.create({
     minHeight: 4,
   },
   barValue: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '600',
     marginTop: 4,
   },
   barLabel: {
-    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Color 03 - Noir pour meilleure lisibilité
     marginTop: 4,
     fontWeight: '600',
   },
@@ -255,12 +256,12 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     flex: 1,
-    backgroundColor: '#FFF3EE', // Color 02
+    backgroundColor: designSystem.colors.primary[50], // Color 02
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0DA', // Color 04
+    borderColor: designSystem.colors.border.light, // Color 04
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryRange: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '700',
   },
   categoryPercentage: {
@@ -280,12 +281,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   categoryLabel: {
-    color: '#312620', // Color 03
+    color: designSystem.colors.text.primary, // Color 03
     fontWeight: '600',
     marginBottom: 2,
   },
   categoryCount: {
-    color: '#312620', // Color 03 - Noir pour meilleure lisibilité
+    color: designSystem.colors.text.primary, // Color 03 - Noir pour meilleure lisibilité
   },
 });
 

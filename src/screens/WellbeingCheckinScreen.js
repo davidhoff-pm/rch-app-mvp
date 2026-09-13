@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   scaleOptionTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.inverse,
   },
   chipsSectionHeader: {
     flexDirection: 'row',

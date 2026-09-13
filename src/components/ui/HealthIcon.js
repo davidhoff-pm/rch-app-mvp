@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path, Circle, Rect, G, Line, Polyline, Ellipse } from 'react-native-svg';
+import designSystem from '../../theme/designSystem';
 
 /**
  * Composant d'icônes médicales inspiré de Health Icons
@@ -253,7 +254,7 @@ const icons = {
 const HealthIcon = ({
   name,
   size = 24,
-  color = '#C16046',
+  color = designSystem.colors.primary[500],
   style
 }) => {
   const IconComponent = icons[name];

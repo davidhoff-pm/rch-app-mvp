@@ -412,10 +412,10 @@ const TreatmentScreen = () => {
           const adherence = schema.adherence || 0;
 
           const adherenceColor = adherence >= 90
-            ? '#397852'
+            ? designSystem.colors.secondary[600]
             : adherence >= 70
-            ? '#AD7130'
-            : '#C0392B';
+            ? designSystem.colors.accent[500]
+            : designSystem.colors.health.danger.main;
 
           return (
             <AppCard key={schema.id} style={styles.historyCard}>
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   historySwitchTextActive: {
-    color: '#FFFFFF',
+    color: designSystem.colors.text.inverse,
   },
   content: {
     flex: 1,

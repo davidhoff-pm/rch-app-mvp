@@ -203,8 +203,8 @@ export default function StatsScreen() {
           style={styles.segmentedButtons}
           theme={{
             colors: {
-              secondaryContainer: '#C16046', // Color 01 pour le bouton sélectionné
-              onSecondaryContainer: '#FFFFFF',
+              secondaryContainer: designSystem.colors.primary[500], // Color 01 pour le bouton sélectionné
+              onSecondaryContainer: designSystem.colors.background.tertiary,
             }
           }}
         />
@@ -289,7 +289,7 @@ export default function StatsScreen() {
           {/* Graphique d'évolution - style de titre harmonisé */}
           <AppCard style={styles.chartCard}>
             <View style={styles.titleRow}>
-              <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#C16046" style={{ marginRight: 12 }} />
+              <MaterialCommunityIcons name="chart-timeline-variant" size={28} color={designSystem.colors.primary[500]} style={{ marginRight: 12 }} />
               <AppText variant="headlineLarge" style={styles.chartTitle}>
                 {dataType === 'score' ? 'Indicateurs' : 'Évolution des Selles'}
               </AppText>

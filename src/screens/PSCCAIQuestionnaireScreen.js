@@ -432,7 +432,7 @@ export default function PSCCAIQuestionnaireScreen() {
                 <MaterialCommunityIcons
                   name={opt.icon}
                   size={22}
-                  color={active ? '#FFFFFF' : colors.primary[500]}
+                  color={active ? colors.text.inverse : colors.primary[500]}
                 />
                 <AppText style={[styles.skinEyeOptionText, active && styles.skinEyeOptionTextActive]}>
                   {opt.label}
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   overrideChipTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.inverse,
   },
 
   // Questions
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   ynButtonTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.inverse,
   },
 
   // Triple choice
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   skinEyeOptionTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.inverse,
   },
 
   // Result

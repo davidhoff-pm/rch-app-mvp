@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, HelperText } from 'react-native-paper';
+import designSystem from '../../theme/designSystem';
 
 /**
  * Composant réutilisable pour la saisie de date et heure
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    backgroundColor: '#F5EFE8',
+    backgroundColor: designSystem.colors.background.secondary,
   },
   dateInput: {
     marginRight: 8,
