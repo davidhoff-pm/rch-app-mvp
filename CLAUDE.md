@@ -22,6 +22,8 @@ l'architecture et les réflexes de dev en amont, expliquer les choix.
 - Commits en français, sujet à l'impératif. Terminer par la ligne
   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 - Ne commit/push que sur demande explicite.
+- Projet en CNG : `android/` et `ios/` sont ignorés par git et régénérés par EAS. Ne jamais
+  les versionner, toute config native passe par `app.json`.
 - Détail du process dev→preview→prod (web + mobile OTA + stores) : voir `docs/WORKFLOW.md`.
 
 ## Commandes

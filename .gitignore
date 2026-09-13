@@ -52,3 +52,6 @@ backlog/
 
 # Claude Code (config locale de l'agent)
 .claude/
+# Dossiers natifs générés par Expo prebuild (CNG) — ne pas versionner
+/android
+/ios

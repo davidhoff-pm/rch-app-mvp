@@ -40,7 +40,11 @@
       "orientation": "portrait",
       "startUrl": "/",
       "lang": "fr",
-      "categories": ["medical", "health", "productivity"],
+      "categories": [
+        "medical",
+        "health",
+        "productivity"
+      ],
       "preferRelatedApplications": false,
       "scope": "/",
       "dir": "ltr",
@@ -64,7 +68,9 @@
       "url": "https://u.expo.dev/0113d079-9123-4719-956b-18678c9c1def",
       "fallbackToCacheTimeout": 0
     },
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "eas": {
         "projectId": "0113d079-9123-4719-956b-18678c9c1def"
