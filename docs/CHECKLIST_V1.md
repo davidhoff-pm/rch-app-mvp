@@ -15,6 +15,11 @@ pour l'export PDF mobile). Une simple mise à jour OTA (`npm run update:preview`
 suffira pas** — il faut un nouveau build complet avant de pouvoir tester quoi que ce soit
 sur téléphone (voir `docs/WORKFLOW.md`, section 3, "Cas B — Changement natif").
 
+Depuis le lot 1 (sept. 2026), le dossier `android/` n'est plus versionné : le build EAS
+repart de `app.json` (package `com.rchsuivi.app`, permission notifications, plugin
+expo-notifications). Les triggers de rappel ont aussi été corrigés (format SDK 54 avec `type`)
+et les rappels des traitements à intervalle (jour J + stock) sont désormais planifiés.
+
 ## 2. Comment lancer le build de test
 
 ```bash

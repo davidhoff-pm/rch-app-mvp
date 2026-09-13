@@ -70,6 +70,16 @@ c'est **B**. Sinon, dans 90% des cas c'est **A** (OTA).
 
 ---
 
+### Les dossiers `android/` et `ios/` ne sont PAS versionnés
+
+Le projet fonctionne en **CNG** (Continuous Native Generation) : EAS régénère le projet natif
+à chaque build à partir de `app.json` (nom, package `com.rchsuivi.app`, icônes, permissions,
+plugins). Si un dossier `android/` ou `ios/` réapparaît dans le dépôt, EAS l'utilise tel quel et
+**ignore `app.json`** (mauvais package, permissions manquantes…). Ils sont dans `.gitignore` :
+ne jamais les commiter. Pour un build local ponctuel : `npx expo prebuild --clean`, puis supprimer.
+
+---
+
 ## 4. Versionnement
 
 - `app.json` → `expo.version` = version publique (ex : `1.2.0`). On la bump à chaque
