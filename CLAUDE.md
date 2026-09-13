@@ -52,3 +52,5 @@ l'architecture et les réflexes de dev en amont, expliquer les choix.
 - Garder le code prêt à passer les tests verts (la CI lance Jest en PR). Ajouter des tests
   pour la logique métier (scores, observance) quand c'est pertinent.
 - Ne pas embarquer de secrets. Données santé = stockage local uniquement (MMKV).
+- Toute nouvelle clé de stockage se déclare dans `src/data/storageKeys.js` (sinon elle n'est ni
+  sauvegardée ni effacée). Tout changement de format de donnée = migration dans `src/data/migrations.js`.

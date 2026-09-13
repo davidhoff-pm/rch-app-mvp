@@ -111,9 +111,15 @@ npm run build:ios:preview
 
 ### Paramètres
 
-- [ ] Export/import JSON manuel — vérifier que `psccaiHistory` et `psccaiLastUsed`
-      sont bien inclus
-- [ ] Reset des données — vérifie que `psccaiHistory` est bien vidé aussi
+- [ ] **Sauvegarde (US-017)** : "Sauvegarder mes données" ouvre la feuille de partage avec
+      `rch-suivi-sauvegarde-AAAA-MM-JJ.json` ; l'enregistrer sur Drive/Fichiers
+- [ ] **Restauration** : effacer les données, puis "Restaurer une sauvegarde" depuis ce fichier →
+      accueil, stats, traitements, notes, bilans et réglages (heures de rappel, mode de suivi)
+      identiques à avant
+- [ ] Restaurer un ancien export web (v1.3.0) → accepté ; un fichier quelconque → refusé
+      avec un message clair
+- [ ] Effacer toutes les données → retour à l'état premier lancement (aucun traitement,
+      aucun bilan, mode actif, rappels désactivés)
 - [ ] Mode développeur cache par défaut, activable via 5 taps sur la version
 
 ### Régression web (PWA)
