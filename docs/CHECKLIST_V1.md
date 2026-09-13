@@ -4,7 +4,7 @@ Ce doc sert de pense-bête pour la prochaine fois que tu reprends le projet : co
 sortir un build de test, et tout ce qu'il faut vérifier avant de considérer la V1 prête.
 Pour le détail complet du workflow (OTA vs build natif, versioning...), voir
 `docs/WORKFLOW.md`. Pour l'installation pas-à-pas d'un build EAS, voir
-`BUILD_INSTRUCTIONS.md`.
+`docs/BUILD_INSTRUCTIONS.md`.
 
 ---
 
