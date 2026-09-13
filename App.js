@@ -8,12 +8,17 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { StoolModalProvider } from './src/contexts/StoolModalContext';
 import { SpeedDialProvider } from './src/contexts/SpeedDialContext';
 import { refreshDailyNotifications } from './src/services/notificationService';
+import { runMigrations } from './src/data/migrations';
 
 // Import du script de mise à jour PWA
 import './src/utils/pwaUpdate';
 
 // Import du service worker PWA
 import { initPWA } from './src/utils/registerServiceWorker';
+
+// Versionnement des données locales : applique les migrations manquantes avant
+// le premier rendu (stockage synchrone).
+runMigrations();
 
 export default function App() {
   const navigationRef = useRef(null);

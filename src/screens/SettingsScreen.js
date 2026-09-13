@@ -21,6 +21,12 @@ import { useTrackingMode } from '../hooks/useTrackingMode';
 import { getTreatmentReminderTimes, saveTreatmentReminderTimes } from '../utils/treatmentUtils';
 import { getWellbeingSettings, saveWellbeingSettings } from '../utils/wellbeingUtils';
 import { useNavigation } from '@react-navigation/native';
+import { parseSnapshot, restoreSnapshot, wipeAllData, describeSnapshot } from '../data/backupService';
+import { exportBackupFile, pickBackupFileText } from '../data/backupFiles';
+import { confirmDialog, infoDialog } from '../utils/dialogs';
+import appConfig from '../../app.json';
+
+const APP_VERSION = appConfig.expo.version;
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -373,54 +379,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleWipeData = () => {
-    Alert.alert(
-      'Effacer toutes les données',
-      'Êtes-vous sûr de vouloir supprimer toutes les données de l\'application ? Cette action est irréversible.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Effacer', 
-          style: 'destructive',
-          onPress: () => {
-            setIsWiping(true);
-            
-            try {
-              // Effacer toutes les données
-              
-              storage.set('dailySells', '[]');
-              
-              storage.set('dailySurvey', '{}');
-              
-              storage.set('scoresHistory', '[]');
-
-              storage.set('psccaiHistory', '[]');
-              storage.delete('psccaiLastUsed');
-              
-              // Vérifier que les données ont bien été effacées
-              const dailySells = storage.getString('dailySells');
-              const dailySurvey = storage.getString('dailySurvey');
-              const scoresHistory = storage.getString('scoresHistory');
-              
-              
-              if (dailySells === '[]' && dailySurvey === '{}' && scoresHistory === '[]') {
-                Alert.alert('Succès', 'Toutes les données ont été effacées avec succès. Les écrans se mettront à jour automatiquement.');
-              } else {
-                Alert.alert('Attention', 'Certaines données n\'ont pas pu être effacées.');
-              }
-              
-            } catch (error) {
-              console.error('Erreur lors de la suppression:', error);
-              Alert.alert('Erreur', `Impossible d'effacer les données: ${error.message}`);
-            } finally {
-              setIsWiping(false);
-            }
-          }
-        }
-      ]
-    );
-  };
-
   const handleManualClear = () => {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -435,79 +393,99 @@ export default function SettingsScreen() {
     }
   };
 
-  // Export des données
-  const handleExportData = () => {
-    try {
-      const allData = {
-        scoresHistory: storage.getString('scoresHistory') || '[]',
-        dailySells: storage.getString('dailySells') || '[]',
-        dailySurvey: storage.getString('dailySurvey') || '{}',
-        treatments: storage.getString('treatments') || '[]',
-        ibdiskHistory: storage.getString('ibdiskHistory') || '[]',
-        ibdiskLastUsed: storage.getString('ibdiskLastUsed') || '',
-        psccaiHistory: storage.getString('psccaiHistory') || '[]',
-        psccaiLastUsed: storage.getString('psccaiLastUsed') || '',
-        exportDate: new Date().toISOString(),
-        version: '1.3.0'
-      };
-
-      const dataStr = JSON.stringify(allData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `rch-suivi-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      Alert.alert('Succès', 'Données exportées avec succès ! Le fichier a été téléchargé.');
-    } catch (error) {
-      console.error('Erreur export:', error);
-      Alert.alert('Erreur', `Impossible d'exporter les données: ${error.message}`);
+  // Après une restauration ou un effacement, resynchroniser les états locaux de
+  // cet écran (les autres écrans relisent le stockage au focus).
+  const resyncLocalState = () => {
+    loadNotificationSettings();
+    setWellbeingSettings(getWellbeingSettings());
+    const saved = storage.getString('normalStoolCount');
+    setNormalStoolCount(saved != null ? parseInt(saved, 10) : 1);
+    setTrackingMode(storage.getString('trackingMode') || 'active');
+    if (Platform.OS !== 'web') {
+      NotificationService.refreshDailyNotifications();
     }
   };
 
+  const handleWipeData = async () => {
+    const ok = await confirmDialog(
+      'Effacer toutes les données',
+      'Toutes vos données seront supprimées définitivement : selles, scores, questionnaires, traitements, notes, symptômes, bilans et réglages. Pensez à faire une sauvegarde avant.',
+      { confirmText: 'Tout effacer', destructive: true }
+    );
+    if (!ok) return;
+    setIsWiping(true);
+    try {
+      wipeAllData();
+      const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+      if (Platform.OS === 'web') service.cancelAllReminders?.(); else await service.cancelAllNotifications();
+      setDevModeEnabled(false);
+      resyncLocalState();
+      await infoDialog('Données effacées', "L'application est revenue à son état initial.");
+    } catch (error) {
+      await infoDialog('Erreur', `Impossible d'effacer les données : ${error.message}`);
+    } finally {
+      setIsWiping(false);
+    }
+  };
 
-  // Import manuel via texte JSON
-  const handleManualImport = () => {
+  // Sauvegarde complète (fichier JSON partagé sur mobile, téléchargé sur web)
+  const handleExportData = async () => {
+    try {
+      const result = await exportBackupFile({ appVersion: APP_VERSION });
+      if (!result.shared) {
+        await infoDialog('Sauvegarde créée', `Le partage n'est pas disponible sur cet appareil. Fichier : ${result.uri}`);
+      }
+    } catch (error) {
+      await infoDialog('Erreur', `Impossible de créer la sauvegarde : ${error.message}`);
+    }
+  };
+
+  // Restauration : valide, résume, confirme, remplace tout
+  const applySnapshotText = async (text, sourceLabel) => {
+    const parsed = parseSnapshot(text);
+    if (!parsed.ok) {
+      await infoDialog('Sauvegarde refusée', parsed.error);
+      return false;
+    }
+    const d = describeSnapshot(parsed.snapshot);
+    const exported = d.exportedAt ? new Date(d.exportedAt).toLocaleDateString('fr-FR') : 'date inconnue';
+    const ok = await confirmDialog(
+      'Restaurer cette sauvegarde ?',
+      `${sourceLabel}\nSauvegarde du ${exported}${d.appVersion ? ` (app v${d.appVersion})` : ''} : ${d.stools} selles, ${d.scores} scores, ${d.psccai} bilans P-SCCAI, ${d.ibdisk} IBDisk, ${d.schemas} traitements, ${d.notes} notes.\n\nVos données actuelles seront REMPLACÉES.`,
+      { confirmText: 'Restaurer', destructive: true }
+    );
+    if (!ok) return false;
+    restoreSnapshot(parsed.snapshot);
+    resyncLocalState();
+    if (Platform.OS === 'web') {
+      window.alert('Données restaurées. La page va se recharger.');
+      window.location.reload();
+    } else {
+      await infoDialog('Données restaurées', 'Votre suivi a été restauré. Les écrans se mettent à jour automatiquement.');
+    }
+    return true;
+  };
+
+  const handleRestoreFromFile = async () => {
+    try {
+      const picked = await pickBackupFileText();
+      if (!picked) return;
+      await applySnapshotText(picked.text, picked.name || 'Fichier sélectionné');
+    } catch (error) {
+      await infoDialog('Erreur', `Impossible de lire le fichier : ${error.message}`);
+    }
+  };
+
+  // Secours : collage manuel du JSON
+  const handleManualImport = async () => {
     if (!importJsonText.trim()) {
-      Alert.alert('Erreur', 'Veuillez coller le contenu JSON de votre sauvegarde.');
+      await infoDialog('Erreur', 'Collez le contenu JSON de votre sauvegarde.');
       return;
     }
-
-    try {
-      const data = JSON.parse(importJsonText);
-      
-      // Vérifier que c'est un fichier de sauvegarde RCH
-      if (!data.version || !data.scoresHistory) {
-        Alert.alert('Erreur', 'Ce JSON ne semble pas être une sauvegarde RCH Suivi valide.');
-        return;
-      }
-
-      // Restaurer les données
-      storage.set('scoresHistory', data.scoresHistory);
-      storage.set('dailySells', data.dailySells);
-      storage.set('dailySurvey', data.dailySurvey);
-      storage.set('treatments', data.treatments);
-      storage.set('ibdiskHistory', data.ibdiskHistory);
-      storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
-      if (data.psccaiHistory) storage.set('psccaiHistory', data.psccaiHistory);
-      if (data.psccaiLastUsed) storage.set('psccaiLastUsed', data.psccaiLastUsed);
-
-      Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
+    const done = await applySnapshotText(importJsonText, 'JSON collé');
+    if (done) {
       setShowManualImport(false);
       setImportJsonText('');
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location) {
-          window.location.reload();
-        }
-      }, 1000);
-    } catch (error) {
-      console.error('Erreur import manuel:', error);
-      Alert.alert('Erreur', `JSON invalide: ${error.message}`);
     }
   };
 
@@ -918,30 +896,37 @@ export default function SettingsScreen() {
           </AppText>
         </View>
         <AppText variant="bodyMedium" style={styles.backupDescription}>
-          Exportez vos données pour les sauvegarder ou les transférer vers un autre appareil.
+          Vos données restent sur cet appareil. Sauvegardez-les régulièrement dans un fichier
+          (Drive, Fichiers, mail…) pour pouvoir les restaurer sur un nouveau téléphone.
         </AppText>
-        
+
         <View style={styles.backupButtons}>
-          <PrimaryButton 
-            onPress={handleExportData} 
+          <PrimaryButton
+            onPress={handleExportData}
             variant="secondary"
             style={styles.backupButton}
-            icon="download"
+            icon={Platform.OS === 'web' ? 'download' : 'share-variant'}
           >
-            Exporter les données
+            Sauvegarder mes données
           </PrimaryButton>
-          
-          <PrimaryButton 
-            onPress={() => setShowManualImport(!showManualImport)} 
+
+          <PrimaryButton
+            onPress={handleRestoreFromFile}
             variant="secondary"
             outlined
             style={styles.backupButton}
-            icon="text-box"
+            icon="folder-open"
           >
-            Importer des données
+            Restaurer une sauvegarde
           </PrimaryButton>
         </View>
-        
+
+        <TouchableOpacity onPress={() => setShowManualImport(!showManualImport)} style={styles.manualImportToggle} activeOpacity={0.7}>
+          <AppText variant="labelSmall" style={styles.manualImportToggleText}>
+            {showManualImport ? 'Masquer le collage manuel' : 'Coller un JSON de sauvegarde (secours)'}
+          </AppText>
+        </TouchableOpacity>
+
         {showManualImport && (
           <View style={styles.manualImportContainer}>
             <AppText variant="bodyMedium" style={styles.manualImportLabel}>
@@ -989,7 +974,7 @@ export default function SettingsScreen() {
           </AppText>
         </View>
         <AppText variant="bodyMedium" style={styles.dangerDescription}>
-          Cette action supprimera définitivement toutes vos données : selles, bilans quotidiens et historique des scores.
+          Cette action supprimera définitivement toutes vos données (selles, scores, questionnaires, traitements, notes, symptômes, bilans, réglages). Faites une sauvegarde avant.
         </AppText>
         <PrimaryButton 
           onPress={handleWipeData} 
@@ -1017,7 +1002,7 @@ export default function SettingsScreen() {
       {/* Version — 5 taps pour activer/désactiver le mode développeur */}
       <TouchableOpacity onPress={handleVersionTap} activeOpacity={1} style={styles.versionFooter}>
         <AppText variant="labelSmall" style={styles.versionText}>
-          RCH Suivi · v1.2.0
+          RCH Suivi · v{APP_VERSION}
         </AppText>
       </TouchableOpacity>
     </ScrollView>
@@ -1228,6 +1213,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   // Styles pour l'import manuel
+  manualImportToggle: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  manualImportToggleText: {
+    color: designSystem.colors.text.tertiary,
+    textDecorationLine: 'underline',
+  },
   manualImportContainer: {
     marginTop: 16,
     padding: 16,
@@ -1242,7 +1236,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   jsonInput: {
-    backgroundColor: 'white',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderWidth: 1,
     borderColor: designSystem.colors.border.light, // Color 04
     borderRadius: 6,
@@ -1351,7 +1345,7 @@ const styles = StyleSheet.create({
     marginLeft: 28,
   },
   stockDaysInput: {
-    backgroundColor: 'white',
+    backgroundColor: designSystem.colors.background.tertiary,
     borderWidth: 1,
     borderColor: designSystem.colors.border.light,
     borderRadius: designSystem.borderRadius.md,
