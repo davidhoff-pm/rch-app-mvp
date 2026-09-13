@@ -1,17 +1,13 @@
 ﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Alert, Animated } from 'react-native';
-import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Animated } from 'react-native';
+import { Portal, Modal } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import HealthIcon from '../components/ui/HealthIcon';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
-import SecondaryButton from '../components/ui/SecondaryButton';
-import StatCard from '../components/ui/StatCard';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import Toast from '../components/ui/Toast';
 import SkeletonCard from '../components/ui/SkeletonCard';
-import EmptyState from '../components/ui/EmptyState';
 import DateTimePicker from '../components/ui/DateTimePicker';
 import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
@@ -37,10 +33,8 @@ import {
   getMedications,
   recordIntake,
   toggleMomentIntake,
-  getPendingIntakesCount,
   getTodayMoments,
   getDoses,
-  getDosesPerDay,
   isIntervalIntakeDone,
 } from '../utils/treatmentUtils';
 import { buttonPressFeedback } from '../utils/haptics';
@@ -70,13 +64,6 @@ export default function HomeScreen({ route }) {
 
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
-
-  // États pour la modale de traitement
-  const [treatmentModalVisible, setTreatmentModalVisible] = useState(false);
-  const [treatmentName, setTreatmentName] = useState('');
-  const [treatmentDateInput, setTreatmentDateInput] = useState('');
-  const [treatmentTimeInput, setTreatmentTimeInput] = useState('');
-  const [treatmentSuggestions, setTreatmentSuggestions] = useState([]);
 
   // État pour le Toast
   const [toastVisible, setToastVisible] = useState(false);
@@ -335,79 +322,6 @@ export default function HomeScreen({ route }) {
     closeModal();
   };
 
-  // Fonctions pour la modale de traitement
-  const showTreatmentModal = () => {
-    const now = new Date();
-    setTreatmentDateInput(now.toLocaleDateString('fr-FR'));
-    setTreatmentTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
-    setTreatmentName('');
-    setTreatmentSuggestions([]);
-    setTreatmentModalVisible(true);
-  };
-
-  const hideTreatmentModal = () => {
-    setTreatmentModalVisible(false);
-    setTreatmentName('');
-    setTreatmentSuggestions([]);
-  };
-
-  const handleTreatmentNameChange = (text) => {
-    setTreatmentName(text);
-    
-    // Récupérer tous les traitements pour l'auto-complétion
-    if (text.length > 0) {
-      const treatmentsJson = storage.getString('treatments');
-      const treatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
-      
-      // Extraire les noms uniques
-      const uniqueNames = [...new Set(treatments.map(t => t.name))];
-      
-      // Filtrer ceux qui commencent par le texte entré
-      const suggestions = uniqueNames.filter(name => 
-        name.toLowerCase().startsWith(text.toLowerCase())
-      ).slice(0, 5); // Limiter à 5 suggestions
-      
-      setTreatmentSuggestions(suggestions);
-    } else {
-      setTreatmentSuggestions([]);
-    }
-  };
-
-  const saveTreatment = () => {
-    if (!treatmentName.trim()) {
-      showToast('Veuillez entrer le nom du traitement', 'error');
-      return;
-    }
-
-    // Valider la date et l'heure
-    if (!isValidDate(treatmentDateInput)) {
-      showToast('Date invalide', 'error');
-      return;
-    }
-
-    if (!isValidTime(treatmentTimeInput)) {
-      showToast('Heure invalide', 'error');
-      return;
-    }
-
-    const selectedDateTime = parseDateTime(treatmentDateInput, treatmentTimeInput);
-    const timestamp = selectedDateTime.getTime();
-
-    const treatmentsJson = storage.getString('treatments');
-    const treatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
-    
-    const newTreatment = {
-      id: Date.now().toString(),
-      name: treatmentName.trim(),
-      timestamp: timestamp
-    };
-    
-    treatments.push(newTreatment);
-    storage.set('treatments', JSON.stringify(treatments));
-    
-    hideTreatmentModal();
-    showToast('💊 Traitement enregistré !', 'success');
-  };
   const showModal = () => {
     openModal();
   };
@@ -436,42 +350,6 @@ export default function HomeScreen({ route }) {
       }
     }
   }, [isModalVisible]);
-
-  const containerStyle = useMemo(() => ({
-    margin: 16
-  }), []);
-
-  const formatDateInput = (text) => {
-    // Supprimer tout sauf les chiffres
-    const numbers = text.replace(/\D/g, '');
-    
-    // Limiter à 8 chiffres (DDMMYYYY)
-    const limited = numbers.slice(0, 8);
-    
-    // Formater avec les /
-    if (limited.length <= 2) {
-      return limited;
-    } else if (limited.length <= 4) {
-      return `${limited.slice(0, 2)}/${limited.slice(2)}`;
-    } else {
-      return `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
-    }
-  };
-
-  const formatTimeInput = (text) => {
-    // Supprimer tout sauf les chiffres
-    const numbers = text.replace(/\D/g, '');
-    
-    // Limiter à 4 chiffres (HHMM)
-    const limited = numbers.slice(0, 4);
-    
-    // Formater avec le :
-    if (limited.length <= 2) {
-      return limited;
-    } else {
-      return `${limited.slice(0, 2)}:${limited.slice(2)}`;
-    }
-  };
 
   const validateDate = (dateStr) => {
     const parts = dateStr.split('/');
@@ -973,88 +851,6 @@ export default function HomeScreen({ route }) {
           loadHistoryData();
         }}
       />
-
-      {/* Modale de prise de traitement */}
-      <Portal>
-        <Modal visible={treatmentModalVisible} onDismiss={hideTreatmentModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard style={styles.modalCard}>
-            <ScrollView>
-              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#312620' }} />
-              
-              <Card.Content>
-                {/* Date et Heure */}
-                <AppText variant="bodyMedium" style={styles.modalSectionLabel}>
-                  📅 Date et heure de la prise
-                </AppText>
-                
-                <DateTimePicker
-                  dateValue={treatmentDateInput}
-                  timeValue={treatmentTimeInput}
-                  onDateChange={setTreatmentDateInput}
-                  onTimeChange={setTreatmentTimeInput}
-                  dateLabel="Date (JJ/MM/AAAA)"
-                  timeLabel="Heure (HH:MM)"
-                />
-
-                {/* Nom du traitement */}
-                <AppText variant="bodyMedium" style={[styles.modalSectionLabel, { marginTop: 20 }]}>
-                  💊 Nom du traitement
-                </AppText>
-                
-                <TextInput
-                  label="Ex: Pentasa, Humira..."
-                  value={treatmentName}
-                  onChangeText={handleTreatmentNameChange}
-                  style={[styles.treatmentInput, { backgroundColor: '#F5EFE8', borderRadius: 16 }]}
-                  mode="outlined"
-                  outlineStyle={{ borderRadius: 16 }}
-                  autoCapitalize="words"
-                />
-
-                {/* Suggestions d'auto-complétion */}
-                {treatmentSuggestions.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    {treatmentSuggestions.map((suggestion, index) => (
-                      <Button
-                        key={index}
-                        mode="outlined"
-                        onPress={() => {
-                          setTreatmentName(suggestion);
-                          setTreatmentSuggestions([]);
-                        }}
-                        style={styles.suggestionButton}
-                        labelStyle={styles.suggestionButtonLabel}
-                      >
-                        {suggestion}
-                      </Button>
-                    ))}
-                  </View>
-                )}
-              </Card.Content>
-
-              <View style={styles.modalActions}>
-                <PrimaryButton
-                  onPress={saveTreatment}
-                  style={styles.saveButton}
-                  variant="primary"
-                  size="medium"
-                >
-                  Enregistrer
-                </PrimaryButton>
-                <PrimaryButton
-                  onPress={hideTreatmentModal}
-                  style={styles.cancelButton}
-                  variant="neutral"
-                  size="medium"
-                  outlined
-                >
-                  Annuler
-                </PrimaryButton>
-              </View>
-            </ScrollView>
-          </AppCard>
-        </Modal>
-      </Portal>
 
       {/* Toast de notification */}
       <Toast
@@ -1729,21 +1525,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: designSystem.colors.primary[500],
-  },
-  treatmentInput: {
-    marginTop: designSystem.spacing[2],
-  },
-  suggestionsContainer: {
-    marginTop: designSystem.spacing[3],
-    gap: designSystem.spacing[2],
-  },
-  suggestionButton: {
-    borderRadius: designSystem.borderRadius.base,
-    borderColor: designSystem.colors.secondary[500],
-  },
-  suggestionButtonLabel: {
-    color: designSystem.colors.secondary[500],
-    fontSize: designSystem.typography.fontSize.sm,
   },
   // Styles pour la section Aujourd'hui
   todaySection: {

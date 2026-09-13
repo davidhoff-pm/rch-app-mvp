@@ -112,7 +112,7 @@ Ces étapes nécessitent des comptes — à faire quand tu seras prêt à builde
    Ajouter `"owner": "<ton-username-expo>"` dans `app.json` (obligatoire pour les builds).
 2. **EAS CLI** : `npm install -g eas-cli`.
 3. **Compte Google Play** (25 $ une fois) et/ou **Apple Developer** (99 $/an) pour publier.
-   Détails de soumission : voir `DEPLOYMENT_GUIDE.md`.
+   Détails de soumission : voir `docs/DEPLOYMENT_GUIDE.md`.
 
 Tant que ces comptes n'existent pas : on développe et on teste sur **web/Vercel**
 (déjà fonctionnel), et on prépare tout le reste.
